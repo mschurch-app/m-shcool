@@ -745,7 +745,9 @@
         <p class="text-xs font-bold text-amber-800 mb-1">📖 今日屬天祝福：</p>
         <p class="text-xs sm:text-sm text-amber-950 font-serif leading-relaxed" id="verse-quote"></p>
       </div>
-      <button onclick="closeVerseModal()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md">我知道了 (Enter)</button>
+      <button onclick="closeVerseModal()" class="w-full py-2.5 bg-blue-600/90 hover:bg-blue-600 text-white text-xs font-bold rounded-xl shadow-md">
+        自動倒數關閉中 (亦可點擊跳過)
+      </button>
     </div>
   </div>
 
@@ -766,6 +768,9 @@
     let currentCalMonth = 9;
     let activeScheduleView = 'calendar';
 
+    // 打卡與彈窗定時器
+    let verseAutoCloseTimer = null;
+
     // AI 臉部辨識核心變數
     let isFaceModelsLoaded = false;
     let isFaceDetecting = false;
@@ -774,7 +779,7 @@
     let faceStream = null;
     let labeledFaceDescriptors = [];
     let faceMatcher = null;
-    let lastFaceMatchTime = {}; // 10秒防重複簽到
+    let lastFaceMatchTime = {};
 
     // 相機 QR Code 變數
     let html5QrScanner = null;
@@ -859,10 +864,8 @@
     // 1. 排班管理與互動行事曆 (徹底修復月曆呈現與資料庫容錯)
     // =============================================================
     async function loadSchedules() {
-      // 1. 無論資料庫連線狀況，先保證畫出當月月曆
       renderActiveScheduleView();
 
-      // 2. 載入同工名單供選單使用
       if (staffList.length === 0) {
         try {
           const { data: users } = await db.from('users').select('*');
@@ -887,7 +890,6 @@
         }
       }
 
-      // 3. 讀取排班紀錄並刷新月曆標記
       try {
         const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
         if (!error && data) {
@@ -1503,7 +1505,7 @@
     }
 
     // -------------------------------------------------------------
-    // 打卡共用邏輯
+    // 打卡邏輯（學生一天限一次；同工5分鐘防呆+自動上下班；2秒自動關閉）
     // -------------------------------------------------------------
     async function handleScan(e) {
       if (e) e.preventDefault();
@@ -1516,6 +1518,8 @@
 
     async function processScanCode(val) {
       const tip = document.getElementById('scan-tip');
+      const now = Date.now();
+
       tip.className = "mt-3 text-xs font-bold text-blue-700 bg-blue-50 block";
       tip.textContent = `打卡辨識中【${val}】...`;
 
@@ -1523,51 +1527,140 @@
         const { data: user, error } = await db.from('users').select('*').eq('id', val).maybeSingle();
         if (error || !user) {
           tip.className = "mt-3 text-xs font-bold text-rose-700 bg-rose-50 block";
-          tip.textContent = `❌ 查無編號【${val}】，請確認是否建檔。`;
+          tip.textContent = `❌ 查無編號【${val}】，請確認是否已建檔。`;
           return;
         }
 
-        const isStaff = val.includes('T') || val.includes('M') || val.includes('P');
-        const nowIso = new Date().toISOString();
-        const action = isStaff ? "教職出勤打卡" : "+1 點 (準時簽到)";
+        const isStaff = val.includes('T') || val.includes('M') || val.includes('P') || (user.role_type && user.role_type !== '學生');
+        const nowObj = new Date();
+        const nowIso = nowObj.toISOString();
+        
+        const todayDateStr = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, '0')}-${String(nowObj.getDate()).padStart(2, '0')}`;
+        const startOfTodayIso = `${todayDateStr}T00:00:00.000Z`;
 
-        await db.from('check_in_logs').insert([{
-          check_time: nowIso,
-          target_id: user.id,
-          target_name: user.name,
-          role: isStaff ? '教職員' : '學生',
-          action_text: action
-        }]);
+        const { data: todayLogs } = await db.from('check_in_logs')
+          .select('*')
+          .eq('target_id', user.id)
+          .gte('check_time', startOfTodayIso)
+          .order('check_time', { ascending: true });
 
+        // 1. 學生規則：一天只能打卡一次
         if (!isStaff) {
+          if (todayLogs && todayLogs.length > 0) {
+            showQuickNotice(`⚠️【${user.name}】今日已完成到班簽到，一天限打卡一次！`);
+            return;
+          }
+
+          const actionText = "+1 點 (到班簽到)";
           const newPts = (user.points || 0) + 1;
+          
           await db.from('users').update({ points: newPts }).eq('id', user.id);
           await db.from('points_logs').insert([{
             change_time: nowIso,
             target_id: user.id,
             target_name: user.name,
             points_delta: 1,
-            reason: "現場準時簽到"
+            reason: "現場準時到班簽到"
           }]);
+
+          await db.from('check_in_logs').insert([{
+            check_time: nowIso,
+            target_id: user.id,
+            target_name: user.name,
+            role: '學生',
+            action_text: actionText
+          }]);
+
+          showPunchSuccessModal(
+            `🎉 ${user.name} 到班簽到成功！`,
+            `夢想點數 +1！目前累積：${newPts} 點`
+          );
+          loadLogs();
+          return;
         }
 
-        document.getElementById('verse-title').textContent = `${user.name} 簽到成功！`;
-        document.getElementById('verse-sub').textContent = isStaff ? `今日服事已登記，謝謝您的忠心付出！` : `夢想點數 +1！目前累積：${(user.points || 0) + 1} 點`;
-        document.getElementById('verse-quote').textContent = verses[Math.floor(Math.random() * verses.length)];
-        document.getElementById('modal-verse-box').classList.remove('hidden');
+        // 2. 教職員 / 同工 / 工讀生：5分鐘防呆 + 第1次上班 第2次下班
+        if (todayLogs && todayLogs.length > 0) {
+          const lastLog = todayLogs[todayLogs.length - 1];
+          const lastLogTime = new Date(lastLog.check_time).getTime();
+          if (now - lastLogTime < 300000) {
+            const remSec = Math.ceil((300000 - (now - lastLogTime)) / 1000);
+            showQuickNotice(`⚠️【${user.name}】5分鐘內已打卡過，請稍候！(${remSec}秒)`);
+            return;
+          }
+        }
 
-        tip.classList.add('hidden');
+        const punchCountToday = todayLogs ? todayLogs.length : 0;
+        let actionText = "";
+        let popupTitle = "";
+        let popupSub = "";
+
+        if (punchCountToday === 0) {
+          actionText = "上班簽到";
+          popupTitle = `💼 ${user.name} 上班簽到成功！`;
+          popupSub = `今日服事出勤已登記，祝您有美好的一天！`;
+        } else if (punchCountToday === 1) {
+          actionText = "下班簽退";
+          popupTitle = `🌙 ${user.name} 下班簽退成功！`;
+          popupSub = `今日辛勞服事已完成，願神親自祝福您的手所做的工！`;
+        } else {
+          actionText = `出勤打卡 (第${punchCountToday + 1}次)`;
+          popupTitle = `💼 ${user.name} 打卡成功！`;
+          popupSub = `服事出勤動態已成功更新。`;
+        }
+
+        await db.from('check_in_logs').insert([{
+          check_time: nowIso,
+          target_id: user.id,
+          target_name: user.name,
+          role: user.role_type || '教職員',
+          action_text: actionText
+        }]);
+
+        showPunchSuccessModal(popupTitle, popupSub);
         loadLogs();
+
       } catch (err) {
         console.error(err);
         tip.className = "mt-3 text-xs font-bold text-rose-700 bg-rose-50 block";
-        tip.textContent = "連線失敗，請檢查網路。";
+        tip.textContent = "打卡連線發生問題，請檢查網路。";
       }
     }
 
+    function showPunchSuccessModal(title, sub) {
+      document.getElementById('verse-title').textContent = title;
+      document.getElementById('verse-sub').textContent = sub;
+      document.getElementById('verse-quote').textContent = verses[Math.floor(Math.random() * verses.length)];
+      
+      const modalBox = document.getElementById('modal-verse-box');
+      modalBox.classList.remove('hidden');
+
+      const tip = document.getElementById('scan-tip');
+      tip.classList.add('hidden');
+
+      if (verseAutoCloseTimer) clearTimeout(verseAutoCloseTimer);
+      verseAutoCloseTimer = setTimeout(() => {
+        closeVerseModal();
+      }, 2200);
+    }
+
+    function showQuickNotice(msg) {
+      const tip = document.getElementById('scan-tip');
+      tip.className = "mt-3 text-xs font-bold text-amber-800 bg-amber-100 block transition-all shadow-xs";
+      tip.textContent = msg;
+      setTimeout(() => { tip.classList.add('hidden'); }, 3500);
+    }
+
     function closeVerseModal() {
-      document.getElementById('modal-verse-box').classList.add('hidden');
-      document.getElementById('scan-code-input').focus();
+      if (verseAutoCloseTimer) {
+        clearTimeout(verseAutoCloseTimer);
+        verseAutoCloseTimer = null;
+      }
+      const modalBox = document.getElementById('modal-verse-box');
+      if (modalBox) modalBox.classList.add('hidden');
+      
+      const scanInput = document.getElementById('scan-code-input');
+      if (scanInput) scanInput.focus();
     }
 
     async function loadLogs() {
@@ -1752,7 +1845,7 @@
             </select>
           </td>
           <td class="py-3 px-3">
-            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200'}">
+            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
               <option value="已完成" ${row.homework === '已完成' ? 'selected' : ''}>已完成</option>
               <option value="未完成" ${row.homework === '未完成' ? 'selected' : ''}>未完成</option>
               <option value="待訂正" ${row.homework === '待訂正' ? 'selected' : ''}>待訂正</option>
