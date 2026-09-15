@@ -55,7 +55,7 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- 頂部高質感導航列 -->
+  <!-- 頂部品牌導航列 -->
   <header class="glass-nav text-white sticky top-0 z-50 border-b border-white/10 shadow-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-18 py-3">
@@ -627,17 +627,35 @@
     </div>
   </div>
 
-  <!-- 登入彈窗 -->
+  <!-- 登入彈窗 (支援姓名或人員編號登入) -->
   <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl animate-in fade-in zoom-in duration-150">
       <div class="text-center mb-5">
         <div class="w-13 h-13 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-2.5 text-2xl font-bold shadow-inner"><i class="fa-solid fa-user-shield"></i></div>
         <h3 class="text-xl font-black text-slate-800">同工管理者登入</h3>
-        <p class="text-xs text-slate-400 mt-0.5">請輸入同工編號與密碼 (手機號碼)</p>
+        <p class="text-xs text-slate-400 mt-0.5">請輸入同工姓名或編號，與密碼 (手機號碼)</p>
       </div>
       <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
-        <div><label class="block text-xs font-bold text-slate-600 mb-1">人員編號</label><input type="text" id="login-uid" placeholder="例如: 2026M0001" required class="w-full uppercase px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold font-mono"></div>
-        <div><label class="block text-xs font-bold text-slate-600 mb-1">密碼 (手機號碼)</label><input type="password" id="login-pwd" placeholder="例如: 0986007885" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold font-mono"></div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">人員編號 或 姓名</label>
+          <input 
+            type="text" 
+            id="login-uid" 
+            placeholder="例如: 吳俊璋 或 2026M0001" 
+            required 
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold"
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">密碼 (手機號碼)</label>
+          <input 
+            type="password" 
+            id="login-pwd" 
+            placeholder="例如: 0986007885" 
+            required 
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold font-mono"
+          >
+        </div>
         <div id="login-err" class="text-xs font-bold text-rose-600 hidden"></div>
         <div class="flex space-x-2 pt-2">
           <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">取消</button>
@@ -729,7 +747,7 @@
     }
 
     // -------------------------------------------------------------
-    // 1. 排班管理與互動行事曆
+    // 1. 排班管理與互動行事曆 (起訖時間自動計算工時)
     // -------------------------------------------------------------
     async function loadSchedules() {
       const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
@@ -1197,9 +1215,9 @@
             <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">🪙 ${u.points || 0}</span></td>
             <td class="py-3 px-3 text-center space-x-1 whitespace-nowrap">
               <button onclick="openUserModal('edit', '${u.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition"><i class="fa-solid fa-pen-to-square mr-0.5"></i>編輯</button>
-              <button onclick="changePoints('${u.id}', 1)" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-bold">+1</button>
-              <button onclick="quickSetStatus('${u.id}', '退班')" title="標記退班" class="px-2 py-1 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded text-xs font-bold">退</button>
-              <button onclick="quickSetStatus('${u.id}', '畢業')" title="標記畢業" class="px-2 py-1 bg-slate-100 hover:bg-purple-50 text-purple-600 rounded text-xs font-bold">畢</button>
+              <button onclick="changePoints('${u.id}', 1)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-bold">+1</button>
+              <button onclick="quickSetStatus('${u.id}', '退班')" title="標記退班" class="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded text-xs font-bold">退</button>
+              <button onclick="quickSetStatus('${u.id}', '畢業')" title="標記畢業" class="px-2.5 py-1 bg-slate-100 hover:bg-purple-50 text-purple-600 rounded text-xs font-bold">畢</button>
             </td>
           </tr>
         `;
@@ -1694,32 +1712,44 @@
     }
 
     // -------------------------------------------------------------
-    // 7. 同工登入邏輯
+    // 7. 同工登入邏輯 (支援姓名或人員編號 + 手機號碼)
     // -------------------------------------------------------------
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
     async function handleLoginSubmit(e) {
       e.preventDefault();
-      const uid = document.getElementById('login-uid').value.trim().toUpperCase();
+      const rawInput = document.getElementById('login-uid').value.trim();
       const pwd = document.getElementById('login-pwd').value.trim().replace(/\D/g, '');
       const errEl = document.getElementById('login-err');
+      errEl.classList.add('hidden');
 
-      const { data: user } = await db.from('users').select('*').eq('id', uid).maybeSingle();
-      if (!user) {
-        errEl.textContent = "查無此同工編號！";
+      // 同時支援「人員編號」或「姓名」查詢
+      const { data: users, error } = await db.from('users')
+        .select('*')
+        .or(`id.ilike.${rawInput},name.eq.${rawInput}`)
+        .limit(1);
+
+      if (error || !users || users.length === 0) {
+        errEl.textContent = `查無此同工編號或姓名【${rawInput}】！`;
         errEl.classList.remove('hidden');
         return;
       }
 
+      const user = users[0];
       const dbPhone = (user.phone || '').toString().split('.')[0].replace(/\D/g, '');
-      if (pwd.replace(/^0/, '') === dbPhone.replace(/^0/, '') || pwd === '640819') {
+
+      // 比對電話號碼
+      const cleanInputPhone = pwd.replace(/^0/, '');
+      const cleanDbPhone = dbPhone.replace(/^0/, '');
+
+      if ((cleanInputPhone && cleanDbPhone && cleanInputPhone === cleanDbPhone) || pwd === '640819') {
         currentUser = user;
         localStorage.setItem('mplus_current_user', JSON.stringify(user));
         updateAuthUI();
         closeLoginModal();
         switchTab('schedules');
       } else {
-        errEl.textContent = "密碼錯誤 (請輸入手機號碼)！";
+        errEl.textContent = "密碼錯誤 (請輸入該同工的手機號碼)！";
         errEl.classList.remove('hidden');
       }
     }
