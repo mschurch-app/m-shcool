@@ -10,26 +10,31 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: #05070d;
+            background-color: #030712;
             color: #f1f5f9;
             overflow-x: hidden;
+            min-height: 100vh;
         }
         .font-num { font-family: 'Chakra Petch', sans-serif; }
+        
+        /* 深度透明全息玻璃卡片（讓背景動態強烈透出） */
         .glass-card {
-            background: rgba(13, 19, 33, 0.82);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        .glow-orange { box-shadow: 0 4px 25px -2px rgba(249, 115, 22, 0.45); }
-        .glow-gold { box-shadow: 0 6px 30px -3px rgba(234, 179, 8, 0.55); }
+        .glow-orange { box-shadow: 0 4px 25px -2px rgba(249, 115, 22, 0.5); }
+        .glow-gold { box-shadow: 0 6px 30px -3px rgba(234, 179, 8, 0.6); }
+        
         .card-2k-border {
             border: 1.5px solid transparent;
-            background: linear-gradient(rgba(15, 23, 42, 0.95), rgba(9, 13, 22, 0.98)) padding-box,
+            background: linear-gradient(rgba(15, 23, 42, 0.92), rgba(9, 13, 22, 0.96)) padding-box,
                         linear-gradient(135deg, #f59e0b, #ea580c, #38bdf8, #1e293b) border-box;
-            box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.8), 0 0 20px rgba(249, 115, 22, 0.2);
+            box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.8), 0 0 20px rgba(249, 115, 22, 0.25);
         }
         .radar-mesh { stroke: rgba(255, 255, 255, 0.15); stroke-dasharray: 2 2; }
         .court-board {
@@ -56,25 +61,29 @@
             box-shadow: 0 0 18px rgba(250, 204, 21, 0.6);
             transform: scale(1.03);
         }
-        /* 動態背景畫布層 */
+        /* 全螢幕背景動態畫布 */
         #dynamicBgCanvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: -1;
+            z-index: 0;
             pointer-events: none;
+        }
+        .app-content {
+            position: relative;
+            z-index: 10;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-between p-3 sm:p-5 relative">
+<body class="min-h-screen flex flex-col items-center justify-between p-3 sm:p-5">
 
-    <!-- 全螢幕動態天氣與星期粒子畫布 -->
+    <!-- 全螢幕動態背景畫布 -->
     <canvas id="dynamicBgCanvas"></canvas>
 
     <!-- 頂部導航列 -->
-    <header class="w-full max-w-4xl glass-card rounded-2xl p-4 mb-4 flex flex-col md:flex-row justify-between items-center shadow-2xl space-y-3 md:space-y-0 border border-slate-800 z-10">
+    <header class="app-content w-full max-w-4xl glass-card rounded-2xl p-4 mb-4 flex flex-col md:flex-row justify-between items-center shadow-2xl space-y-3 md:space-y-0 border border-slate-800/80">
         <div class="flex items-center justify-between w-full md:w-auto">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center font-black text-xl shadow-lg shadow-orange-500/30 text-white">
@@ -121,13 +130,16 @@
         </div>
     </header>
 
-    <main class="w-full max-w-4xl flex-1 flex flex-col space-y-4 mb-4 pb-24 z-10">
-        <!-- 登入面板 (浮於動態天候畫布上) -->
-        <section id="loginSection" class="glass-card rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center justify-center space-y-6 my-auto border border-slate-800 backdrop-blur-2xl">
+    <main class="app-content w-full max-w-4xl flex-1 flex flex-col space-y-4 mb-4 pb-24">
+        <!-- 登入面板 -->
+        <section id="loginSection" class="glass-card rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center justify-center space-y-6 my-auto border border-slate-700/60">
             <div class="text-center space-y-2">
-                <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-orange-500/20 to-amber-500/10 rounded-2xl border border-orange-500/30 flex items-center justify-center text-3xl mb-2 text-orange-400 glow-orange">🛡️</div>
+                <div class="w-16 h-16 mx-auto bg-gradient-to-tr from-orange-500/20 to-amber-500/10 rounded-2xl border border-orange-500/40 flex items-center justify-center text-3xl mb-2 text-orange-400 glow-orange">🛡️</div>
                 <h2 class="text-2xl font-black tracking-wide text-white">Ｍ＋藍球隊球員系統</h2>
-                <p class="text-xs text-slate-400" id="loginAtmosphereText">正在同步當地天候與隊魂氛圍...</p>
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900/80 border border-amber-500/30">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <p class="text-[11px] text-amber-300 font-bold" id="loginAtmosphereText">天候與隊魂粒子同步中...</p>
+                </div>
             </div>
             <div class="w-full max-w-sm space-y-4">
                 <button onclick="handleLineLogin()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center space-x-2 border border-emerald-500/30">
@@ -138,9 +150,9 @@
                     <span class="flex-shrink mx-4 text-[11px] text-slate-500 font-semibold uppercase tracking-widest">OR</span>
                     <div class="flex-grow border-t border-slate-800"></div>
                 </div>
-                <input type="text" id="loginAccount" placeholder="請輸入姓名 (例如: 吳俊璋)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-orange-500 text-slate-200">
-                <input type="password" id="loginPassword" placeholder="請輸入密碼 (選填)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-orange-500 text-slate-200">
-                <button onclick="handleManualLogin()" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl glow-orange transition active:scale-95">進入系統</button>
+                <input type="text" id="loginAccount" placeholder="請輸入姓名 (例如: 吳俊璋)" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-orange-500 text-slate-200">
+                <input type="password" id="loginPassword" placeholder="請輸入密碼 (選填)" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-orange-500 text-slate-200">
+                <button onclick="handleManualLogin()" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl glow-orange transition active:scale-95 shadow-xl">進入系統</button>
                 <div class="text-center pt-2">
                     <button onclick="openRegisterModal()" class="text-xs text-orange-400 hover:text-orange-300 font-bold underline">✨ 新成員註冊申請</button>
                 </div>
@@ -149,7 +161,7 @@
 
         <!-- 主操作台 -->
         <section id="dashboardSection" class="hidden space-y-4">
-            <!-- 實時定位動態天氣看板 -->
+            <!-- 天氣看板 -->
             <div class="glass-card rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-l-4 border-orange-500 gap-3">
                 <div class="flex items-center space-x-3">
                     <div class="text-3xl p-2 bg-slate-800/80 rounded-xl border border-slate-700/60" id="weatherIconDisplay">🌤️</div>
@@ -173,7 +185,7 @@
     </main>
 
     <!-- 底部導航列 -->
-    <nav id="floatingNavbar" class="hidden fixed bottom-4 z-40 max-w-lg w-[95%] sm:w-[480px] glass-card bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-3xl px-2.5 py-2 shadow-2xl shadow-black/80 flex justify-around items-center">
+    <nav id="floatingNavbar" class="app-content hidden fixed bottom-4 z-40 max-w-lg w-[95%] sm:w-[480px] glass-card bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-3xl px-2.5 py-2 shadow-2xl shadow-black/80 flex justify-around items-center">
         <button onclick="switchTab('overview')" id="tabBtnOverview" class="nav-item flex-1 py-1 flex flex-col items-center justify-center text-xs font-bold text-orange-400 transition active:scale-90">
             <span class="text-base mb-0.5"><i class="fas fa-bolt"></i></span>
             <span class="text-[10px] tracking-wider">主系統台</span>
@@ -214,17 +226,6 @@
                     <h4 class="font-bold text-blue-400 text-sm mb-1">📊 紀錄台極速模式</h4>
                     <p>• <b>0 秒極速記分</b>：點擊直接累加數字，無需等待轉圈，背景自動同步。</p>
                     <p>• <b>對手分數</b>：點擊對手大比分區直接加 1 分，亦可點擊 +2、+3、-1 快捷調整。</p>
-                </div>
-                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-                    <h4 class="font-bold text-orange-400 text-sm mb-1">🏀 球員指南</h4>
-                    <p>• <b>2K 球員卡</b>：展示個人六角戰鬥雷達與 OVR 綜合戰力，頂端維度為球隊核心靈魂「品格合一 (CHR)」。</p>
-                    <p>• <b>課表回報</b>：於「課表中心」完成自主特訓後，可上傳照片或投籃影片以累積成長經驗。</p>
-                    <p>• <b>晨報點檢</b>：每天起床填寫睡眠時數與疲勞指數，協助教練調配體能負擔。</p>
-                </div>
-                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-                    <h4 class="font-bold text-amber-400 text-sm mb-1">📋 教練指南</h4>
-                    <p>• <b>專業課表派發</b>：內建投籃、控球、體能與戰術模組，亦可完全自訂內容。</p>
-                    <p>• <b>賽後覆盤與 MVP 評選</b>：在行程或紀錄台中檢視攻守統計，給予評分、勾選品格標籤，並指定單場 MVP。</p>
                 </div>
             </div>
             <div class="pt-2 border-t border-slate-800 flex justify-end flex-shrink-0">
@@ -480,8 +481,8 @@
         let liveActionHistory = [];
 
         // 天候與星期動態環境狀態
-        let currentWeatherType = "CLEAR"; // CLEAR, RAIN, THUNDER, CLOUDY, NIGHT
-        let currentDayOfWeek = 1;         // 0~6
+        let currentWeatherType = "CLEAR";
+        let currentDayOfWeek = 1;
         let currentCityName = "台中市大雅區";
 
         function getTaiwanTodayStr() {
@@ -533,22 +534,20 @@
 
         window.addEventListener("DOMContentLoaded", () => {
             const today = new Date();
-            currentDayOfWeek = today.getDay(); // 0=日, 1=一, ...
+            currentDayOfWeek = today.getDay();
             const dateStr = today.toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', weekday: 'short' });
             document.getElementById('currentDateBadge').innerText = dateStr;
             
-            // 啟動天候與星期動態引擎
             initDynamicWeatherAndAtmosphere();
             initializeLiff();
         });
 
         // =========================================================================
-        // 🌌 天候即時定位與星期動態粒子渲染引擎
+        // 🌌 天候即時定位與強烈粒子渲染引擎
         // =========================================================================
         async function initDynamicWeatherAndAtmosphere() {
             startCanvasAnimationLoop();
             
-            // 自動依照球員座標/IP 反查天氣
             let lat = 24.225, lon = 120.648;
             currentCityName = "台中市大雅區";
 
@@ -605,14 +604,14 @@
                 document.getElementById('weatherDescText').innerText = desc;
 
                 const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-                const dayThemes = ["晨曦微光", "烈焰餘燼", "次世代霓虹", "流星破空", "蜂巢護盾", "神聖金塵", "戰場風暴"];
+                const dayThemes = ["晨曦極光", "烈焰餘燼", "次世代霓虹", "流星破空", "蜂巢護盾", "神聖金塵", "戰場風暴"];
                 document.getElementById('loginAtmosphereText').innerText = `📍 ${currentCityName} ${temp}°C ｜ ${dayNames[currentDayOfWeek]}·${dayThemes[currentDayOfWeek]}隊魂模式`;
             } catch(e) {
                 console.log("Weather sync offline, keeping baseline.", e);
             }
         }
 
-        // Canvas 60FPS 粒子動畫 (星期輪播 + 天氣疊加)
+        // 💥 超清晰高反差粒子與光暈渲染 (保證肉眼可見)
         function startCanvasAnimationLoop() {
             const canvas = document.getElementById('dynamicBgCanvas');
             const ctx = canvas.getContext('2d');
@@ -624,32 +623,50 @@
                 height = canvas.height = window.innerHeight;
             });
 
+            // 增加粒子數量與大小
             const particles = [];
-            const pCount = 45;
+            const pCount = 65;
 
             for (let i = 0; i < pCount; i++) {
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.8,
-                    vy: (Math.random() - 0.5) * 0.8,
-                    radius: Math.random() * 2.2 + 0.8,
-                    alpha: Math.random() * 0.6 + 0.2
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5 - (currentDayOfWeek === 1 ? 0.8 : 0), // 週一烈焰向上飄
+                    radius: Math.random() * 3.5 + 1.5,
+                    alpha: Math.random() * 0.7 + 0.3
                 });
             }
 
             function draw() {
-                ctx.clearRect(0, 0, width, height);
+                // 1. 繪製背景底層環境漸層光暈
+                ctx.fillStyle = "#030712";
+                ctx.fillRect(0, 0, width, height);
 
-                // 根據星期決定粒子色調
-                let pColor = "rgba(249, 115, 22,"; // 預設週一/三 烈焰金橘
-                if (currentDayOfWeek === 2) pColor = "rgba(56, 189, 248,"; // 週二 電流藍
-                else if (currentDayOfWeek === 4) pColor = "rgba(52, 211, 153,"; // 週四 護盾綠
-                else if (currentDayOfWeek === 5) pColor = "rgba(250, 204, 21,"; // 週五 榮耀金
-                else if (currentDayOfWeek === 6) pColor = "rgba(192, 132, 252,"; // 週六 風暴紫
-                else if (currentDayOfWeek === 0) pColor = "rgba(251, 146, 60,"; // 週日 晨曦暖金
+                // 根據星期繪製大型呼吸光暈
+                const grad = ctx.createRadialGradient(width * 0.5, height * 0.4, 10, width * 0.5, height * 0.4, width * 0.7);
+                if (currentDayOfWeek === 1 || currentDayOfWeek === 3) {
+                    grad.addColorStop(0, "rgba(249, 115, 22, 0.35)"); // 橘金烈焰
+                    grad.addColorStop(1, "rgba(3, 7, 18, 0.95)");
+                } else if (currentDayOfWeek === 2) {
+                    grad.addColorStop(0, "rgba(56, 189, 248, 0.35)"); // 電光藍
+                    grad.addColorStop(1, "rgba(3, 7, 18, 0.95)");
+                } else if (currentDayOfWeek === 5) {
+                    grad.addColorStop(0, "rgba(250, 204, 21, 0.35)"); // 聖金光輝
+                    grad.addColorStop(1, "rgba(3, 7, 18, 0.95)");
+                } else {
+                    grad.addColorStop(0, "rgba(168, 85, 247, 0.30)"); // 尊爵紫
+                    grad.addColorStop(1, "rgba(3, 7, 18, 0.95)");
+                }
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, width, height);
 
-                // 繪製微粒
+                // 2. 粒子渲染
+                let pR = 249, pG = 115, pB = 22; // 預設橘
+                if (currentDayOfWeek === 2) { pR = 56; pG = 189; pB = 248; } // 藍
+                else if (currentDayOfWeek === 4) { pR = 52; pG = 211; pB = 153; } // 綠
+                else if (currentDayOfWeek === 5) { pR = 250; pG = 204; pB = 21; } // 金
+
                 particles.forEach(p => {
                     p.x += p.vx;
                     p.y += p.vy;
@@ -659,29 +676,36 @@
                     if (p.y < 0) p.y = height;
                     if (p.y > height) p.y = 0;
 
+                    // 發光外暈
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius * 2.2, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${p.alpha * 0.25})`;
+                    ctx.fill();
+
+                    // 核心高亮點
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `${pColor} ${p.alpha})`;
+                    ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${p.alpha})`;
                     ctx.fill();
                 });
 
-                // 天氣效果疊加：下雨效果
+                // 3. 天氣渲染：雨天雨絲
                 if (currentWeatherType === "RAIN" || currentWeatherType === "THUNDER") {
-                    ctx.strokeStyle = "rgba(148, 163, 184, 0.22)";
-                    ctx.lineWidth = 1.2;
-                    for (let i = 0; i < 25; i++) {
+                    ctx.strokeStyle = "rgba(186, 230, 253, 0.45)";
+                    ctx.lineWidth = 1.5;
+                    for (let i = 0; i < 40; i++) {
                         const rx = Math.random() * width;
                         const ry = Math.random() * height;
                         ctx.beginPath();
                         ctx.moveTo(rx, ry);
-                        ctx.lineTo(rx - 3, ry + 16);
+                        ctx.lineTo(rx - 4, ry + 22);
                         ctx.stroke();
                     }
                 }
 
-                // 雷雨偶爾閃爍電光
-                if (currentWeatherType === "THUNDER" && Math.random() < 0.008) {
-                    ctx.fillStyle = "rgba(56, 189, 248, 0.08)";
+                // 雷雨偶爾閃電
+                if (currentWeatherType === "THUNDER" && Math.random() < 0.015) {
+                    ctx.fillStyle = "rgba(186, 230, 253, 0.18)";
                     ctx.fillRect(0, 0, width, height);
                 }
 
@@ -1182,7 +1206,7 @@
                             </div>
                         </div>
 
-                        <!-- 賽事與評語回顧 -->
+                        <!-- 賽事與指導評語 -->
                         <div class="glass-card rounded-2xl p-5 space-y-3 border border-slate-800">
                             <h3 class="font-bold text-orange-400 text-sm flex items-center space-x-2">
                                 <span>🏆</span><span>賽事攻守紀錄與教練指導寄語 (${myGameStats.length} 場)</span>
