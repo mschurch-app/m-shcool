@@ -6,7 +6,7 @@
   <title>M+ 大雅教會 課輔行政全功能系統</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome 6 -->
+  <!-- FontAwesome 6 CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -31,7 +31,7 @@
           <div>
             <div class="flex items-center space-x-2">
               <h1 class="text-base sm:text-lg font-bold">M+ 大雅教會</h1>
-              <span class="bg-blue-900/60 text-blue-200 text-xs px-2 py-0.5 rounded-full border border-blue-400/30">課輔行政全功能</span>
+              <span class="bg-blue-900/60 text-blue-200 text-xs px-2 py-0.5 rounded-full border border-blue-400/30">課輔行政管理系統</span>
             </div>
             <p class="text-xs text-blue-200 font-mono" id="clock-display">載入中...</p>
           </div>
@@ -254,13 +254,13 @@
       </div>
     </div>
 
-    <!-- 5. 課輔與個別輔導紀錄 (向度分類 + 追蹤管理) -->
+    <!-- 5. 課輔與個別輔導紀錄 (向度分類、快捷勾選標籤、追蹤管理) -->
     <div id="tab-counseling" class="hidden space-y-6">
       <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div>
             <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童課輔與身心輔導紀錄</h2>
-            <p class="text-xs text-slate-400 mt-1">詳實記錄晤談重點、情緒陪伴、段考弱科補救與個案後續追蹤事項</p>
+            <p class="text-xs text-slate-400 mt-1">提供快捷狀態標籤自動帶入文字、情緒陪伴、段考弱科補救與後續追蹤事項</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <select id="counsel-filter-student" onchange="filterCounselingList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600"><option value="">全部學童輔導紀錄</option></select>
@@ -316,7 +316,7 @@
 
   <!-- ======================== 彈窗區域 ======================== -->
 
-  <!-- 排班彈窗 (自動換算工時) -->
+  <!-- 排班彈窗 (起訖時間自動計算工時) -->
   <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -340,7 +340,7 @@
         </div>
 
         <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex justify-between items-center">
-          <span class="text-xs font-bold text-blue-800 flex items-center gap-1.5"><i class="fa-solid fa-calculator"></i> 系統核算工時：</span>
+          <span class="text-xs font-bold text-blue-800 flex items-center gap-1.5"><i class="fa-solid fa-calculator"></i> 系統自動核算工時：</span>
           <span class="text-base font-black text-blue-900 font-mono" id="sch-hours-display">2.0 小時</span>
           <input type="hidden" id="sch-hours-val" value="2">
         </div>
@@ -354,7 +354,7 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 -->
+  <!-- 人員建檔 / 編輯 完整彈窗 -->
   <div id="modal-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
       <div class="flex justify-between items-center mb-5 border-b pb-3">
@@ -436,14 +436,17 @@
     </div>
   </div>
 
-  <!-- 輔導紀錄 新增/編輯 完整彈窗 -->
+  <!-- 輔導紀錄 新增/編輯 完整彈窗 (支援快捷勾選項) -->
   <div id="modal-counseling-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
-        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2" id="modal-cs-title"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄</h3>
-        <button onclick="closeAddCounselingModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <div>
+          <h3 class="text-xl font-black text-slate-800 flex items-center gap-2" id="modal-cs-title"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增學童輔導紀錄</h3>
+          <p class="text-xs text-slate-400 mt-1">點擊快捷狀態標籤自動帶入文字，減輕打字負擔</p>
+        </div>
+        <button onclick="closeAddCounselingModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
       </div>
-      <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
+      <form onsubmit="handleCounselingSubmit(event)" class="space-y-4 text-xs sm:text-sm">
         <input type="hidden" id="counsel-edit-id" value="">
         <div class="grid grid-cols-2 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">輔導對象 (學生) *</label><select id="counsel-student-select" onchange="onCounselStudentChange()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
@@ -452,14 +455,21 @@
         <div id="counsel-student-info-box" class="hidden p-2.5 bg-amber-50 rounded-xl border border-amber-200/60 text-xs text-amber-900"><span class="font-bold">⚠️ 個案提醒：</span><span id="counsel-student-note"></span></div>
         <div class="grid grid-cols-3 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">紀錄日期 *</label><input type="date" id="counsel-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">輔導向度</label><select id="counsel-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導向度</label><select id="counsel-category" onchange="switchCounselTags()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"><option value="課業輔導">📖 課業輔導</option><option value="情緒行為">😠 情緒行為</option><option value="家庭關懷">🏠 家庭關懷</option><option value="品格引導">✨ 品格引導</option></select></div>
           <div><label class="block font-bold text-slate-600 mb-1">晤談時長 (分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
         </div>
-        <div><label class="block font-bold text-slate-600 mb-1">晤談歷程與狀況描述 *</label><textarea id="counsel-content" rows="3" placeholder="請詳細記錄孩子今日心態、課業訂正困難點或情緒事件..." required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea></div>
-        <div><label class="block font-bold text-slate-600 mb-1">引導處置與後續追蹤事項</label><textarea id="counsel-followup" rows="2" placeholder="例: 明日持續關心作業、已聯繫母親說明情況..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea></div>
-        <div class="flex space-x-2 pt-3 border-t">
-          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow">確認儲存紀錄</button>
+        
+        <!-- 動態快捷狀態勾選標籤區 -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+          <label class="block font-bold text-slate-600 mb-2"><i class="fa-solid fa-tags text-blue-500"></i> 快捷狀態勾選 (點擊自動帶入文字)</label>
+          <div id="counsel-quick-tags" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div><label class="block font-bold text-slate-600 mb-1">晤談歷程與狀況描述 *</label><textarea id="counsel-content" rows="3" placeholder="點擊上方標籤可快速組合，或手動補充今日詳細狀況..." required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner"></textarea></div>
+        <div><label class="block font-bold text-slate-600 mb-1">引導處置與後續追蹤事項</label><textarea id="counsel-followup" rows="2" placeholder="例: 明日需檢查作業、已聯繫家長、需社工介入評估..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner"></textarea></div>
+        <div class="flex space-x-3 pt-3 border-t">
+          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition">取消</button>
+          <button type="submit" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md transition">確認儲存紀錄</button>
         </div>
       </form>
     </div>
@@ -485,7 +495,7 @@
     </div>
   </div>
 
-  <!-- 打卡金句彈窗 -->
+  <!-- 金句彈窗 -->
   <div id="modal-verse-box" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
       <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-circle-check"></i></div>
@@ -499,7 +509,7 @@
     </div>
   </div>
 
-  <!-- 核心 JavaScript 程式碼 -->
+  <!-- 核心 JavaScript -->
   <script>
     const SUPABASE_URL = "https://othgvewffvkkafbezejy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_ZtVYBHHxANOqLhi-l-sAFQ_ojUhO2dX";
@@ -515,6 +525,13 @@
     let currentCalYear = 2026;
     let currentCalMonth = 9;
     let activeScheduleView = 'calendar';
+
+    const counselTagsDict = {
+      "課業輔導": ["專注度良好", "完成度高", "需要一對一指導", "數學理解困難", "容易分心", "排斥寫作業", "字體潦草需重寫", "段考前複習狀態佳"],
+      "情緒行為": ["情緒平穩", "起伏大容易生氣", "與同儕發生衝突", "哭鬧難以安撫", "退縮不說話", "過度興奮坐不住", "願意道歉和好", "需要暫離冷靜"],
+      "家庭關懷": ["家長晚接", "未吃晚餐", "家中有突發變故", "孩子表達想念家人", "衣服單薄需關心", "提供物資協助", "已主動聯繫家長了解"],
+      "品格引導": ["主動協助同儕", "樂意分享", "說粗話需糾正", "說謊行為", "不服從老師規範", "物歸原主", "懂得感恩", "態度敷衍需教導"]
+    };
 
     const verses = [
       "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
@@ -560,7 +577,7 @@
     }
 
     // -------------------------------------------------------------
-    // 1. 排班管理與互動行事曆 (起訖時間自動計算工時)
+    // 1. 排班管理與互動行事曆
     // -------------------------------------------------------------
     async function loadSchedules() {
       const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
@@ -831,7 +848,7 @@
     }
 
     // -------------------------------------------------------------
-    // 2. 課堂點名與作業聯絡簿核章 (每日陪讀檢核工作台)
+    // 2. 課堂點名與作業聯絡簿核章
     // -------------------------------------------------------------
     async function initRollCallTab() {
       const picker = document.getElementById('rollcall-date-picker');
@@ -986,7 +1003,7 @@
     }
 
     // -------------------------------------------------------------
-    // 3. 人員名冊管理模組 (完整社工收案欄位)
+    // 3. 人員名冊管理模組
     // -------------------------------------------------------------
     async function loadUsers() {
       const tbody = document.getElementById('students-table');
@@ -1200,7 +1217,7 @@
     }
 
     // -------------------------------------------------------------
-    // 4. 輔導紀錄模組 (向度分類、學生個案提示、後續處置)
+    // 4. 輔導紀錄模組 (快捷標籤 + 個案追蹤)
     // -------------------------------------------------------------
     async function loadCounseling() {
       const { data, error } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
@@ -1225,6 +1242,29 @@
         teachers.map(t => `<option value="${t.name}">${t.name} (${t.role_type})</option>`).join('');
 
       filterCounselingList();
+    }
+
+    function switchCounselTags() {
+      const cat = document.getElementById('counsel-category').value.replace(/[^\u4e00-\u9fa5]/g, '');
+      const tagsBox = document.getElementById('counsel-quick-tags');
+      const tags = counselTagsDict[cat] || counselTagsDict["課業輔導"];
+      
+      tagsBox.innerHTML = tags.map(tag => `
+        <button type="button" onclick="addTagToContent('${tag}')" class="px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-700 rounded-lg text-xs font-bold transition shadow-xs">
+          + ${tag}
+        </button>
+      `).join('');
+    }
+
+    function addTagToContent(tagStr) {
+      const contentEl = document.getElementById('counsel-content');
+      let currentVal = contentEl.value.trim();
+      if (currentVal.includes(`【${tagStr}】`)) return;
+
+      if (currentVal && !currentVal.endsWith(' ')) {
+        currentVal += "、";
+      }
+      contentEl.value = currentVal + `【${tagStr}】`;
     }
 
     function onCounselStudentChange() {
@@ -1306,7 +1346,7 @@
 
     function openAddCounselingModal() {
       document.getElementById('counsel-edit-id').value = "";
-      document.getElementById('modal-cs-title').innerHTML = `<i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄`;
+      document.getElementById('modal-cs-title').innerHTML = `<i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增學童輔導紀錄`;
       document.getElementById('counsel-date').value = new Date().toISOString().split('T')[0];
       document.getElementById('counsel-student-select').value = "";
       document.getElementById('counsel-teacher-select').value = "";
@@ -1315,6 +1355,8 @@
       document.getElementById('counsel-content').value = "";
       document.getElementById('counsel-followup').value = "";
       document.getElementById('counsel-student-info-box').classList.add('hidden');
+      
+      switchCounselTags();
       document.getElementById('modal-counseling-add').classList.remove('hidden');
     }
 
@@ -1329,12 +1371,21 @@
       document.getElementById('counsel-date').value = c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
       document.getElementById('counsel-student-select').value = c.student_id;
       document.getElementById('counsel-teacher-select').value = c.teacher_name;
-      document.getElementById('counsel-category').value = c.category || "課業輔導";
+      
+      let catSelect = document.getElementById('counsel-category');
+      for (let i = 0; i < catSelect.options.length; i++) {
+        if (catSelect.options[i].value.includes(c.category || "課業輔導")) {
+          catSelect.selectedIndex = i;
+          break;
+        }
+      }
+
       document.getElementById('counsel-duration').value = c.duration_min || 30;
       document.getElementById('counsel-content').value = c.content || "";
       document.getElementById('counsel-followup').value = c.follow_up || "";
 
       onCounselStudentChange();
+      switchCounselTags();
       document.getElementById('modal-counseling-add').classList.remove('hidden');
     }
 
@@ -1342,12 +1393,14 @@
       e.preventDefault();
       const editId = document.getElementById('counsel-edit-id').value;
       const stuSelect = document.getElementById('counsel-student-select');
+      const catVal = document.getElementById('counsel-category').value.replace(/[^\u4e00-\u9fa5]/g, '');
+
       const payload = {
         created_at: `${document.getElementById('counsel-date').value}T16:00:00.000Z`,
         student_id: stuSelect.value,
         student_name: stuSelect.options[stuSelect.selectedIndex].getAttribute('data-name'),
         teacher_name: document.getElementById('counsel-teacher-select').value,
-        category: document.getElementById('counsel-category').value,
+        category: catVal,
         duration_min: parseInt(document.getElementById('counsel-duration').value) || 30,
         content: document.getElementById('counsel-content').value.trim(),
         follow_up: document.getElementById('counsel-followup').value.trim()
@@ -1355,6 +1408,7 @@
 
       if (editId) { await db.from('counseling_logs').update(payload).eq('id', editId); }
       else { await db.from('counseling_logs').insert([payload]); }
+      
       closeAddCounselingModal();
       loadCounseling();
     }
@@ -1366,7 +1420,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. 快速刷卡打卡邏輯
+    // 5. 快速刷卡打卡
     // -------------------------------------------------------------
     async function handleScan(e) {
       if (e) e.preventDefault();
@@ -1491,7 +1545,7 @@
     }
 
     // -------------------------------------------------------------
-    // 7. 同工登入邏輯 (編號 + 手機號碼)
+    // 7. 同工登入邏輯 (人員編號 + 手機號碼)
     // -------------------------------------------------------------
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
@@ -1541,6 +1595,7 @@
       }
     }
 
+    // 頁面加載完成後自動初始化
     document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('mplus_current_user');
       if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
