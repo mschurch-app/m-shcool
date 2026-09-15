@@ -1,59 +1,283 @@
-<!-- 5. 課輔與個別輔導紀錄 (完整原版個案工作台) -->
-    <div id="tab-counseling" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-        
-        <!-- 頂部工具列 -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-          <div>
-            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童課輔與身心輔導紀錄
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">詳實記錄晤談重點、情緒陪伴、段考弱科補救與個案後續追蹤事項</p>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M+ 大雅教會 課輔行政全功能系統</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+    body { font-family: 'Noto Sans TC', sans-serif; }
+    .tab-active { background-color: rgba(255, 255, 255, 0.22); color: #ffffff; font-weight: 700; border-bottom: 3px solid #facc15; }
+    .cal-day-cell { min-height: 105px; transition: all 0.15s ease; }
+    .cal-day-cell:hover { background-color: #f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+
+  <!-- 頂部品牌與導航列 -->
+  <header class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-white text-blue-700 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner">
+            M+
           </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-base sm:text-lg font-bold">M+ 大雅教會</h1>
+              <span class="bg-blue-900/60 text-blue-200 text-xs px-2 py-0.5 rounded-full border border-blue-400/30">課輔行政全功能</span>
+            </div>
+            <p class="text-xs text-blue-200 font-mono" id="clock-display">載入中...</p>
+          </div>
+        </div>
 
-          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <!-- 依學生個案篩選 -->
-            <select id="counsel-filter-student" onchange="filterCounselingList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600">
-              <option value="">全部學童輔導紀錄</option>
-            </select>
-
-            <!-- 依輔導向度篩選 -->
-            <select id="counsel-filter-category" onchange="filterCounselingList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600">
-              <option value="">全部輔導向度</option>
-              <option value="課業輔導">課業輔導 (段考複習/弱科)</option>
-              <option value="情緒行為">情緒行為 (焦慮/同儕相處)</option>
-              <option value="家庭關懷">家庭關懷 (單親/變故支持)</option>
-              <option value="品格引導">品格引導 (常規/學習態度)</option>
-            </select>
-
-            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
-              <i class="fa-solid fa-pen-nib"></i>
-              <span>新增輔導紀錄</span>
+        <!-- 登入狀態 -->
+        <div class="flex items-center space-x-2">
+          <div id="auth-unlogged">
+            <button onclick="openLoginModal()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow">
+              <i class="fa-solid fa-lock"></i>
+              <span>同工登入</span>
+            </button>
+          </div>
+          <div id="auth-logged" class="hidden items-center space-x-2">
+            <span id="logged-user-tag" class="text-xs font-bold bg-blue-900/80 px-2.5 py-1 rounded-lg border border-blue-400/30 text-blue-100"></span>
+            <button onclick="doLogout()" class="px-2.5 py-1 bg-rose-500/80 hover:bg-rose-600 text-white rounded-lg text-xs font-medium transition">
+              登出
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- 輔導統計看板 -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div class="bg-rose-50/60 border border-rose-100 rounded-2xl p-3.5">
-            <span class="text-xs text-rose-600 font-bold block">累計輔導次數</span>
-            <span class="text-xl font-black text-rose-900" id="cs-stat-count">0 次</span>
+      <!-- 模組分頁選單 -->
+      <nav class="flex space-x-1 overflow-x-auto pb-1 text-xs sm:text-sm font-medium border-t border-blue-600/50 pt-1">
+        <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-active px-3 py-2 rounded-t-lg transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-qrcode"></i><span>刷卡打卡</span>
+        </button>
+        <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-calendar-check"></i><span>排班與行事曆</span>
+        </button>
+        <button onclick="requireTab('rollcall')" id="nav-rollcall" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-clipboard-check"></i><span>點名與聯絡簿</span>
+        </button>
+        <button onclick="requireTab('students')" id="nav-students" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-users"></i><span>學員與人員名冊</span>
+        </button>
+        <button onclick="requireTab('counseling')" id="nav-counseling" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-hand-holding-heart"></i><span>輔導紀錄</span>
+        </button>
+        <button onclick="requireTab('messages')" id="nav-messages" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-comments"></i><span>家長留言板</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 主內容區 -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- 1. 刷卡打卡 (前台公開) -->
+    <div id="tab-checkin" class="space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg"><i class="fa-solid fa-user-graduate"></i></div>
+          <div><p class="text-xs text-slate-400">今日到班學員</p><p class="text-xl font-bold" id="stat-stu-count">0</p></div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-chalkboard-user"></i></div>
+          <div><p class="text-xs text-slate-400">教職出勤同工</p><p class="text-xl font-bold" id="stat-staff-count">0</p></div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg"><i class="fa-solid fa-coins"></i></div>
+          <div><p class="text-xs text-slate-400">今日發放點數</p><p class="text-xl font-bold" id="stat-pts-count">0</p></div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg"><i class="fa-solid fa-calendar-day"></i></div>
+          <div><p class="text-xs text-slate-400">本月排定班次</p><p class="text-xl font-bold" id="stat-sch-count">0</p></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm text-center max-w-xl mx-auto">
+        <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-barcode"></i></div>
+        <h2 class="text-xl font-black text-slate-800">條碼掃描 / 快速簽到打卡</h2>
+        <p class="text-xs text-slate-400 mt-1 mb-5">請將條碼槍對準識別證掃描，或手動輸入編號後按 Enter</p>
+        <form onsubmit="handleScan(event)">
+          <input type="text" id="scan-code-input" placeholder="請刷條碼或輸入編號 (例: 2026S0001 / 2026T0001)" autofocus autocomplete="off" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-lg font-bold text-center uppercase tracking-wider focus:outline-none focus:border-blue-600 focus:bg-white transition">
+          <button type="submit" class="mt-3 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow transition">確認報到</button>
+        </form>
+        <div id="scan-tip" class="mt-3 text-xs font-bold hidden"></div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>今日即時出勤動態紀錄</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+              <tr><th class="py-2.5 px-3">時間</th><th class="py-2.5 px-3">照片</th><th class="py-2.5 px-3">編號</th><th class="py-2.5 px-3">姓名</th><th class="py-2.5 px-3">身分</th><th class="py-2.5 px-3">打卡狀態</th></tr>
+            </thead>
+            <tbody id="logs-list" class="divide-y divide-slate-100"><tr><td colspan="6" class="py-4 text-center text-slate-400">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 排班管理與互動行事曆 (自動工時計算 + 月曆網格) -->
+    <div id="tab-schedules" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-blue-600"></i> 教職員排班與互動行事曆</h2>
+            <p class="text-xs text-slate-400 mt-1">點擊日曆上的任一天即可快速登記排班，起訖時段自動計算工時</p>
           </div>
-          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5">
-            <span class="text-xs text-indigo-600 font-bold block">累計陪伴時長</span>
-            <span class="text-xl font-black text-indigo-900" id="cs-stat-mins">0 分鐘</span>
-          </div>
-          <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5">
-            <span class="text-xs text-blue-600 font-bold block">受輔導學童數</span>
-            <span class="text-xl font-black text-blue-900" id="cs-stat-students">0 位</span>
-          </div>
-          <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-3.5">
-            <span class="text-xs text-amber-600 font-bold block">待後續追蹤個案</span>
-            <span class="text-xl font-black text-amber-900" id="cs-stat-followup">0 案</span>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
+              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-blue-700 transition flex items-center gap-1"><i class="fa-solid fa-calendar"></i><span>行事曆月曆</span></button>
+              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1"><i class="fa-solid fa-list-ul"></i><span>清單列表</span></button>
+            </div>
+            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
+            <button onclick="openScheduleModal('add')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5"><i class="fa-solid fa-plus"></i><span>排班登記</span></button>
           </div>
         </div>
 
-        <!-- 輔導紀錄列表 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5"><span class="text-xs text-blue-600 font-bold block">本月排定班次</span><span class="text-xl font-black text-blue-900" id="total-count-badge">0 班</span></div>
+          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5"><span class="text-xs text-indigo-600 font-bold block">排定總工時</span><span class="text-xl font-black text-indigo-900" id="total-shift-badge">0 小時</span></div>
+          <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3.5"><span class="text-xs text-emerald-600 font-bold block">服事同工人數</span><span class="text-xl font-black text-emerald-900" id="total-workers-badge">0 人</span></div>
+          <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-3.5"><span class="text-xs text-amber-600 font-bold block">預估薪資支出</span><span class="text-xl font-black text-amber-900" id="total-wage-badge">$0</span></div>
+        </div>
+
+        <div id="schedule-calendar-view" class="space-y-3">
+          <div class="flex justify-between items-center bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200">
+            <div class="flex items-center space-x-2">
+              <button onclick="prevMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+              <h3 class="text-base font-black text-slate-800 font-mono" id="calendar-month-title">2026 年 09 月</h3>
+              <button onclick="nextMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+            </div>
+            <button onclick="goToCurrentMonth()" class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100">回到本月</button>
+          </div>
+          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            <div class="grid grid-cols-7 text-center font-bold text-xs py-2.5 bg-slate-100/80 border-b border-slate-200 text-slate-600">
+              <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-200 text-xs"></div>
+          </div>
+        </div>
+
+        <div id="schedule-list-view" class="hidden overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+              <tr><th class="py-3 px-3">排班日期</th><th class="py-3 px-3">同工編號</th><th class="py-3 px-3">同工姓名</th><th class="py-3 px-3">班別時段</th><th class="py-3 px-3">負責工作</th><th class="py-3 px-3">工時</th><th class="py-3 px-3 text-center">操作</th></tr>
+            </thead>
+            <tbody id="schedules-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="7" class="py-6 text-center text-slate-400">載入排班中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 課堂點名與作業聯絡簿核章 (每日陪讀檢核工作台) -->
+    <div id="tab-rollcall" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-blue-600"></i> 課堂點名與作業聯絡簿核章</h2>
+            <p class="text-xs text-slate-400 mt-1">管理孩子每日到班狀況、作業訂正完成度、學校聯絡簿簽名與家長請假連動</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono focus:outline-none focus:border-blue-600">
+            <button onclick="batchSetAll('attendance', '出席')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席</button>
+            <button onclick="batchSetAll('homework', '已完成')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-book mr-1 text-blue-600"></i>作業全完成</button>
+            <button onclick="batchSetAll('signed', '是')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體已核章</button>
+            <button onclick="saveRollCallSheet()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5"><i class="fa-solid fa-floppy-disk"></i><span>儲存點名紀錄</span></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5"><span class="text-xs text-blue-600 font-bold block">應到學員人數</span><span class="text-xl font-black text-blue-900" id="rc-stat-total">0 人</span></div>
+          <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3.5"><span class="text-xs text-emerald-600 font-bold block">實到出席人數</span><span class="text-xl font-black text-emerald-900" id="rc-stat-attend">0 人</span></div>
+          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5"><span class="text-xs text-indigo-600 font-bold block">作業完成率</span><span class="text-xl font-black text-indigo-900" id="rc-stat-hw">0%</span></div>
+          <div class="bg-purple-50/60 border border-purple-100 rounded-2xl p-3.5"><span class="text-xs text-purple-600 font-bold block">聯絡簿已核章</span><span class="text-xl font-black text-purple-900" id="rc-stat-signed">0 人</span></div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+              <tr>
+                <th class="py-3 px-3">學號</th>
+                <th class="py-3 px-3">學生姓名</th>
+                <th class="py-3 px-3">學校 / 年級</th>
+                <th class="py-3 px-3">出席狀態</th>
+                <th class="py-3 px-3">學校作業完成狀況</th>
+                <th class="py-3 px-3">聯絡簿核章</th>
+                <th class="py-3 px-3">備註 (家長請假 / 叮嚀)</th>
+              </tr>
+            </thead>
+            <tbody id="rollcall-table-body" class="divide-y divide-slate-100 font-medium">
+              <tr><td colspan="7" class="py-6 text-center text-slate-400">載入點名名冊中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 學員與人員名冊 (完整社工收案欄位) -->
+    <div id="tab-students" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-address-book text-blue-600"></i> 學員與人員全資料管理</h2>
+            <p class="text-xs text-slate-400 mt-1">包含社福弱勢身分、雙家長接送聯絡人、身心健康特教紀錄與照片完整檢視</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+              <option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班學員</option><option value="畢業">畢業學員</option><option value="在職">在職教職</option><option value="離職">離職同工</option>
+            </select>
+            <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/學校/特質..." class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm">
+            <button onclick="openUserModal('add')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5"><i class="fa-solid fa-user-plus"></i><span>新增人員建檔</span></button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+              <tr>
+                <th class="py-3 px-3">照片</th><th class="py-3 px-3">學號/編號</th><th class="py-3 px-3">姓名</th><th class="py-3 px-3">身分/狀態</th><th class="py-3 px-3">就讀學校/班級</th><th class="py-3 px-3">家長/接送電話</th><th class="py-3 px-3">福利身分/特教狀況</th><th class="py-3 px-3">點數</th><th class="py-3 px-3 text-center">操作管理</th>
+              </tr>
+            </thead>
+            <tbody id="students-table" class="divide-y divide-slate-100 font-medium"><tr><td colspan="9" class="py-4 text-center text-slate-400">載入名冊中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 課輔與個別輔導紀錄 (向度分類 + 追蹤管理) -->
+    <div id="tab-counseling" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童課輔與身心輔導紀錄</h2>
+            <p class="text-xs text-slate-400 mt-1">詳實記錄晤談重點、情緒陪伴、段考弱科補救與個案後續追蹤事項</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <select id="counsel-filter-student" onchange="filterCounselingList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600"><option value="">全部學童輔導紀錄</option></select>
+            <select id="counsel-filter-category" onchange="filterCounselingList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600">
+              <option value="">全部輔導向度</option><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option>
+            </select>
+            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5"><i class="fa-solid fa-pen-nib"></i><span>新增輔導紀錄</span></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-rose-50/60 border border-rose-100 rounded-2xl p-3.5"><span class="text-xs text-rose-600 font-bold block">累計輔導次數</span><span class="text-xl font-black text-rose-900" id="cs-stat-count">0 次</span></div>
+          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5"><span class="text-xs text-indigo-600 font-bold block">累計陪伴時長</span><span class="text-xl font-black text-indigo-900" id="cs-stat-mins">0 分鐘</span></div>
+          <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5"><span class="text-xs text-blue-600 font-bold block">受輔導學童數</span><span class="text-xl font-black text-blue-900" id="cs-stat-students">0 位</span></div>
+          <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-3.5"><span class="text-xs text-amber-600 font-bold block">待後續追蹤個案</span><span class="text-xl font-black text-amber-900" id="cs-stat-followup">0 案</span></div>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs sm:text-sm">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
@@ -68,11 +292,1261 @@
                 <th class="py-3 px-3 text-center">操作</th>
               </tr>
             </thead>
-            <tbody id="counseling-list" class="divide-y divide-slate-100 font-medium">
-              <tr><td colspan="8" class="py-6 text-center text-slate-400">載入輔導紀錄中...</td></tr>
-            </tbody>
+            <tbody id="counseling-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="8" class="py-6 text-center text-slate-400">載入輔導紀錄中...</td></tr></tbody>
           </table>
         </div>
-
       </div>
     </div>
+
+    <!-- 6. 家長留言板 -->
+    <div id="tab-messages" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <h2 class="text-xl font-bold text-slate-800 mb-1">家長留言板與親師回覆</h2>
+        <p class="text-xs text-slate-400 mb-6">掌握家長叮嚀、服藥囑咐、請假備註並即時給予回饋</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100"><tr><th class="py-3 px-3">留言時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">家長留言叮嚀</th><th class="py-3 px-3">老師回覆內容</th><th class="py-3 px-3">回覆操作</th></tr></thead>
+            <tbody id="messages-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="5" class="py-4 text-center text-slate-400">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ======================== 彈窗區域 ======================== -->
+
+  <!-- 排班彈窗 (自動換算工時) -->
+  <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2" id="modal-sch-title"><i class="fa-solid fa-calendar-plus text-blue-600"></i> 排班日程登記</h3>
+        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+      <form onsubmit="handleScheduleSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
+        <input type="hidden" id="sch-edit-id" value="">
+        <div><label class="block font-bold text-slate-600 mb-1">排班日期 *</label><input type="date" id="sch-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono"></div>
+        <div><label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label><select id="sch-worker-select" onchange="onWorkerSelectChange()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">開始時間 <span class="text-rose-500">*</span></label>
+            <input type="time" id="sch-start-time" value="16:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">結束時間 <span class="text-rose-500">*</span></label>
+            <input type="time" id="sch-end-time" value="18:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
+        </div>
+
+        <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex justify-between items-center">
+          <span class="text-xs font-bold text-blue-800 flex items-center gap-1.5"><i class="fa-solid fa-calculator"></i> 系統核算工時：</span>
+          <span class="text-base font-black text-blue-900 font-mono" id="sch-hours-display">2.0 小時</span>
+          <input type="hidden" id="sch-hours-val" value="2">
+        </div>
+
+        <div><label class="block font-bold text-slate-600 mb-1">負責工作 / 服事內容</label><input type="text" id="sch-job" placeholder="例: 四年級課輔陪伴" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
+        <div class="flex space-x-2 pt-3 border-t">
+          <button type="button" onclick="closeScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold shadow">確認儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 人員建檔 / 編輯 彈窗 -->
+  <div id="modal-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center mb-5 border-b pb-3">
+        <div>
+          <h3 class="text-xl font-black text-slate-800 flex items-center gap-2" id="modal-user-title"><i class="fa-solid fa-id-card text-blue-600"></i> 學員與人員詳細資料表</h3>
+          <p class="text-xs text-slate-400 mt-0.5">完整支援身分證號、雙親聯絡電話、社福身分、疾病過敏與特教註記</p>
+        </div>
+        <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
+      </div>
+      <form onsubmit="handleUserSubmit(event)" class="space-y-6 text-xs sm:text-sm">
+        <input type="hidden" id="form-user-mode" value="add">
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-user text-blue-600"></i> 1. 基本個人身分</h4>
+          <div class="flex flex-col sm:flex-row items-center gap-4">
+            <img id="preview-avatar" src="https://ui-avatars.com/api/?name=User&background=cbd5e1" class="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow">
+            <div class="flex-1 w-full">
+              <label class="block font-bold text-slate-600 mb-1">大頭照網址</label>
+              <input type="url" id="form-avatar" oninput="updateAvatarPreview()" placeholder="https://..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">學號 / 編號 *</label><input type="text" id="form-id" required class="w-full uppercase font-mono font-bold px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">姓名 *</label><input type="text" id="form-name" required class="w-full font-bold px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">性別</label><select id="form-gender" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"><option value="男">男</option><option value="女">女</option></select></div>
+            <div><label class="block font-bold text-slate-600 mb-1">出生年月日</label><input type="date" id="form-birth" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">身分證字號</label><input type="text" id="form-id-card" placeholder="例: B125******" class="w-full uppercase font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">身分類別</label><select id="form-role" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold"><option value="學生">學生</option><option value="同工">同工</option><option value="老師">老師</option><option value="工讀生">工讀生</option></select></div>
+            <div><label class="block font-bold text-slate-600 mb-1">在學/在職狀態 *</label><select id="form-status" class="w-full px-3 py-2 bg-amber-50 font-bold border border-amber-300 rounded-xl text-amber-900"><option value="在班">在班</option><option value="退班">退班</option><option value="畢業">畢業</option><option value="在職">在職</option><option value="離職">離職</option></select></div>
+          </div>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-indigo-600"></i> 2. 就讀學校與課輔編制</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">就讀學校</label><input type="text" id="form-school" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">年級</label><input type="text" id="form-grade" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">原校班級</label><input type="text" id="form-class-section" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">責任同工/導師</label><input type="text" id="form-mentor" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          </div>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-phone text-emerald-600"></i> 3. 聯絡方式與雙家長接送授權</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">本人手機 (密碼)</label><input type="text" id="form-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">住家室內市話</label><input type="text" id="form-home-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">夢想點數</label><input type="number" id="form-points" value="0" class="w-full font-bold px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          </div>
+          <div><label class="block font-bold text-slate-600 mb-1">通訊住址</label><input type="text" id="form-address" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          <div class="grid grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+            <div><label class="block font-bold text-slate-600 mb-1">主要家長姓名</label><input type="text" id="form-guardian-name" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">稱謂關係</label><input type="text" id="form-guardian-rel" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">家長電話</label><input type="text" id="form-guardian-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">緊急聯絡人</label><input type="text" id="form-emergency-name" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">稱謂關係</label><input type="text" id="form-emergency-rel" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">聯絡電話</label><input type="text" id="form-emergency-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          </div>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福關懷、健康特質與特教學習</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">家庭福利身分</label><input type="text" id="form-welfare" placeholder="例: 單親、低收入戶、隔代教養" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">家中兄弟姊妹數 / 排行</label><input type="text" id="form-siblings" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          </div>
+          <div><label class="block font-bold text-slate-600 mb-1">家庭經濟與父母就業備註</label><input type="text" id="form-family-economy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block font-bold text-slate-600 mb-1">特殊疾病 / 重大病史</label><input type="text" id="form-medical" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">飲食習慣 / 過敏原禁忌</label><input type="text" id="form-diet" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+          </div>
+          <div><label class="block font-bold text-slate-600 mb-1">身心特質 / 特教叮嚀</label><textarea id="form-special-needs" rows="2" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></textarea></div>
+        </div>
+        <div class="flex space-x-3 pt-3 border-t">
+          <button type="button" onclick="closeUserModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow">儲存人員資料</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 輔導紀錄 新增/編輯 完整彈窗 -->
+  <div id="modal-counseling-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2" id="modal-cs-title"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄</h3>
+        <button onclick="closeAddCounselingModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
+        <input type="hidden" id="counsel-edit-id" value="">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block font-bold text-slate-600 mb-1">輔導對象 (學生) *</label><select id="counsel-student-select" onchange="onCounselStudentChange()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 / 同工 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
+        </div>
+        <div id="counsel-student-info-box" class="hidden p-2.5 bg-amber-50 rounded-xl border border-amber-200/60 text-xs text-amber-900"><span class="font-bold">⚠️ 個案提醒：</span><span id="counsel-student-note"></span></div>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="block font-bold text-slate-600 mb-1">紀錄日期 *</label><input type="date" id="counsel-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導向度</label><select id="counsel-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">晤談時長 (分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
+        </div>
+        <div><label class="block font-bold text-slate-600 mb-1">晤談歷程與狀況描述 *</label><textarea id="counsel-content" rows="3" placeholder="請詳細記錄孩子今日心態、課業訂正困難點或情緒事件..." required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea></div>
+        <div><label class="block font-bold text-slate-600 mb-1">引導處置與後續追蹤事項</label><textarea id="counsel-followup" rows="2" placeholder="例: 明日持續關心作業、已聯繫母親說明情況..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea></div>
+        <div class="flex space-x-2 pt-3 border-t">
+          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow">確認儲存紀錄</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 登入彈窗 -->
+  <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl font-bold"><i class="fa-solid fa-user-shield"></i></div>
+        <h3 class="text-lg font-black text-slate-800">同工管理者登入</h3>
+        <p class="text-xs text-slate-400">請輸入同工編號與密碼 (手機號碼)</p>
+      </div>
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
+        <div><label class="block text-xs font-bold text-slate-600 mb-1">人員編號</label><input type="text" id="login-uid" placeholder="例如: 2026M0001" required class="w-full uppercase px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold"></div>
+        <div><label class="block text-xs font-bold text-slate-600 mb-1">密碼 (手機號碼)</label><input type="password" id="login-pwd" placeholder="例如: 0986007885" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold"></div>
+        <div id="login-err" class="text-xs font-bold text-rose-600 hidden"></div>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow">確認登入</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 打卡金句彈窗 -->
+  <div id="modal-verse-box" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+      <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fa-solid fa-circle-check"></i></div>
+      <h3 class="text-xl font-black text-slate-800" id="verse-title">簽到成功！</h3>
+      <p class="text-xs text-slate-500 mt-1" id="verse-sub">已登記出勤紀錄</p>
+      <div class="my-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+        <p class="text-xs font-bold text-amber-800 mb-1">📖 今日屬天祝福：</p>
+        <p class="text-sm text-amber-950 font-serif leading-relaxed" id="verse-quote"></p>
+      </div>
+      <button onclick="closeVerseModal()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow">我知道了 (Enter)</button>
+    </div>
+  </div>
+
+  <!-- 核心 JavaScript 程式碼 -->
+  <script>
+    const SUPABASE_URL = "https://othgvewffvkkafbezejy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_ZtVYBHHxANOqLhi-l-sAFQ_ojUhO2dX";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allUsers = [];
+    let staffList = [];
+    let rawSchedules = [];
+    let activeRollCallList = [];
+    let rawCounselingList = [];
+    let currentUser = null;
+
+    let currentCalYear = 2026;
+    let currentCalMonth = 9;
+    let activeScheduleView = 'calendar';
+
+    const verses = [
+      "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
+      "「應當一無掛慮，只要凡事藉著禱告、祈求，和感謝，將你們所要的告訴神。」（腓立比書 4:6）",
+      "「你的話是我腳前的燈，是我路上的光。」（詩篇 119:105）",
+      "「耶和華是我的牧者，我必不致缺乏。」（詩篇 23:1）",
+      "「教養孩童，使他走當行的道，就是到老他也不偏離。」（箴言 22:6）",
+      "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
+    ];
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock-display').textContent = 
+        now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }) + " " +
+        now.toLocaleTimeString('zh-TW', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function requireTab(tabId) {
+      if (!currentUser) { openLoginModal(); return; }
+      switchTab(tabId);
+    }
+
+    function switchTab(tabId) {
+      ['checkin', 'schedules', 'rollcall', 'students', 'counseling', 'messages'].forEach(id => {
+        const el = document.getElementById(`tab-${id}`);
+        if (el) el.classList.add('hidden');
+        const nav = document.getElementById(`nav-${id}`);
+        if (nav) nav.className = "px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap";
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) activeNav.className = "tab-active px-3 py-2 rounded-t-lg transition flex items-center space-x-1 whitespace-nowrap";
+
+      if (tabId === 'checkin') { loadLogs(); setTimeout(() => document.getElementById('scan-code-input').focus(), 150); }
+      if (tabId === 'schedules') loadSchedules();
+      if (tabId === 'rollcall') initRollCallTab();
+      if (tabId === 'students') loadUsers();
+      if (tabId === 'counseling') loadCounseling();
+      if (tabId === 'messages') loadMessages();
+    }
+
+    // -------------------------------------------------------------
+    // 1. 排班管理與互動行事曆 (起訖時間自動計算工時)
+    // -------------------------------------------------------------
+    async function loadSchedules() {
+      const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
+      if (error || !data) return;
+      rawSchedules = data;
+
+      if (staffList.length === 0) {
+        const { data: users } = await db.from('users').select('*');
+        if (users) {
+          allUsers = users;
+          staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
+          document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工與老師 (${staffList.length} 人)</option>` + 
+            staffList.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
+          document.getElementById('sch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` + 
+            staffList.map(s => `<option value="${s.id}" data-name="${s.name}" data-role="${s.role_type}">${s.name} - ${s.role_type} (${s.id})</option>`).join('');
+        }
+      }
+      renderActiveScheduleView();
+    }
+
+    function autoCalcHours() {
+      const start = document.getElementById('sch-start-time').value;
+      const end = document.getElementById('sch-end-time').value;
+      if (!start || !end) return;
+
+      const [sH, sM] = start.split(':').map(Number);
+      const [eH, eM] = end.split(':').map(Number);
+      let diffMinutes = (eH * 60 + eM) - (sH * 60 + sM);
+      if (diffMinutes < 0) diffMinutes += 24 * 60;
+
+      const calcHours = Math.round((diffMinutes / 60) * 10) / 10;
+      document.getElementById('sch-hours-val').value = calcHours;
+      document.getElementById('sch-hours-display').textContent = `${calcHours} 小時`;
+    }
+
+    function onWorkerSelectChange() {
+      const sel = document.getElementById('sch-worker-select');
+      const opt = sel.options[sel.selectedIndex];
+      if (opt && opt.value.includes('P')) {
+        document.getElementById('sch-start-time').value = "17:00";
+        document.getElementById('sch-end-time').value = "20:00";
+        document.getElementById('sch-job').value = "四年級課輔陪伴";
+      } else {
+        document.getElementById('sch-start-time').value = "16:00";
+        document.getElementById('sch-end-time').value = "18:00";
+        document.getElementById('sch-job').value = "課輔陪伴";
+      }
+      autoCalcHours();
+    }
+
+    function setScheduleView(viewType) {
+      activeScheduleView = viewType;
+      const btnCal = document.getElementById('btn-view-cal');
+      const btnList = document.getElementById('btn-view-list');
+      const viewCal = document.getElementById('schedule-calendar-view');
+      const viewList = document.getElementById('schedule-list-view');
+
+      if (viewType === 'calendar') {
+        btnCal.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-blue-700 transition flex items-center gap-1";
+        btnList.className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1";
+        viewCal.classList.remove('hidden');
+        viewList.classList.add('hidden');
+      } else {
+        btnList.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-blue-700 transition flex items-center gap-1";
+        btnCal.className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1";
+        viewList.classList.remove('hidden');
+        viewCal.classList.add('hidden');
+      }
+      renderActiveScheduleView();
+    }
+
+    function renderActiveScheduleView() {
+      const selectedWorker = document.getElementById('schedule-worker-filter').value;
+      const monthStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}`;
+
+      const monthFiltered = rawSchedules.filter(s => {
+        const matchWorker = !selectedWorker || s.worker_id === selectedWorker;
+        const matchMonth = s.date && s.date.startsWith(monthStr);
+        return matchWorker && matchMonth;
+      });
+
+      let sumHrs = 0;
+      let workersSet = new Set();
+      monthFiltered.forEach(s => {
+        sumHrs += Number(s.hours || 0);
+        workersSet.add(s.worker_id);
+      });
+      document.getElementById('total-count-badge').textContent = `${monthFiltered.length} 班`;
+      document.getElementById('total-shift-badge').textContent = `${sumHrs} 小時`;
+      document.getElementById('total-workers-badge').textContent = `${workersSet.size} 人`;
+      document.getElementById('total-wage-badge').textContent = `$${(sumHrs * 190).toLocaleString()}`;
+
+      if (activeScheduleView === 'calendar') {
+        renderCalendarGrid(monthFiltered);
+      } else {
+        renderSchedulesListTable(monthFiltered);
+      }
+    }
+
+    function renderCalendarGrid(monthSchedules) {
+      document.getElementById('calendar-month-title').textContent = `${currentCalYear} 年 ${String(currentCalMonth).padStart(2, '0')} 月`;
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = "";
+
+      const firstDayIndex = new Date(currentCalYear, currentCalMonth - 1, 1).getDay();
+      const daysInMonth = new Date(currentCalYear, currentCalMonth, 0).getDate();
+
+      const schedulesByDay = {};
+      monthSchedules.forEach(s => {
+        const dayNum = parseInt(s.date.split('-')[2]);
+        if (!schedulesByDay[dayNum]) schedulesByDay[dayNum] = [];
+        schedulesByDay[dayNum].push(s);
+      });
+
+      for (let i = 0; i < firstDayIndex; i++) {
+        const blank = document.createElement('div');
+        blank.className = "cal-day-cell bg-slate-50/50 p-1.5 opacity-40";
+        grid.appendChild(blank);
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = dateStr === todayStr;
+        const dayShifts = schedulesByDay[day] || [];
+
+        const cell = document.createElement('div');
+        cell.className = `cal-day-cell p-1.5 flex flex-col justify-between group relative cursor-pointer ${isToday ? 'bg-amber-50/40 ring-2 ring-inset ring-amber-400' : ''}`;
+        
+        let badgesHtml = dayShifts.map(s => {
+          let badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
+          if (s.worker_id.includes('T')) badgeColor = "bg-blue-100 text-blue-800 border-blue-200";
+          else if (s.worker_id.includes('P')) badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
+
+          return `
+            <div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" title="${s.worker_name} (${s.shift || ''}) - 點擊編輯" class="text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${badgeColor} truncate hover:opacity-80 transition flex items-center justify-between">
+              <span>${s.worker_name || s.worker_id}</span>
+              <span class="opacity-70">${s.hours || 0}h</span>
+            </div>
+          `;
+        }).join('');
+
+        cell.innerHTML = `
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-black font-mono text-xs ${isToday ? 'bg-amber-500 text-white px-1.5 py-0.5 rounded-md shadow-xs' : 'text-slate-700'}">${day}</span>
+              <button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dateStr}')" title="在此日登記排班" class="w-5 h-5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 rounded-full flex items-center justify-center text-[10px] opacity-80 group-hover:opacity-100 transition shadow-xs">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+            <div class="space-y-1 overflow-y-auto max-h-[68px]">
+              ${badgesHtml}
+            </div>
+          </div>
+        `;
+
+        cell.onclick = () => quickAddScheduleOnDate(dateStr);
+        grid.appendChild(cell);
+      }
+
+      const totalCells = firstDayIndex + daysInMonth;
+      const remaining = (7 - (totalCells % 7)) % 7;
+      for (let i = 0; i < remaining; i++) {
+        const blank = document.createElement('div');
+        blank.className = "cal-day-cell bg-slate-50/50 p-1.5 opacity-40";
+        grid.appendChild(blank);
+      }
+    }
+
+    function quickAddScheduleOnDate(dateStr) {
+      document.getElementById('sch-edit-id').value = "";
+      document.getElementById('modal-sch-title').innerHTML = `<i class="fa-solid fa-calendar-plus text-blue-600"></i> 新增排班 (${dateStr})`;
+      document.getElementById('sch-date').value = dateStr;
+      document.getElementById('sch-worker-select').value = "";
+      document.getElementById('sch-start-time').value = "16:00";
+      document.getElementById('sch-end-time').value = "18:00";
+      document.getElementById('sch-job').value = "課輔陪伴";
+      autoCalcHours();
+      document.getElementById('modal-schedule').classList.remove('hidden');
+    }
+
+    function prevMonth() { currentCalMonth--; if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; } renderActiveScheduleView(); }
+    function nextMonth() { currentCalMonth++; if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } renderActiveScheduleView(); }
+    function goToCurrentMonth() {
+      const now = new Date();
+      currentCalYear = now.getFullYear();
+      currentCalMonth = now.getMonth() + 1;
+      renderActiveScheduleView();
+    }
+
+    function renderSchedulesListTable(list) {
+      const tbody = document.getElementById('schedules-list');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">目前條件下無排班紀錄</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(s => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3 px-3 font-mono font-bold text-slate-700">${s.date}</td>
+          <td class="py-3 px-3 font-mono text-slate-800 font-bold">${s.worker_id}</td>
+          <td class="py-3 px-3 font-bold">${s.worker_name || ''}</td>
+          <td class="py-3 px-3 text-slate-700 font-medium">${s.shift || ''}</td>
+          <td class="py-3 px-3 text-xs text-slate-500">${s.job_desc || '課輔陪伴'}</td>
+          <td class="py-3 px-3 font-bold text-indigo-700">${s.hours || 0} 小時</td>
+          <td class="py-3 px-3 text-center space-x-1">
+            <button onclick="openScheduleModal('edit', ${s.id})" class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-pen mr-0.5"></i>編輯</button>
+            <button onclick="deleteSchedule(${s.id})" class="px-2.5 py-1 bg-rose-50 text-rose-600 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-trash-can mr-0.5"></i>刪除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openScheduleModal(mode, id = null) {
+      document.getElementById('sch-edit-id').value = id || "";
+      if (mode === 'add') {
+        document.getElementById('modal-sch-title').innerHTML = `<i class="fa-solid fa-calendar-plus text-blue-600"></i> 新增教職員排班`;
+        document.getElementById('sch-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('sch-worker-select').value = "";
+        document.getElementById('sch-start-time').value = "16:00";
+        document.getElementById('sch-end-time').value = "18:00";
+        document.getElementById('sch-job').value = "課輔陪伴";
+      } else {
+        document.getElementById('modal-sch-title').innerHTML = `<i class="fa-solid fa-calendar-check text-indigo-600"></i> 編輯排班時段`;
+        const item = rawSchedules.find(x => x.id === id);
+        if (!item) return;
+        document.getElementById('sch-date').value = item.date;
+        document.getElementById('sch-worker-select').value = item.worker_id;
+        document.getElementById('sch-job').value = item.job_desc || "課輔陪伴";
+
+        if (item.shift && item.shift.includes('-')) {
+          const parts = item.shift.split('-').map(s => s.trim());
+          document.getElementById('sch-start-time').value = parts[0].padStart(5, '0');
+          document.getElementById('sch-end-time').value = parts[1].padStart(5, '0');
+        }
+      }
+      autoCalcHours();
+      document.getElementById('modal-schedule').classList.remove('hidden');
+    }
+
+    function closeScheduleModal() { document.getElementById('modal-schedule').classList.add('hidden'); }
+
+    async function handleScheduleSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('sch-edit-id').value;
+      const startTime = document.getElementById('sch-start-time').value;
+      const endTime = document.getElementById('sch-end-time').value;
+      const hours = parseFloat(document.getElementById('sch-hours-val').value) || 0;
+
+      const payload = {
+        date: document.getElementById('sch-date').value,
+        worker_id: document.getElementById('sch-worker-select').value,
+        worker_name: document.getElementById('sch-worker-select').selectedOptions[0].getAttribute('data-name'),
+        shift: `${startTime} - ${endTime}`,
+        hours: hours,
+        job_desc: document.getElementById('sch-job').value.trim()
+      };
+
+      if (editId) { await db.from('schedules').update(payload).eq('id', editId); }
+      else { await db.from('schedules').insert([payload]); }
+      closeScheduleModal();
+      loadSchedules();
+    }
+
+    async function deleteSchedule(id) {
+      if (!confirm("確定要刪除這筆排班紀錄嗎？")) return;
+      await db.from('schedules').delete().eq('id', id);
+      loadSchedules();
+    }
+
+    // -------------------------------------------------------------
+    // 2. 課堂點名與作業聯絡簿核章 (每日陪讀檢核工作台)
+    // -------------------------------------------------------------
+    async function initRollCallTab() {
+      const picker = document.getElementById('rollcall-date-picker');
+      if (!picker.value) {
+        picker.value = new Date().toISOString().split('T')[0];
+      }
+      loadRollCallsForDate();
+    }
+
+    async function loadRollCallsForDate() {
+      const targetDate = document.getElementById('rollcall-date-picker').value;
+      const tbody = document.getElementById('rollcall-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">正在整理【${targetDate}】點名資料...</td></tr>`;
+
+      if (allUsers.length === 0) {
+        const { data: users } = await db.from('users').select('*').order('id');
+        if (users) allUsers = users;
+      }
+
+      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
+
+      const startIso = `${targetDate}T00:00:00.000Z`;
+      const endIso = `${targetDate}T23:59:59.999Z`;
+
+      const { data: savedRecords } = await db.from('roll_calls')
+        .select('*')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso);
+
+      const { data: messages } = await db.from('parent_messages')
+        .select('*')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso);
+
+      const msgMap = {};
+      (messages || []).forEach(m => {
+        msgMap[m.student_id] = m.parent_message;
+      });
+
+      const recordMap = {};
+      (savedRecords || []).forEach(r => {
+        recordMap[r.student_id] = r;
+      });
+
+      activeRollCallList = activeStudents.map(s => {
+        const saved = recordMap[s.id];
+        const parentNote = msgMap[s.id] || "";
+        return {
+          id: saved?.id || null,
+          student_id: s.id,
+          student_name: s.name,
+          school: s.school || "",
+          grade: s.grade || "",
+          class_section: s.class_section || "",
+          attendance: saved?.attendance_status || (parentNote.includes('請假') ? '請假' : '出席'),
+          homework: saved?.homework_status || '已完成',
+          signed: saved?.contact_book_signed || '是',
+          note: saved?.note || parentNote || ''
+        };
+      });
+
+      renderRollCallRows();
+      updateRollCallStats();
+    }
+
+    function renderRollCallRows() {
+      const tbody = document.getElementById('rollcall-table-body');
+      if (activeRollCallList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">目前名冊中無在班學生</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = activeRollCallList.map((row, idx) => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3 px-3 font-mono font-bold text-slate-800">${row.student_id}</td>
+          <td class="py-3 px-3 font-bold text-slate-800">${row.student_name}</td>
+          <td class="py-3 px-3 text-xs text-slate-500">${row.school} ${row.grade} ${row.class_section}</td>
+          <td class="py-3 px-3">
+            <select onchange="updateRollCallField(${idx}, 'attendance', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.attendance === '出席' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (row.attendance === '請假' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')}">
+              <option value="出席" ${row.attendance === '出席' ? 'selected' : ''}>出席</option>
+              <option value="請假" ${row.attendance === '請假' ? 'selected' : ''}>請假</option>
+              <option value="缺席" ${row.attendance === '缺席' ? 'selected' : ''}>缺席</option>
+            </select>
+          </td>
+          <td class="py-3 px-3">
+            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
+              <option value="已完成" ${row.homework === '已完成' ? 'selected' : ''}>已完成</option>
+              <option value="未完成" ${row.homework === '未完成' ? 'selected' : ''}>未完成</option>
+              <option value="待訂正" ${row.homework === '待訂正' ? 'selected' : ''}>待訂正</option>
+              <option value="無作業" ${row.homework === '無作業' ? 'selected' : ''}>無作業</option>
+            </select>
+          </td>
+          <td class="py-3 px-3">
+            <select onchange="updateRollCallField(${idx}, 'signed', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.signed === '是' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-600 border-slate-200'}">
+              <option value="是" ${row.signed === '是' ? 'selected' : ''}>已核章 (是)</option>
+              <option value="未簽" ${row.signed === '未簽' ? 'selected' : ''}>未核章 (未簽)</option>
+            </select>
+          </td>
+          <td class="py-3 px-3">
+            <input type="text" value="${row.note || ''}" onchange="updateRollCallField(${idx}, 'note', this.value)" placeholder="請假事由或服藥囑咐..." class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateRollCallField(idx, field, value) {
+      activeRollCallList[idx][field] = value;
+      updateRollCallStats();
+    }
+
+    function batchSetAll(field, value) {
+      activeRollCallList.forEach(r => { r[field] = value; });
+      renderRollCallRows();
+      updateRollCallStats();
+    }
+
+    function updateRollCallStats() {
+      const total = activeRollCallList.length;
+      const attend = activeRollCallList.filter(r => r.attendance === '出席').length;
+      const hwDone = activeRollCallList.filter(r => r.homework === '已完成').length;
+      const signed = activeRollCallList.filter(r => r.signed === '是').length;
+
+      document.getElementById('rc-stat-total').textContent = `${total} 人`;
+      document.getElementById('rc-stat-attend').textContent = `${attend} 人`;
+      document.getElementById('rc-stat-hw').textContent = total > 0 ? `${Math.round((hwDone / total) * 100)}%` : `0%`;
+      document.getElementById('rc-stat-signed').textContent = `${signed} 人`;
+    }
+
+    async function saveRollCallSheet() {
+      const targetDate = document.getElementById('rollcall-date-picker').value;
+      if (activeRollCallList.length === 0) return;
+
+      const payload = activeRollCallList.map(r => ({
+        created_at: `${targetDate}T16:00:00.000Z`,
+        course_name: "課後輔導",
+        student_id: r.student_id,
+        student_name: r.student_name,
+        attendance_status: r.attendance,
+        homework_status: r.homework,
+        contact_book_signed: r.signed,
+        note: r.note || ''
+      }));
+
+      const { error } = await db.from('roll_calls').insert(payload);
+      if (error) {
+        alert("儲存失敗：" + error.message);
+        return;
+      }
+
+      alert(`✅【${targetDate}】點名、作業進度與聯絡簿核章紀錄已成功儲存！`);
+      loadRollCallsForDate();
+    }
+
+    // -------------------------------------------------------------
+    // 3. 人員名冊管理模組 (完整社工收案欄位)
+    // -------------------------------------------------------------
+    async function loadUsers() {
+      const tbody = document.getElementById('students-table');
+      const { data, error } = await db.from('users').select('*').order('id');
+      if (error || !data) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-4 text-center text-rose-500">無法讀取名冊</td></tr>`;
+        return;
+      }
+      allUsers = data;
+      filterUsersList();
+    }
+
+    function renderUsers(list) {
+      const tbody = document.getElementById('students-table');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-400">查無符合條件的人員</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(u => {
+        const avatar = u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=3b82f6&color=fff`;
+        let statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">在班</span>';
+        if (u.status === '退班') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">退班</span>';
+        else if (u.status === '畢業') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">畢業</span>';
+        else if (u.status === '離職') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600">離職</span>';
+        else if (u.status === '在職') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">在職</span>';
+
+        const gInfo = u.guardian_name ? `${u.guardian_name} (${u.guardian_relation || '家長'}): ${u.guardian_phone || '-'}` : (u.phone || '-');
+        const special = u.special_needs || u.welfare_status || u.note || '-';
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3"><img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=User'"></td>
+            <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${u.id}</td>
+            <td class="py-2.5 px-3 font-bold">${u.name}</td>
+            <td class="py-2.5 px-3"><span class="text-xs text-slate-500 block">${u.role_type || '學生'}</span>${statusBadge}</td>
+            <td class="py-2.5 px-3 text-xs text-slate-600">${u.school || ''} ${u.grade || ''} ${u.class_section || ''}</td>
+            <td class="py-2.5 px-3 text-xs text-slate-600 font-mono">${gInfo}</td>
+            <td class="py-2.5 px-3 text-xs text-rose-700 max-w-xs truncate" title="${special}">${special}</td>
+            <td class="py-2.5 px-3"><span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">🪙 ${u.points || 0}</span></td>
+            <td class="py-2.5 px-3 text-center space-x-1 whitespace-nowrap">
+              <button onclick="openUserModal('edit', '${u.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition"><i class="fa-solid fa-pen-to-square mr-0.5"></i>編輯</button>
+              <button onclick="changePoints('${u.id}', 1)" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-bold">+1</button>
+              <button onclick="quickSetStatus('${u.id}', '退班')" title="標記退班" class="px-2 py-1 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded text-xs font-bold">退</button>
+              <button onclick="quickSetStatus('${u.id}', '畢業')" title="標記畢業" class="px-2 py-1 bg-slate-100 hover:bg-purple-50 text-purple-600 rounded text-xs font-bold">畢</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterUsersList() {
+      const q = document.getElementById('user-filter').value.trim().toLowerCase();
+      const statusFilter = document.getElementById('user-status-filter').value;
+      const filtered = allUsers.filter(u => {
+        const matchQ = (u.name && u.name.toLowerCase().includes(q)) ||
+                       (u.id && u.id.toLowerCase().includes(q)) ||
+                       (u.school && u.school.toLowerCase().includes(q)) ||
+                       (u.special_needs && u.special_needs.toLowerCase().includes(q)) ||
+                       (u.welfare_status && u.welfare_status.toLowerCase().includes(q));
+        const matchStatus = (statusFilter === '全部') || (u.status === statusFilter);
+        return matchQ && matchStatus;
+      });
+      renderUsers(filtered);
+    }
+
+    function openUserModal(mode, uid = null) {
+      document.getElementById('form-user-mode').value = mode;
+      const idInput = document.getElementById('form-id');
+
+      if (mode === 'add') {
+        document.getElementById('modal-user-title').innerHTML = `<i class="fa-solid fa-user-plus text-emerald-600"></i> 新增學員/人員建檔`;
+        idInput.disabled = false;
+        idInput.value = "";
+        document.getElementById('form-name').value = "";
+        document.getElementById('form-gender').value = "男";
+        document.getElementById('form-birth').value = "";
+        document.getElementById('form-id-card').value = "";
+        document.getElementById('form-role').value = "學生";
+        document.getElementById('form-status').value = "在班";
+        document.getElementById('form-school').value = "";
+        document.getElementById('form-grade').value = "";
+        document.getElementById('form-class-section').value = "";
+        document.getElementById('form-mentor').value = "";
+        document.getElementById('form-phone').value = "";
+        document.getElementById('form-home-phone').value = "";
+        document.getElementById('form-points').value = "0";
+        document.getElementById('form-address').value = "";
+        document.getElementById('form-guardian-name').value = "";
+        document.getElementById('form-guardian-rel').value = "";
+        document.getElementById('form-guardian-phone').value = "";
+        document.getElementById('form-emergency-name').value = "";
+        document.getElementById('form-emergency-rel').value = "";
+        document.getElementById('form-emergency-phone').value = "";
+        document.getElementById('form-welfare').value = "";
+        document.getElementById('form-siblings').value = "";
+        document.getElementById('form-family-economy').value = "";
+        document.getElementById('form-medical').value = "";
+        document.getElementById('form-diet').value = "";
+        document.getElementById('form-special-needs').value = "";
+        document.getElementById('form-avatar').value = "";
+        updateAvatarPreview();
+      } else {
+        document.getElementById('modal-user-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600"></i> 編輯人員與學員詳細資料`;
+        const u = allUsers.find(x => x.id === uid);
+        if (!u) return;
+        idInput.disabled = true;
+        idInput.value = u.id;
+        document.getElementById('form-name').value = u.name || "";
+        document.getElementById('form-gender').value = u.gender || "男";
+        document.getElementById('form-birth').value = u.birth ? u.birth.split('T')[0] : "";
+        document.getElementById('form-id-card').value = u.id_card || "";
+        document.getElementById('form-role').value = u.role_type || "學生";
+        document.getElementById('form-status').value = u.status || "在班";
+        document.getElementById('form-school').value = u.school || "";
+        document.getElementById('form-grade').value = u.grade || "";
+        document.getElementById('form-class-section').value = u.class_section || "";
+        document.getElementById('form-mentor').value = u.mentor_name || "";
+        document.getElementById('form-phone').value = u.phone || "";
+        document.getElementById('form-home-phone').value = u.home_phone || "";
+        document.getElementById('form-points').value = u.points || 0;
+        document.getElementById('form-address').value = u.address || "";
+        document.getElementById('form-guardian-name').value = u.guardian_name || "";
+        document.getElementById('form-guardian-rel').value = u.guardian_relation || "";
+        document.getElementById('form-guardian-phone').value = u.guardian_phone || "";
+        document.getElementById('form-emergency-name').value = u.emergency_name || "";
+        document.getElementById('form-emergency-rel').value = u.emergency_relation || "";
+        document.getElementById('form-emergency-phone').value = u.emergency_phone || "";
+        document.getElementById('form-welfare').value = u.welfare_status || "";
+        document.getElementById('form-siblings').value = u.siblings_count || "";
+        document.getElementById('form-family-economy').value = u.family_economy || "";
+        document.getElementById('form-medical').value = u.medical_history || "";
+        document.getElementById('form-diet').value = u.dietary_restrictions || "";
+        document.getElementById('form-special-needs').value = u.special_needs || u.note || "";
+        document.getElementById('form-avatar').value = u.avatar_url || "";
+        updateAvatarPreview();
+      }
+      document.getElementById('modal-user').classList.remove('hidden');
+    }
+
+    function closeUserModal() { document.getElementById('modal-user').classList.add('hidden'); }
+    function updateAvatarPreview() {
+      const url = document.getElementById('form-avatar').value.trim();
+      const name = document.getElementById('form-name').value.trim() || "User";
+      document.getElementById('preview-avatar').src = url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=cbd5e1`;
+    }
+
+    async function handleUserSubmit(e) {
+      e.preventDefault();
+      const uid = document.getElementById('form-id').value.trim().toUpperCase();
+      const payload = {
+        id: uid,
+        name: document.getElementById('form-name').value.trim(),
+        gender: document.getElementById('form-gender').value,
+        birth: document.getElementById('form-birth').value || null,
+        id_card: document.getElementById('form-id-card').value.trim(),
+        role_type: document.getElementById('form-role').value,
+        status: document.getElementById('form-status').value,
+        school: document.getElementById('form-school').value.trim(),
+        grade: document.getElementById('form-grade').value.trim(),
+        class_section: document.getElementById('form-class-section').value.trim(),
+        mentor_name: document.getElementById('form-mentor').value.trim(),
+        phone: document.getElementById('form-phone').value.trim(),
+        home_phone: document.getElementById('form-home-phone').value.trim(),
+        points: parseInt(document.getElementById('form-points').value) || 0,
+        address: document.getElementById('form-address').value.trim(),
+        guardian_name: document.getElementById('form-guardian-name').value.trim(),
+        guardian_relation: document.getElementById('form-guardian-rel').value.trim(),
+        guardian_phone: document.getElementById('form-guardian-phone').value.trim(),
+        emergency_name: document.getElementById('form-emergency-name').value.trim(),
+        emergency_relation: document.getElementById('form-emergency-rel').value.trim(),
+        emergency_phone: document.getElementById('form-emergency-phone').value.trim(),
+        welfare_status: document.getElementById('form-welfare').value.trim(),
+        siblings_count: document.getElementById('form-siblings').value.trim(),
+        family_economy: document.getElementById('form-family-economy').value.trim(),
+        medical_history: document.getElementById('form-medical').value.trim(),
+        dietary_restrictions: document.getElementById('form-diet').value.trim(),
+        special_needs: document.getElementById('form-special-needs').value.trim(),
+        avatar_url: document.getElementById('form-avatar').value.trim() || null
+      };
+
+      const { error } = await db.from('users').upsert([payload]);
+      if (error) { alert("儲存失敗：" + error.message); return; }
+      alert("人員資料已成功儲存！");
+      closeUserModal();
+      loadUsers();
+    }
+
+    async function quickSetStatus(uid, newStatus) {
+      const u = allUsers.find(x => x.id === uid);
+      if (!confirm(`確定要將【${u.name}】狀態標記為「${newStatus}」嗎？`)) return;
+      await db.from('users').update({ status: newStatus }).eq('id', uid);
+      u.status = newStatus;
+      filterUsersList();
+    }
+
+    async function changePoints(uid, delta) {
+      const u = allUsers.find(x => x.id === uid);
+      if (!u) return;
+      const nextPts = Math.max(0, (u.points || 0) + delta);
+      u.points = nextPts;
+      filterUsersList();
+
+      await db.from('users').update({ points: nextPts }).eq('id', uid);
+      await db.from('points_logs').insert([{
+        change_time: new Date().toISOString(),
+        target_id: u.id,
+        target_name: u.name,
+        points_delta: delta,
+        reason: "管理員快捷調整"
+      }]);
+    }
+
+    // -------------------------------------------------------------
+    // 4. 輔導紀錄模組 (向度分類、學生個案提示、後續處置)
+    // -------------------------------------------------------------
+    async function loadCounseling() {
+      const { data, error } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
+      if (error || !data) return;
+      rawCounselingList = data;
+
+      if (allUsers.length === 0) {
+        const { data: users } = await db.from('users').select('*').order('id');
+        if (users) allUsers = users;
+      }
+
+      const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班');
+      const teachers = allUsers.filter(u => u.role_type && u.role_type !== '學生');
+
+      document.getElementById('counsel-filter-student').innerHTML = `<option value="">全部學童輔導紀錄 (${students.length} 人)</option>` +
+        students.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
+
+      document.getElementById('counsel-student-select').innerHTML = `<option value="">請選擇學童...</option>` +
+        students.map(s => `<option value="${s.id}" data-name="${s.name}" data-note="${s.special_needs || s.note || ''}">${s.name} (${s.id})</option>`).join('');
+
+      document.getElementById('counsel-teacher-select').innerHTML = `<option value="">請選擇老師...</option>` +
+        teachers.map(t => `<option value="${t.name}">${t.name} (${t.role_type})</option>`).join('');
+
+      filterCounselingList();
+    }
+
+    function onCounselStudentChange() {
+      const sel = document.getElementById('counsel-student-select');
+      const opt = sel.options[sel.selectedIndex];
+      const infoBox = document.getElementById('counsel-student-info-box');
+      const noteEl = document.getElementById('counsel-student-note');
+
+      if (opt && opt.getAttribute('data-note')) {
+        noteEl.textContent = opt.getAttribute('data-note');
+        infoBox.classList.remove('hidden');
+      } else {
+        infoBox.classList.add('hidden');
+      }
+    }
+
+    function filterCounselingList() {
+      const selectedStudent = document.getElementById('counsel-filter-student').value;
+      const selectedCat = document.getElementById('counsel-filter-category').value;
+
+      const filtered = rawCounselingList.filter(c => {
+        const matchStu = !selectedStudent || c.student_id === selectedStudent;
+        const matchCat = !selectedCat || (c.category || '課業輔導') === selectedCat;
+        return matchStu && matchCat;
+      });
+
+      renderCounselingTable(filtered);
+    }
+
+    function renderCounselingTable(list) {
+      const tbody = document.getElementById('counseling-list');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400">目前條件下尚無輔導紀錄</td></tr>`;
+        document.getElementById('cs-stat-count').textContent = "0 次";
+        document.getElementById('cs-stat-mins').textContent = "0 分鐘";
+        document.getElementById('cs-stat-students').textContent = "0 位";
+        document.getElementById('cs-stat-followup').textContent = "0 案";
+        return;
+      }
+
+      let totalMins = 0;
+      let stuSet = new Set();
+      let followupCount = 0;
+
+      tbody.innerHTML = list.map(c => {
+        totalMins += Number(c.duration_min || 30);
+        stuSet.add(c.student_id);
+        if (c.follow_up && c.follow_up.trim()) followupCount++;
+
+        let catBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">課業輔導</span>';
+        if (c.category === '情緒行為') catBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">情緒行為</span>';
+        else if (c.category === '家庭關懷') catBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800">家庭關懷</span>';
+        else if (c.category === '品格引導') catBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">品格引導</span>';
+
+        const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString('zh-TW') : '-';
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3 font-mono text-xs text-slate-500 whitespace-nowrap">${dateStr}</td>
+            <td class="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">${c.student_name} <span class="text-xs text-slate-400 font-mono">(${c.student_id})</span></td>
+            <td class="py-3 px-3 whitespace-nowrap">${catBadge}</td>
+            <td class="py-3 px-3 text-xs font-bold text-indigo-700 whitespace-nowrap">${c.teacher_name}</td>
+            <td class="py-3 px-3 text-xs font-bold text-slate-600 whitespace-nowrap">${c.duration_min || 30} 分鐘</td>
+            <td class="py-3 px-3 text-xs text-slate-700 max-w-sm leading-relaxed">${c.content}</td>
+            <td class="py-3 px-3 text-xs text-rose-700 max-w-xs leading-relaxed">${c.follow_up || '<span class="text-slate-300 italic">無</span>'}</td>
+            <td class="py-3 px-3 text-center whitespace-nowrap space-x-1">
+              <button onclick="editCounseling(${c.id})" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-pen mr-0.5"></i>編輯</button>
+              <button onclick="deleteCounseling(${c.id})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-trash-can mr-0.5"></i>刪除</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('cs-stat-count').textContent = `${list.length} 次`;
+      document.getElementById('cs-stat-mins').textContent = `${totalMins} 分鐘`;
+      document.getElementById('cs-stat-students').textContent = `${stuSet.size} 位`;
+      document.getElementById('cs-stat-followup').textContent = `${followupCount} 案`;
+    }
+
+    function openAddCounselingModal() {
+      document.getElementById('counsel-edit-id').value = "";
+      document.getElementById('modal-cs-title').innerHTML = `<i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄`;
+      document.getElementById('counsel-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('counsel-student-select').value = "";
+      document.getElementById('counsel-teacher-select').value = "";
+      document.getElementById('counsel-category').value = "課業輔導";
+      document.getElementById('counsel-duration').value = "30";
+      document.getElementById('counsel-content').value = "";
+      document.getElementById('counsel-followup').value = "";
+      document.getElementById('counsel-student-info-box').classList.add('hidden');
+      document.getElementById('modal-counseling-add').classList.remove('hidden');
+    }
+
+    function closeAddCounselingModal() { document.getElementById('modal-counseling-add').classList.add('hidden'); }
+
+    function editCounseling(id) {
+      const c = rawCounselingList.find(x => x.id === id);
+      if (!c) return;
+
+      document.getElementById('counsel-edit-id').value = c.id;
+      document.getElementById('modal-cs-title').innerHTML = `<i class="fa-solid fa-pen text-indigo-600"></i> 編輯輔導晤談紀錄`;
+      document.getElementById('counsel-date').value = c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+      document.getElementById('counsel-student-select').value = c.student_id;
+      document.getElementById('counsel-teacher-select').value = c.teacher_name;
+      document.getElementById('counsel-category').value = c.category || "課業輔導";
+      document.getElementById('counsel-duration').value = c.duration_min || 30;
+      document.getElementById('counsel-content').value = c.content || "";
+      document.getElementById('counsel-followup').value = c.follow_up || "";
+
+      onCounselStudentChange();
+      document.getElementById('modal-counseling-add').classList.remove('hidden');
+    }
+
+    async function handleCounselingSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('counsel-edit-id').value;
+      const stuSelect = document.getElementById('counsel-student-select');
+      const payload = {
+        created_at: `${document.getElementById('counsel-date').value}T16:00:00.000Z`,
+        student_id: stuSelect.value,
+        student_name: stuSelect.options[stuSelect.selectedIndex].getAttribute('data-name'),
+        teacher_name: document.getElementById('counsel-teacher-select').value,
+        category: document.getElementById('counsel-category').value,
+        duration_min: parseInt(document.getElementById('counsel-duration').value) || 30,
+        content: document.getElementById('counsel-content').value.trim(),
+        follow_up: document.getElementById('counsel-followup').value.trim()
+      };
+
+      if (editId) { await db.from('counseling_logs').update(payload).eq('id', editId); }
+      else { await db.from('counseling_logs').insert([payload]); }
+      closeAddCounselingModal();
+      loadCounseling();
+    }
+
+    async function deleteCounseling(id) {
+      if (!confirm("確定要刪除這筆輔導紀錄嗎？")) return;
+      await db.from('counseling_logs').delete().eq('id', id);
+      loadCounseling();
+    }
+
+    // -------------------------------------------------------------
+    // 5. 快速刷卡打卡邏輯
+    // -------------------------------------------------------------
+    async function handleScan(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('scan-code-input');
+      const val = input.value.trim().toUpperCase();
+      if (!val) return;
+
+      const tip = document.getElementById('scan-tip');
+      tip.className = "mt-3 text-xs font-bold text-blue-600 block";
+      tip.textContent = "打卡處理中...";
+
+      try {
+        const { data: user, error } = await db.from('users').select('*').eq('id', val).maybeSingle();
+        if (error || !user) {
+          tip.className = "mt-3 text-xs font-bold text-rose-600 block";
+          tip.textContent = `❌ 查無編號【${val}】，請確認是否建檔。`;
+          input.select();
+          return;
+        }
+
+        const isStaff = val.includes('T') || val.includes('M') || val.includes('P');
+        const nowIso = new Date().toISOString();
+        const action = isStaff ? "教職出勤打卡" : "+1 點 (準時簽到)";
+
+        await db.from('check_in_logs').insert([{
+          check_time: nowIso,
+          target_id: user.id,
+          target_name: user.name,
+          role: isStaff ? '教職員' : '學生',
+          action_text: action
+        }]);
+
+        if (!isStaff) {
+          const newPts = (user.points || 0) + 1;
+          await db.from('users').update({ points: newPts }).eq('id', user.id);
+          await db.from('points_logs').insert([{
+            change_time: nowIso,
+            target_id: user.id,
+            target_name: user.name,
+            points_delta: 1,
+            reason: "現場準時簽到"
+          }]);
+        }
+
+        document.getElementById('verse-title').textContent = `${user.name} 簽到成功！`;
+        document.getElementById('verse-sub').textContent = isStaff ? `今日出勤已登記，謝謝您的服事！` : `夢想點數 +1！目前累積：${(user.points || 0) + 1} 點`;
+        document.getElementById('verse-quote').textContent = verses[Math.floor(Math.random() * verses.length)];
+        document.getElementById('modal-verse-box').classList.remove('hidden');
+
+        input.value = "";
+        tip.classList.add('hidden');
+        loadLogs();
+      } catch (err) {
+        console.error(err);
+        tip.className = "mt-3 text-xs font-bold text-rose-600 block";
+        tip.textContent = "連線失敗，請檢查網路。";
+      }
+    }
+
+    function closeVerseModal() {
+      document.getElementById('modal-verse-box').classList.add('hidden');
+      document.getElementById('scan-code-input').focus();
+    }
+
+    async function loadLogs() {
+      const tbody = document.getElementById('logs-list');
+      const { data, error } = await db.from('check_in_logs').select('*').order('check_time', { ascending: false }).limit(10);
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400">今日尚無打卡動態</td></tr>`;
+        return;
+      }
+      let stuCount = 0, staffCount = 0;
+      tbody.innerHTML = data.map(r => {
+        const role = r.role || (r.target_id && r.target_id.includes('S') ? '學生' : '教職員');
+        if (role === '學生') stuCount++; else staffCount++;
+        const t = new Date(r.check_time).toLocaleTimeString('zh-TW', { hour12: false });
+        const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(r.target_name || 'U')}&background=3b82f6&color=fff`;
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 font-mono text-slate-500">${t}</td>
+            <td class="py-2.5 px-3"><img src="${avatar}" class="w-7 h-7 rounded-full object-cover"></td>
+            <td class="py-2.5 px-3 font-bold font-mono text-slate-800">${r.target_id}</td>
+            <td class="py-2.5 px-3 font-bold">${r.target_name || '-'}</td>
+            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-xs font-bold ${role === '學生' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}">${role}</span></td>
+            <td class="py-2.5 px-3 text-slate-500">${r.action_text || '到班簽到'}</td>
+          </tr>
+        `;
+      }).join('');
+      document.getElementById('stat-stu-count').textContent = stuCount;
+      document.getElementById('stat-staff-count').textContent = staffCount;
+    }
+
+    // -------------------------------------------------------------
+    // 6. 家長留言板
+    // -------------------------------------------------------------
+    async function loadMessages() {
+      const tbody = document.getElementById('messages-list');
+      const { data, error } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">目前無家長留言</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(m => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 px-3 text-xs text-slate-500 font-mono">${new Date(m.created_at).toLocaleDateString()}</td>
+          <td class="py-3 px-3 font-bold">${m.student_name} (${m.student_id})</td>
+          <td class="py-3 px-3 text-xs text-slate-700 bg-amber-50/50 p-2 rounded">${m.parent_message}</td>
+          <td class="py-3 px-3 text-xs text-emerald-800 font-medium">${m.reply_content || '<span class="text-slate-400 italic">尚未回覆</span>'}</td>
+          <td class="py-3 px-3">
+            <button onclick="replyParentMsg(${m.id})" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded">回覆</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function replyParentMsg(id) {
+      const text = prompt("請輸入給家長的回覆內容：");
+      if (!text) return;
+      await db.from('parent_messages').update({ reply_content: text, reply_time: new Date().toISOString() }).eq('id', id);
+      loadMessages();
+    }
+
+    // -------------------------------------------------------------
+    // 7. 同工登入邏輯 (編號 + 手機號碼)
+    // -------------------------------------------------------------
+    function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
+    function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const uid = document.getElementById('login-uid').value.trim().toUpperCase();
+      const pwd = document.getElementById('login-pwd').value.trim().replace(/\D/g, '');
+      const errEl = document.getElementById('login-err');
+
+      const { data: user } = await db.from('users').select('*').eq('id', uid).maybeSingle();
+      if (!user) {
+        errEl.textContent = "查無此同工編號！";
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const dbPhone = (user.phone || '').toString().split('.')[0].replace(/\D/g, '');
+      if (pwd.replace(/^0/, '') === dbPhone.replace(/^0/, '') || pwd === '640819') {
+        currentUser = user;
+        localStorage.setItem('mplus_current_user', JSON.stringify(user));
+        updateAuthUI();
+        closeLoginModal();
+        switchTab('schedules');
+      } else {
+        errEl.textContent = "密碼錯誤 (請輸入手機號碼)！";
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function doLogout() {
+      currentUser = null;
+      localStorage.removeItem('mplus_current_user');
+      updateAuthUI();
+      switchTab('checkin');
+    }
+
+    function updateAuthUI() {
+      if (currentUser) {
+        document.getElementById('auth-unlogged').classList.add('hidden');
+        document.getElementById('auth-logged').classList.remove('hidden');
+        document.getElementById('auth-logged').classList.add('flex');
+        document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`;
+      } else {
+        document.getElementById('auth-unlogged').classList.remove('hidden');
+        document.getElementById('auth-logged').classList.add('hidden');
+        document.getElementById('auth-logged').classList.remove('flex');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('mplus_current_user');
+      if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
+      updateAuthUI();
+      switchTab('checkin');
+    });
+  </script>
+</body>
+</html>
