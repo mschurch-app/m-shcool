@@ -768,7 +768,6 @@
     let currentCalMonth = 9;
     let activeScheduleView = 'calendar';
 
-    // 打卡與彈窗定時器
     let verseAutoCloseTimer = null;
 
     // AI 臉部辨識核心變數
@@ -895,11 +894,9 @@
         if (!error && data) {
           rawSchedules = data;
         } else {
-          console.warn("未取得排班資料或尚無紀錄:", error);
           rawSchedules = [];
         }
       } catch (err) {
-        console.warn("讀取排班發生錯誤:", err);
         rawSchedules = [];
       }
 
@@ -1175,7 +1172,7 @@
     }
 
     // =============================================================
-    // 2. AI 臉部辨識核心模組 (face-api.js 瀏覽器端神經網路)
+    // 2. AI 臉部辨識核心模組 (徹底修復資料庫預載與靈敏度)
     // =============================================================
     async function loadFaceApiModels() {
       if (isFaceModelsLoaded) return true;
@@ -1196,18 +1193,48 @@
       }
     }
 
-    function buildFaceMatcher() {
+    async function buildFaceMatcher() {
+      const faceStatus = document.getElementById('face-status-text');
+      
+      // 🌟 強制從 Supabase 撈取所有有特徵碼的人員
+      try {
+        const { data: users, error } = await db.from('users').select('*');
+        if (!error && users) {
+          allUsers = users;
+        }
+      } catch (err) {
+        console.warn("特徵庫同步失敗:", err);
+      }
+
       labeledFaceDescriptors = [];
-      allUsers.forEach(u => {
-        if (u.face_descriptor && Array.isArray(u.face_descriptor) && u.face_descriptor.length === 128) {
-          const descriptor = new Float32Array(u.face_descriptor);
+      let enrolledCount = 0;
+
+      (allUsers || []).forEach(u => {
+        let descArr = u.face_descriptor;
+        if (typeof descArr === 'string') {
+          try { descArr = JSON.parse(descArr); } catch(e){}
+        }
+
+        if (Array.isArray(descArr) && descArr.length === 128) {
+          const descriptor = new Float32Array(descArr);
           labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(u.id, [descriptor]));
+          enrolledCount++;
         }
       });
+
       if (labeledFaceDescriptors.length > 0) {
-        faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.48);
+        // 寬容度調為 0.58 (極速秒殺辨識，不再長久卡在掃描中)
+        faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.58);
+        if (faceStatus) {
+          faceStatus.className = "text-emerald-300 font-bold";
+          faceStatus.textContent = `✅ 已就緒 (已載入 ${enrolledCount} 位特徵)，請正面直視鏡頭`;
+        }
       } else {
         faceMatcher = null;
+        if (faceStatus) {
+          faceStatus.className = "text-amber-300 font-bold";
+          faceStatus.textContent = "⚠️ 資料庫尚無人臉特徵，請先至名冊拍照建檔！";
+        }
       }
     }
 
@@ -1224,8 +1251,14 @@
 
       const box = document.getElementById('face-recognition-container');
       const btnText = document.getElementById('btn-face-text');
+      const faceStatus = document.getElementById('face-status-text');
+      
       box.classList.remove('hidden');
       btnText.textContent = "關閉手機人臉相機";
+      if (faceStatus) {
+        faceStatus.className = "text-blue-300 font-bold";
+        faceStatus.textContent = "載入 AI 模型與臉部特徵庫中...";
+      }
 
       faceVideoEl = document.getElementById('face-video');
       faceCanvasEl = document.getElementById('face-canvas');
@@ -1237,14 +1270,12 @@
         return;
       }
 
-      buildFaceMatcher();
-      if (!faceMatcher) {
-        document.getElementById('face-status-text').textContent = "⚠️ 目前名冊尚無學童臉部特徵，請先至人員名冊拍照建檔！";
-      }
+      // 等待特徵庫自資料庫同步載入
+      await buildFaceMatcher();
 
       try {
         faceStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
+          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false
         });
         faceVideoEl.srcObject = faceStream;
@@ -1305,10 +1336,10 @@
                 if (bestMatch.label !== 'unknown') {
                   const matchedUser = allUsers.find(u => u.id === bestMatch.label);
                   labelText = matchedUser ? `${matchedUser.name} (${Math.round((1 - bestMatch.distance) * 100)}%)` : bestMatch.label;
-                  strokeColor = "#10b981";
+                  strokeColor = "#10b981"; // 辨識成功亮綠色
 
                   const now = Date.now();
-                  if (!lastFaceMatchTime[bestMatch.label] || (now - lastFaceMatchTime[bestMatch.label] > 10000)) {
+                  if (!lastFaceMatchTime[bestMatch.label] || (now - lastFaceMatchTime[bestMatch.label] > 8000)) {
                     lastFaceMatchTime[bestMatch.label] = now;
                     if (navigator.vibrate) navigator.vibrate(100);
                     processScanCode(bestMatch.label);
@@ -1505,7 +1536,7 @@
     }
 
     // -------------------------------------------------------------
-    // 打卡邏輯（學生一天限一次；同工5分鐘防呆+自動上下班；2秒自動關閉）
+    // 智慧打卡核心（學生一天限一次；同工60秒防呆+自動上下班；2秒自動關閉）
     // -------------------------------------------------------------
     async function handleScan(e) {
       if (e) e.preventDefault();
@@ -1518,16 +1549,18 @@
 
     async function processScanCode(val) {
       const tip = document.getElementById('scan-tip');
+      const faceStatus = document.getElementById('face-status-text');
       const now = Date.now();
 
-      tip.className = "mt-3 text-xs font-bold text-blue-700 bg-blue-50 block";
-      tip.textContent = `打卡辨識中【${val}】...`;
+      if (faceStatus) {
+        faceStatus.className = "text-amber-300 font-bold animate-pulse";
+        faceStatus.textContent = `⚡ 正在處理【${val}】出勤...`;
+      }
 
       try {
         const { data: user, error } = await db.from('users').select('*').eq('id', val).maybeSingle();
         if (error || !user) {
-          tip.className = "mt-3 text-xs font-bold text-rose-700 bg-rose-50 block";
-          tip.textContent = `❌ 查無編號【${val}】，請確認是否已建檔。`;
+          if (faceStatus) faceStatus.textContent = `❌ 查無編號【${val}】`;
           return;
         }
 
@@ -1535,8 +1568,9 @@
         const nowObj = new Date();
         const nowIso = nowObj.toISOString();
         
-        const todayDateStr = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, '0')}-${String(nowObj.getDate()).padStart(2, '0')}`;
-        const startOfTodayIso = `${todayDateStr}T00:00:00.000Z`;
+        // 台灣本地今日 00:00:00 精準查詢 (避免 UTC 誤差)
+        const localDateStr = nowObj.toLocaleDateString('en-CA');
+        const startOfTodayIso = new Date(`${localDateStr}T00:00:00+08:00`).toISOString();
 
         const { data: todayLogs } = await db.from('check_in_logs')
           .select('*')
@@ -1544,10 +1578,15 @@
           .gte('check_time', startOfTodayIso)
           .order('check_time', { ascending: true });
 
-        // 1. 學生規則：一天只能打卡一次
+        // 1. 學生規則：一天限一次
         if (!isStaff) {
           if (todayLogs && todayLogs.length > 0) {
-            showQuickNotice(`⚠️【${user.name}】今日已完成到班簽到，一天限打卡一次！`);
+            const warnMsg = `⚠️【${user.name}】今日已完成簽到，一天限打卡一次！`;
+            showQuickNotice(warnMsg);
+            if (faceStatus) {
+              faceStatus.className = "text-amber-400 font-bold";
+              faceStatus.textContent = warnMsg;
+            }
             return;
           }
 
@@ -1571,21 +1610,28 @@
             action_text: actionText
           }]);
 
-          showPunchSuccessModal(
-            `🎉 ${user.name} 到班簽到成功！`,
-            `夢想點數 +1！目前累積：${newPts} 點`
-          );
+          if (faceStatus) {
+            faceStatus.className = "text-emerald-400 font-bold";
+            faceStatus.textContent = `🎉 ${user.name} 簽到成功！點數 +1`;
+          }
+
+          showPunchSuccessModal(`🎉 ${user.name} 到班簽到成功！`, `夢想點數 +1！目前累積：${newPts} 點`);
           loadLogs();
           return;
         }
 
-        // 2. 教職員 / 同工 / 工讀生：5分鐘防呆 + 第1次上班 第2次下班
+        // 2. 同工 / 老師 / 工讀生：60 秒防連刷 + 第1次上班 第2次下班
         if (todayLogs && todayLogs.length > 0) {
           const lastLog = todayLogs[todayLogs.length - 1];
           const lastLogTime = new Date(lastLog.check_time).getTime();
-          if (now - lastLogTime < 300000) {
-            const remSec = Math.ceil((300000 - (now - lastLogTime)) / 1000);
-            showQuickNotice(`⚠️【${user.name}】5分鐘內已打卡過，請稍候！(${remSec}秒)`);
+          if (now - lastLogTime < 60000) {
+            const remSec = Math.ceil((60000 - (now - lastLogTime)) / 1000);
+            const tipMsg = `⚠️【${user.name}】剛完成打卡，請間隔 ${remSec} 秒後再簽退！`;
+            showQuickNotice(tipMsg);
+            if (faceStatus) {
+              faceStatus.className = "text-amber-400 font-bold";
+              faceStatus.textContent = tipMsg;
+            }
             return;
           }
         }
@@ -1606,7 +1652,7 @@
         } else {
           actionText = `出勤打卡 (第${punchCountToday + 1}次)`;
           popupTitle = `💼 ${user.name} 打卡成功！`;
-          popupSub = `服事出勤動態已成功更新。`;
+          popupSub = `今日累計出勤已記錄。`;
         }
 
         await db.from('check_in_logs').insert([{
@@ -1617,13 +1663,20 @@
           action_text: actionText
         }]);
 
+        if (faceStatus) {
+          faceStatus.className = "text-emerald-400 font-bold";
+          faceStatus.textContent = popupTitle;
+        }
+
         showPunchSuccessModal(popupTitle, popupSub);
         loadLogs();
 
       } catch (err) {
         console.error(err);
-        tip.className = "mt-3 text-xs font-bold text-rose-700 bg-rose-50 block";
-        tip.textContent = "打卡連線發生問題，請檢查網路。";
+        if (faceStatus) {
+          faceStatus.className = "text-rose-400 font-bold";
+          faceStatus.textContent = "打卡連線異常，請檢查網路。";
+        }
       }
     }
 
@@ -1845,7 +1898,7 @@
             </select>
           </td>
           <td class="py-3 px-3">
-            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
+            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200'}">
               <option value="已完成" ${row.homework === '已完成' ? 'selected' : ''}>已完成</option>
               <option value="未完成" ${row.homework === '未完成' ? 'selected' : ''}>未完成</option>
               <option value="待訂正" ${row.homework === '待訂正' ? 'selected' : ''}>待訂正</option>
@@ -2097,8 +2150,8 @@
         document.getElementById('form-special-needs').value = u.special_needs || u.note || "";
         document.getElementById('form-avatar').value = u.avatar_url || "";
         
-        if (u.face_descriptor && Array.isArray(u.face_descriptor)) {
-          document.getElementById('form-face-descriptor').value = JSON.stringify(u.face_descriptor);
+        if (u.face_descriptor) {
+          document.getElementById('form-face-descriptor').value = typeof u.face_descriptor === 'string' ? u.face_descriptor : JSON.stringify(u.face_descriptor);
           document.getElementById('face-enrolled-badge').classList.remove('hidden');
           document.getElementById('face-extract-tip').textContent = "已建立臉部特徵庫";
         }
@@ -2158,7 +2211,7 @@
       alert("人員資料及臉部特徵已成功儲存！");
       closeUserModal();
       await loadUsers();
-      buildFaceMatcher();
+      await buildFaceMatcher();
     }
 
     async function deleteUser(uid) {
@@ -2177,7 +2230,7 @@
 
         alert(`✅ 人員【${userName}】已成功刪除！`);
         await loadUsers();
-        buildFaceMatcher();
+        await buildFaceMatcher();
       } catch (err) {
         console.error(err);
         alert("刪除連線異常，請檢查網路。");
