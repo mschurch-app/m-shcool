@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>M+ 大雅教會 課輔行政全功能系統</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,176 +19,178 @@
       font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
       background-color: #f8fafc;
       color: #1e293b;
+      -webkit-tap-highlight-color: transparent;
     }
     .glass-nav {
-      background: rgba(30, 58, 138, 0.88);
+      background: rgba(30, 58, 138, 0.92);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
     .tab-btn-active {
-      background: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.25);
       color: #ffffff !important;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
       border-bottom: 3px solid #fbbf24;
     }
     .cal-day-cell {
-      min-height: 110px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      min-height: 85px;
+      transition: all 0.15s ease;
+    }
+    @media (min-width: 640px) {
+      .cal-day-cell {
+        min-height: 110px;
+      }
     }
     .cal-day-cell:hover {
       background-color: #f1f5f9;
-      transform: translateY(-1px);
     }
     .custom-scroll::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
     }
     .custom-scroll::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 10px;
+      border-radius: 8px;
     }
     .custom-scroll::-webkit-scrollbar-track {
       background: transparent;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="min-h-screen flex flex-col antialiased pb-12 sm:pb-0">
 
-  <!-- 頂部品牌導航列 -->
+  <!-- 頂部高質感 RWD 導航列 -->
   <header class="glass-nav text-white sticky top-0 z-50 border-b border-white/10 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-18 py-3">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16 sm:h-18 py-2 sm:py-3">
         <!-- 品牌識別 -->
-        <div class="flex items-center space-x-3.5">
-          <div class="w-11 h-11 bg-gradient-to-tr from-amber-400 to-amber-200 text-blue-950 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-amber-500/20 tracking-tighter">
+        <div class="flex items-center space-x-2.5 sm:space-x-3.5">
+          <div class="w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-tr from-amber-400 to-amber-200 text-blue-950 rounded-2xl flex items-center justify-center font-black text-lg sm:text-xl shadow-md tracking-tighter">
             M+
           </div>
           <div>
-            <div class="flex items-center space-x-2">
-              <h1 class="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-white via-blue-50 to-blue-200 bg-clip-text text-transparent">M+ 大雅教會</h1>
-              <span class="bg-amber-400/20 text-amber-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-400/30">課輔行政系統</span>
+            <div class="flex items-center space-x-1.5 sm:space-x-2">
+              <h1 class="text-base sm:text-xl font-black tracking-tight bg-gradient-to-r from-white via-blue-50 to-blue-200 bg-clip-text text-transparent">M+ 大雅教會</h1>
+              <span class="bg-amber-400/20 text-amber-300 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full border border-amber-400/30">行政系統</span>
             </div>
-            <p class="text-xs text-blue-200/90 font-mono mt-0.5" id="clock-display">系統同步中...</p>
+            <p class="text-[10px] sm:text-xs text-blue-200/90 font-mono" id="clock-display">同步中...</p>
           </div>
         </div>
 
         <!-- 登入身分操作區 -->
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2">
           <div id="auth-unlogged">
-            <button onclick="openLoginModal()" class="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md shadow-amber-400/20 flex items-center space-x-1.5 hover:scale-[1.02] active:scale-[0.98]">
-              <i class="fa-solid fa-user-shield text-sm"></i>
+            <button onclick="openLoginModal()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 rounded-xl text-xs font-black transition-all shadow-sm flex items-center space-x-1 active:scale-95">
+              <i class="fa-solid fa-user-shield text-xs sm:text-sm"></i>
               <span>同工登入</span>
             </button>
           </div>
-          <div id="auth-logged" class="hidden items-center space-x-2.5">
-            <div class="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15 backdrop-blur-sm">
+          <div id="auth-logged" class="hidden items-center space-x-1.5 sm:space-x-2.5">
+            <div class="flex items-center space-x-1.5 bg-white/10 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-white/15">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="logged-user-tag" class="text-xs font-bold text-white tracking-wide"></span>
+              <span id="logged-user-tag" class="text-xs font-bold text-white tracking-wide max-w-[90px] sm:max-w-none truncate"></span>
             </div>
-            <button onclick="doLogout()" class="px-3 py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white rounded-xl text-xs font-semibold transition border border-rose-400/30 shadow-sm">
+            <button onclick="doLogout()" class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-rose-500/80 hover:bg-rose-600 text-white rounded-xl text-xs font-semibold transition border border-rose-400/30">
               登出
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 次選單分頁導航 -->
-      <nav class="flex space-x-1.5 overflow-x-auto pb-1 text-xs sm:text-sm font-semibold border-t border-white/10 pt-1.5 custom-scroll">
-        <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3.5 py-2.5 rounded-xl transition flex items-center space-x-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-qrcode text-sm"></i><span>刷卡報到</span>
+      <!-- 分頁橫向滑動選單 (RWD 自適應觸控滾動) -->
+      <nav class="flex space-x-1 overflow-x-auto pb-1.5 text-xs sm:text-sm font-semibold border-t border-white/10 pt-1.5 custom-scroll no-scrollbar">
+        <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3 py-2 rounded-xl transition flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-qrcode text-xs sm:text-sm"></i><span>刷卡報到</span>
         </button>
-        <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3.5 py-2.5 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-calendar-check text-sm"></i><span>排班與行事曆</span>
+        <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3 py-2 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-calendar-check text-xs sm:text-sm"></i><span>排班行事曆</span>
         </button>
-        <button onclick="requireTab('rollcall')" id="nav-rollcall" class="px-3.5 py-2.5 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-clipboard-check text-sm"></i><span>點名與聯絡簿</span>
+        <button onclick="requireTab('rollcall')" id="nav-rollcall" class="px-3 py-2 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-clipboard-check text-xs sm:text-sm"></i><span>點名聯絡簿</span>
         </button>
-        <button onclick="requireTab('students')" id="nav-students" class="px-3.5 py-2.5 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-address-book text-sm"></i><span>人員與學員名冊</span>
+        <button onclick="requireTab('students')" id="nav-students" class="px-3 py-2 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-address-book text-xs sm:text-sm"></i><span>人員學員名冊</span>
         </button>
-        <button onclick="requireTab('counseling')" id="nav-counseling" class="px-3.5 py-2.5 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-hand-holding-heart text-sm"></i><span>個別輔導紀錄</span>
+        <button onclick="requireTab('counseling')" id="nav-counseling" class="px-3 py-2 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-hand-holding-heart text-xs sm:text-sm"></i><span>個別輔導</span>
         </button>
-        <button onclick="requireTab('messages')" id="nav-messages" class="px-3.5 py-2.5 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-comments text-sm"></i><span>家長留言板</span>
+        <button onclick="requireTab('messages')" id="nav-messages" class="px-3 py-2 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-comments text-xs sm:text-sm"></i><span>家長留言</span>
         </button>
       </nav>
     </div>
   </header>
 
   <!-- 主內容容器 -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
 
     <!-- 1. 刷卡報到打卡 (前台公開) -->
-    <div id="tab-checkin" class="space-y-8">
+    <div id="tab-checkin" class="space-y-5 sm:space-y-8">
       
-      <!-- 四項指標儀表板 -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
-        <div class="bg-white/80 backdrop-blur-md rounded-3xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center space-x-4">
-          <div class="w-13 h-13 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shadow-inner"><i class="fa-solid fa-user-graduate"></i></div>
-          <div><p class="text-xs font-semibold text-slate-400">今日到班學員</p><p class="text-2xl font-black text-slate-800" id="stat-stu-count">0</p></div>
+      <!-- 四項指標看板 (RWD 雙欄 / 四欄自動切換) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
+        <div class="bg-white/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0"><i class="fa-solid fa-user-graduate"></i></div>
+          <div class="min-w-0"><p class="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">今日到班學員</p><p class="text-xl sm:text-2xl font-black text-slate-800" id="stat-stu-count">0</p></div>
         </div>
-        <div class="bg-white/80 backdrop-blur-md rounded-3xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center space-x-4">
-          <div class="w-13 h-13 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-inner"><i class="fa-solid fa-chalkboard-user"></i></div>
-          <div><p class="text-xs font-semibold text-slate-400">教職出勤同工</p><p class="text-2xl font-black text-slate-800" id="stat-staff-count">0</p></div>
+        <div class="bg-white/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0"><i class="fa-solid fa-chalkboard-user"></i></div>
+          <div class="min-w-0"><p class="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">教職出勤同工</p><p class="text-xl sm:text-2xl font-black text-slate-800" id="stat-staff-count">0</p></div>
         </div>
-        <div class="bg-white/80 backdrop-blur-md rounded-3xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center space-x-4">
-          <div class="w-13 h-13 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner"><i class="fa-solid fa-coins"></i></div>
-          <div><p class="text-xs font-semibold text-slate-400">今日發放點數</p><p class="text-2xl font-black text-slate-800" id="stat-pts-count">0</p></div>
+        <div class="bg-white/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0"><i class="fa-solid fa-coins"></i></div>
+          <div class="min-w-0"><p class="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">今日發放點數</p><p class="text-xl sm:text-2xl font-black text-slate-800" id="stat-pts-count">0</p></div>
         </div>
-        <div class="bg-white/80 backdrop-blur-md rounded-3xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex items-center space-x-4">
-          <div class="w-13 h-13 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shadow-inner"><i class="fa-solid fa-calendar-day"></i></div>
-          <div><p class="text-xs font-semibold text-slate-400">本月排定班次</p><p class="text-2xl font-black text-slate-800" id="stat-sch-count">0</p></div>
+        <div class="bg-white/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0"><i class="fa-solid fa-calendar-day"></i></div>
+          <div class="min-w-0"><p class="text-[11px] sm:text-xs font-semibold text-slate-400 truncate">本月排定班次</p><p class="text-xl sm:text-2xl font-black text-slate-800" id="stat-sch-count">0</p></div>
         </div>
       </div>
 
       <!-- 核心條碼掃描區 -->
-      <div class="bg-gradient-to-b from-white to-slate-50/70 rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm text-center max-w-xl mx-auto relative overflow-hidden">
-        <div class="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
-        <div class="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-xl shadow-blue-500/25">
+      <div class="bg-gradient-to-b from-white to-slate-50/70 rounded-3xl p-5 sm:p-10 border border-slate-200 shadow-sm text-center max-w-xl mx-auto">
+        <div class="w-14 h-14 sm:w-16 sm:h-16 bg-blue-600 text-white rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-3 sm:mb-4 text-2xl sm:text-3xl shadow-lg shadow-blue-500/25">
           <i class="fa-solid fa-barcode"></i>
         </div>
-        <h2 class="text-2xl font-black text-slate-800 tracking-tight">條碼掃描 / 快速簽到打卡</h2>
-        <p class="text-xs text-slate-500 mt-1.5 mb-6">請將條碼槍對準識別證掃描，或使用鍵盤輸入學號/工號後按 Enter</p>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">條碼掃描 / 快速簽到打卡</h2>
+        <p class="text-xs text-slate-500 mt-1 mb-5">請刷識別證條碼或手動輸入編號後按 Enter</p>
         
         <form onsubmit="handleScan(event)" class="space-y-3">
-          <div class="relative">
-            <input 
-              type="text" 
-              id="scan-code-input" 
-              placeholder="請刷條碼或輸入編號 (例: 2026S0001)" 
-              autofocus 
-              autocomplete="off" 
-              class="w-full bg-white border-2 border-slate-200 hover:border-blue-400 rounded-2xl px-5 py-4 text-xl font-bold text-center uppercase tracking-wider focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner font-mono"
-            >
-          </div>
-          <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-base font-bold rounded-2xl shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.01] active:scale-[0.99]">
+          <input 
+            type="text" 
+            id="scan-code-input" 
+            placeholder="請刷條碼或輸入學號 (例: 2026S0001)" 
+            autofocus 
+            autocomplete="off" 
+            class="w-full bg-white border-2 border-slate-200 hover:border-blue-400 rounded-2xl px-4 py-3.5 sm:py-4 text-lg sm:text-xl font-bold text-center uppercase tracking-wider focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all font-mono"
+          >
+          <button type="submit" class="w-full py-3.5 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm sm:text-base font-bold rounded-2xl shadow-md transition-all active:scale-98">
             確認打卡報到
           </button>
         </form>
-        <div id="scan-tip" class="mt-3.5 text-xs font-bold hidden py-2 px-3 rounded-xl"></div>
+        <div id="scan-tip" class="mt-3 text-xs font-bold hidden py-2 px-3 rounded-xl"></div>
       </div>
 
       <!-- 即時出勤動態紀錄 -->
-      <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-slate-200/80 shadow-xs">
+        <div class="flex justify-between items-center mb-3 sm:mb-4">
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center space-x-2">
             <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            <span>今日即時出勤流水動態</span>
+            <span>今日即時出勤動態</span>
           </h3>
-          <span class="text-xs text-slate-400 font-medium">即時自動刷新</span>
+          <span class="text-[11px] text-slate-400 font-medium">即時更新</span>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50/80 text-slate-400 font-semibold border-b border-slate-100">
+        <div class="overflow-x-auto custom-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap sm:whitespace-normal">
+            <thead class="bg-slate-50 text-slate-400 font-semibold border-b border-slate-100">
               <tr>
-                <th class="py-3 px-4 rounded-l-2xl">時間</th>
-                <th class="py-3 px-4">照片</th>
-                <th class="py-3 px-4">編號</th>
-                <th class="py-3 px-4">姓名</th>
-                <th class="py-3 px-4">身分類別</th>
-                <th class="py-3 px-4 rounded-r-2xl">打卡狀態</th>
+                <th class="py-2.5 px-3 sm:px-4">時間</th>
+                <th class="py-2.5 px-3 sm:px-4">照片</th>
+                <th class="py-2.5 px-3 sm:px-4">編號</th>
+                <th class="py-2.5 px-3 sm:px-4">姓名</th>
+                <th class="py-2.5 px-3 sm:px-4">身分</th>
+                <th class="py-2.5 px-3 sm:px-4">打卡狀態</th>
               </tr>
             </thead>
             <tbody id="logs-list" class="divide-y divide-slate-100 font-medium">
@@ -199,70 +201,68 @@
       </div>
     </div>
 
-    <!-- 2. 排班管理與互動行事曆 (自動工時計算 + 月曆網格) -->
-    <div id="tab-schedules" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
+    <!-- 2. 排班管理與互動行事曆 -->
+    <div id="tab-schedules" class="hidden space-y-5 sm:space-y-6">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
         
-        <!-- 頂部操作欄 -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
           <div>
-            <h2 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-calendar-days text-blue-600"></i> 教職員排班與行事曆
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-calendar-days text-blue-600"></i> 教職員排班行事曆
             </h2>
-            <p class="text-xs text-slate-400 mt-1">點擊日曆中的任意一天即可快速排班，時段起訖自動精確換算工時</p>
+            <p class="text-xs text-slate-400 mt-0.5">點擊日期即可快速排班，時段起訖自動精確換算工時</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            <!-- 視圖切換按鈕 -->
-            <div class="inline-flex rounded-2xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold shadow-inner">
-              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3.5 py-2 rounded-xl bg-white shadow-sm text-blue-700 transition flex items-center gap-1.5 font-bold">
-                <i class="fa-solid fa-calendar"></i><span>行事曆月曆</span>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
+              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white shadow-xs text-blue-700 transition font-bold">
+                <i class="fa-solid fa-calendar mr-1"></i>月曆
               </button>
-              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-bold">
-                <i class="fa-solid fa-list-ul"></i><span>清單列表</span>
+              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold">
+                <i class="fa-solid fa-list-ul mr-1"></i>清單
               </button>
             </div>
             
-            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600"></select>
+            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="flex-1 sm:flex-none px-3 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
             
-            <button onclick="openScheduleModal('add')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-blue-500/20 flex items-center space-x-1.5 hover:scale-[1.02]">
+            <button onclick="openScheduleModal('add')" class="px-3.5 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1">
               <i class="fa-solid fa-plus"></i><span>新增排班</span>
             </button>
           </div>
         </div>
 
         <!-- 數據統計 -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
-          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4">
-            <span class="text-xs text-blue-600 font-bold block">本月排定班次</span>
-            <span class="text-2xl font-black text-blue-900 mt-0.5 block" id="total-count-badge">0 班</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-5 sm:mb-6">
+          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3 sm:p-4">
+            <span class="text-[11px] sm:text-xs text-blue-600 font-bold block">本月總班次</span>
+            <span class="text-lg sm:text-2xl font-black text-blue-900 mt-0.5 block" id="total-count-badge">0 班</span>
           </div>
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4">
-            <span class="text-xs text-indigo-600 font-bold block">排定總工時</span>
-            <span class="text-2xl font-black text-indigo-900 mt-0.5 block" id="total-shift-badge">0 小時</span>
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3 sm:p-4">
+            <span class="text-[11px] sm:text-xs text-indigo-600 font-bold block">排定總工時</span>
+            <span class="text-lg sm:text-2xl font-black text-indigo-900 mt-0.5 block" id="total-shift-badge">0 小時</span>
           </div>
-          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4">
-            <span class="text-xs text-emerald-600 font-bold block">服事同工人數</span>
-            <span class="text-2xl font-black text-emerald-900 mt-0.5 block" id="total-workers-badge">0 人</span>
+          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 sm:p-4">
+            <span class="text-[11px] sm:text-xs text-emerald-600 font-bold block">出勤同工</span>
+            <span class="text-lg sm:text-2xl font-black text-emerald-900 mt-0.5 block" id="total-workers-badge">0 人</span>
           </div>
-          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-4">
-            <span class="text-xs text-amber-600 font-bold block">預估薪資支出</span>
-            <span class="text-2xl font-black text-amber-900 mt-0.5 block" id="total-wage-badge">$0</span>
+          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-3 sm:p-4">
+            <span class="text-[11px] sm:text-xs text-amber-600 font-bold block">預估薪資支出</span>
+            <span class="text-lg sm:text-2xl font-black text-amber-900 mt-0.5 block" id="total-wage-badge">$0</span>
           </div>
         </div>
 
         <!-- 月曆視圖 -->
-        <div id="schedule-calendar-view" class="space-y-4">
-          <div class="flex justify-between items-center bg-slate-50/80 px-5 py-3 rounded-2xl border border-slate-200">
-            <div class="flex items-center space-x-2.5">
-              <button onclick="prevMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-xl border border-slate-200 hover:bg-slate-100 shadow-xs"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-              <h3 class="text-base font-black text-slate-800 font-mono tracking-wide" id="calendar-month-title">2026 年 09 月</h3>
-              <button onclick="nextMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-xl border border-slate-200 hover:bg-slate-100 shadow-xs"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+        <div id="schedule-calendar-view" class="space-y-3 sm:space-y-4">
+          <div class="flex justify-between items-center bg-slate-50 px-3 sm:px-5 py-2.5 rounded-2xl border border-slate-200">
+            <div class="flex items-center space-x-2">
+              <button onclick="prevMonth()" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+              <h3 class="text-sm sm:text-base font-black text-slate-800 font-mono tracking-wide" id="calendar-month-title">2026 年 09 月</h3>
+              <button onclick="nextMonth()" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200"><i class="fa-solid fa-chevron-right text-xs"></i></button>
             </div>
-            <button onclick="goToCurrentMonth()" class="px-3.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-100 shadow-xs transition">回到本月</button>
+            <button onclick="goToCurrentMonth()" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold">本月</button>
           </div>
           
-          <div class="border border-slate-200 rounded-3xl overflow-hidden bg-white shadow-sm">
-            <div class="grid grid-cols-7 text-center font-bold text-xs py-3 bg-slate-50 border-b border-slate-200 text-slate-600">
+          <div class="border border-slate-200 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-xs">
+            <div class="grid grid-cols-7 text-center font-bold text-[11px] sm:text-xs py-2.5 bg-slate-50 border-b border-slate-200 text-slate-600">
               <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
             </div>
             <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-100 text-xs"></div>
@@ -270,8 +270,8 @@
         </div>
 
         <!-- 清單視圖 -->
-        <div id="schedule-list-view" class="hidden overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <div id="schedule-list-view" class="hidden overflow-x-auto custom-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
               <tr>
                 <th class="py-3 px-3">排班日期</th>
@@ -293,47 +293,47 @@
     </div>
 
     <!-- 3. 課堂點名與作業聯絡簿核章 -->
-    <div id="tab-rollcall" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
+    <div id="tab-rollcall" class="hidden space-y-5 sm:space-y-6">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
         
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
           <div>
-            <h2 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-clipboard-check text-blue-600"></i> 課堂點名與聯絡簿核章
             </h2>
-            <p class="text-xs text-slate-400 mt-1">管理孩子每日到班狀況、作業完成度、聯絡簿簽名與家長請假交代</p>
+            <p class="text-xs text-slate-400 mt-0.5">管理孩子每日到班狀況、作業進度、聯絡簿簽名與請假備註</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono focus:outline-none focus:border-blue-600">
-            <button onclick="batchSetAll('attendance', '出席')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席</button>
-            <button onclick="batchSetAll('homework', '已完成')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-book mr-1 text-blue-600"></i>作業全完成</button>
-            <button onclick="batchSetAll('signed', '是')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體已核章</button>
-            <button onclick="saveRollCallSheet()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5"><i class="fa-solid fa-floppy-disk"></i><span>儲存點名紀錄</span></button>
+            <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono">
+            <button onclick="batchSetAll('attendance', '出席')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"><i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席</button>
+            <button onclick="batchSetAll('homework', '已完成')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"><i class="fa-solid fa-book mr-1 text-blue-600"></i>作業全完成</button>
+            <button onclick="batchSetAll('signed', '是')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"><i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體已核章</button>
+            <button onclick="saveRollCallSheet()" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1 ml-auto sm:ml-0"><i class="fa-solid fa-floppy-disk"></i><span>儲存紀錄</span></button>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
-          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4"><span class="text-xs text-blue-600 font-bold block">應到學員人數</span><span class="text-2xl font-black text-blue-900 mt-0.5 block" id="rc-stat-total">0 人</span></div>
-          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4"><span class="text-xs text-emerald-600 font-bold block">實到出席人數</span><span class="text-2xl font-black text-emerald-900 mt-0.5 block" id="rc-stat-attend">0 人</span></div>
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4"><span class="text-xs text-indigo-600 font-bold block">作業完成率</span><span class="text-2xl font-black text-indigo-900 mt-0.5 block" id="rc-stat-hw">0%</span></div>
-          <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-4"><span class="text-xs text-purple-600 font-bold block">聯絡簿已核章</span><span class="text-2xl font-black text-purple-900 mt-0.5 block" id="rc-stat-signed">0 人</span></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-5 sm:mb-6">
+          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-blue-600 font-bold block">應到學員</span><span class="text-lg sm:text-2xl font-black text-blue-900 mt-0.5 block" id="rc-stat-total">0 人</span></div>
+          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-emerald-600 font-bold block">實到出席</span><span class="text-lg sm:text-2xl font-black text-emerald-900 mt-0.5 block" id="rc-stat-attend">0 人</span></div>
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-indigo-600 font-bold block">作業完成率</span><span class="text-lg sm:text-2xl font-black text-indigo-900 mt-0.5 block" id="rc-stat-hw">0%</span></div>
+          <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-purple-600 font-bold block">聯絡簿已核章</span><span class="text-lg sm:text-2xl font-black text-purple-900 mt-0.5 block" id="rc-stat-signed">0 人</span></div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <div class="overflow-x-auto custom-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap sm:whitespace-normal">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
               <tr>
                 <th class="py-3 px-3">學號</th>
-                <th class="py-3 px-3">學生姓名</th>
-                <th class="py-3 px-3">就讀學校 / 年級</th>
+                <th class="py-3 px-3">姓名</th>
+                <th class="py-3 px-3">學校/年級</th>
                 <th class="py-3 px-3">出席狀態</th>
-                <th class="py-3 px-3">學校作業完成進度</th>
+                <th class="py-3 px-3">作業完成進度</th>
                 <th class="py-3 px-3">聯絡簿核章</th>
-                <th class="py-3 px-3">家長交代 / 備註</th>
+                <th class="py-3 px-3">請假 / 叮嚀備註</th>
               </tr>
             </thead>
             <tbody id="rollcall-table-body" class="divide-y divide-slate-100 font-medium">
-              <tr><td colspan="7" class="py-6 text-center text-slate-400">載入名冊中...</td></tr>
+              <tr><td colspan="7" class="py-6 text-center text-slate-400">載入點名名冊中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -341,39 +341,39 @@
       </div>
     </div>
 
-    <!-- 4. 學員與人員名冊 -->
-    <div id="tab-students" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
+    <!-- 4. 學員與人員名冊 (含刪除按鈕) -->
+    <div id="tab-students" class="hidden space-y-5 sm:space-y-6">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
         
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
           <div>
-            <h2 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-address-book text-blue-600"></i> 學員與人員全資料名冊
             </h2>
-            <p class="text-xs text-slate-400 mt-1">包含社福弱勢身分、雙家長接送聯絡人、身心健康特教紀錄與照片</p>
+            <p class="text-xs text-slate-400 mt-0.5">支援社福弱勢身分、家長電話、特教註記、編輯與永久刪除</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <select id="user-status-filter" onchange="filterUsersList()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+            <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
               <option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班學員</option><option value="畢業">畢業學員</option><option value="在職">在職教職</option><option value="離職">離職同工</option>
             </select>
-            <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/學校/特質..." class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm">
-            <button onclick="openUserModal('add')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5">
-              <i class="fa-solid fa-user-plus"></i><span>新增人員建檔</span>
+            <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/特質..." class="flex-1 sm:flex-none px-3 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            <button onclick="openUserModal('add')" class="px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1">
+              <i class="fa-solid fa-user-plus"></i><span>新增建檔</span>
             </button>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <div class="overflow-x-auto custom-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
                 <th class="py-3 px-3">照片</th>
                 <th class="py-3 px-3">學號/編號</th>
                 <th class="py-3 px-3">姓名</th>
                 <th class="py-3 px-3">身分/狀態</th>
-                <th class="py-3 px-3">就讀學校/班級</th>
-                <th class="py-3 px-3">家長/接送電話</th>
-                <th class="py-3 px-3">福利身分/特教特質</th>
+                <th class="py-3 px-3">學校/班級</th>
+                <th class="py-3 px-3">主要聯絡電話</th>
+                <th class="py-3 px-3">福利/特教狀況</th>
                 <th class="py-3 px-3">點數</th>
                 <th class="py-3 px-3 text-center">操作管理</th>
               </tr>
@@ -388,45 +388,45 @@
     </div>
 
     <!-- 5. 課輔與個別輔導紀錄 -->
-    <div id="tab-counseling" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
+    <div id="tab-counseling" class="hidden space-y-5 sm:space-y-6">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
         
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
           <div>
-            <h2 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童課輔與身心輔導紀錄
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童輔導紀錄
             </h2>
-            <p class="text-xs text-slate-400 mt-1">詳實記錄晤談重點、情緒陪伴、段考弱科補救與後續追蹤事項</p>
+            <p class="text-xs text-slate-400 mt-0.5">詳實記錄晤談重點、情緒陪伴、弱科補救與後續追蹤</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <select id="counsel-filter-student" onchange="filterCounselingList()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"><option value="">全部學童輔導紀錄</option></select>
-            <select id="counsel-filter-category" onchange="filterCounselingList()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+            <select id="counsel-filter-student" onchange="filterCounselingList()" class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"><option value="">全部學童</option></select>
+            <select id="counsel-filter-category" onchange="filterCounselingList()" class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
               <option value="">全部向度</option><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option>
             </select>
-            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5">
-              <i class="fa-solid fa-pen-nib"></i><span>新增輔導紀錄</span>
+            <button onclick="openAddCounselingModal()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1">
+              <i class="fa-solid fa-pen-nib"></i><span>新增輔導</span>
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
-          <div class="bg-rose-50/50 border border-rose-100 rounded-2xl p-4"><span class="text-xs text-rose-600 font-bold block">累計輔導次數</span><span class="text-2xl font-black text-rose-900 mt-0.5 block" id="cs-stat-count">0 次</span></div>
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4"><span class="text-xs text-indigo-600 font-bold block">累計陪伴時長</span><span class="text-2xl font-black text-indigo-900 mt-0.5 block" id="cs-stat-mins">0 分鐘</span></div>
-          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4"><span class="text-xs text-blue-600 font-bold block">受輔導學童數</span><span class="text-2xl font-black text-blue-900 mt-0.5 block" id="cs-stat-students">0 位</span></div>
-          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-4"><span class="text-xs text-amber-600 font-bold block">待後續追蹤個案</span><span class="text-2xl font-black text-amber-900 mt-0.5 block" id="cs-stat-followup">0 案</span></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-5 sm:mb-6">
+          <div class="bg-rose-50/50 border border-rose-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-rose-600 font-bold block">累計輔導</span><span class="text-lg sm:text-2xl font-black text-rose-900 mt-0.5 block" id="cs-stat-count">0 次</span></div>
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-indigo-600 font-bold block">陪伴時長</span><span class="text-lg sm:text-2xl font-black text-indigo-900 mt-0.5 block" id="cs-stat-mins">0 分鐘</span></div>
+          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-blue-600 font-bold block">受輔學童</span><span class="text-lg sm:text-2xl font-black text-blue-900 mt-0.5 block" id="cs-stat-students">0 位</span></div>
+          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-amber-600 font-bold block">待追蹤個案</span><span class="text-lg sm:text-2xl font-black text-amber-900 mt-0.5 block" id="cs-stat-followup">0 案</span></div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <div class="overflow-x-auto custom-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap sm:whitespace-normal">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
               <tr>
                 <th class="py-3 px-3">晤談時間</th>
                 <th class="py-3 px-3">學號/姓名</th>
                 <th class="py-3 px-3">向度</th>
-                <th class="py-3 px-3">輔導同工</th>
+                <th class="py-3 px-3">輔導老師</th>
                 <th class="py-3 px-3">時長</th>
                 <th class="py-3 px-3">狀況描述與晤談要點</th>
-                <th class="py-3 px-3">後續處置與追蹤重點</th>
+                <th class="py-3 px-3">後續處置與追蹤</th>
                 <th class="py-3 px-3 text-center">操作</th>
               </tr>
             </thead>
@@ -440,16 +440,16 @@
     </div>
 
     <!-- 6. 家長留言板 -->
-    <div id="tab-messages" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
-        <h2 class="text-xl sm:text-2xl font-black text-slate-800 mb-1 flex items-center gap-2">
+    <div id="tab-messages" class="hidden space-y-5 sm:space-y-6">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
+        <h2 class="text-lg sm:text-2xl font-black text-slate-800 mb-1 flex items-center gap-2">
           <i class="fa-solid fa-comments text-blue-600"></i> 家長留言板與親師回覆
         </h2>
-        <p class="text-xs text-slate-400 mb-6">掌握家長叮嚀、服藥囑咐、請假備註並即時給予溫暖回饋</p>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <p class="text-xs text-slate-400 mb-5 sm:mb-6">掌握家長叮嚀、請假備註並即時給予溫暖回饋</p>
+        <div class="overflow-x-auto custom-scroll -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap sm:whitespace-normal">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
-              <tr><th class="py-3 px-3">留言時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">家長叮嚀囑咐</th><th class="py-3 px-3">老師回覆內容</th><th class="py-3 px-3 text-center">回覆操作</th></tr>
+              <tr><th class="py-3 px-3">留言時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">家長叮嚀囑咐</th><th class="py-3 px-3">老師回覆內容</th><th class="py-3 px-3 text-center">操作</th></tr>
             </thead>
             <tbody id="messages-list" class="divide-y divide-slate-100 font-medium">
               <tr><td colspan="5" class="py-6 text-center text-slate-400">載入中...</td></tr>
@@ -461,13 +461,13 @@
 
   </main>
 
-  <!-- ======================== 精緻彈窗區域 ======================== -->
+  <!-- ======================== 彈窗區域 (RWD 自適應全螢幕/滿版) ======================== -->
 
   <!-- 排班彈窗 (自動換算工時) -->
-  <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl animate-in fade-in zoom-in duration-150">
-      <div class="flex justify-between items-center mb-4 border-b pb-3">
-        <h3 class="text-lg font-black text-slate-800 flex items-center gap-2" id="modal-sch-title"><i class="fa-solid fa-calendar-plus text-blue-600"></i> 排班日程登記</h3>
+  <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll">
+      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2" id="modal-sch-title"><i class="fa-solid fa-calendar-plus text-blue-600"></i> 排班日程登記</h3>
         <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
       <form onsubmit="handleScheduleSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
@@ -475,25 +475,25 @@
         <div><label class="block font-bold text-slate-600 mb-1">排班日期 *</label><input type="date" id="sch-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono"></div>
         <div><label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label><select id="sch-worker-select" onchange="onWorkerSelectChange()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
         
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block font-bold text-slate-600 mb-1">開始時間 <span class="text-rose-500">*</span></label>
+            <label class="block font-bold text-slate-600 mb-1">開始時間 *</label>
             <input type="time" id="sch-start-time" value="16:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
           </div>
           <div>
-            <label class="block font-bold text-slate-600 mb-1">結束時間 <span class="text-rose-500">*</span></label>
+            <label class="block font-bold text-slate-600 mb-1">結束時間 *</label>
             <input type="time" id="sch-end-time" value="18:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
           </div>
         </div>
 
-        <div class="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-100 flex justify-between items-center">
+        <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-100 flex justify-between items-center">
           <span class="text-xs font-bold text-blue-800 flex items-center gap-1.5"><i class="fa-solid fa-calculator"></i> 系統核算工時：</span>
-          <span class="text-base font-black text-blue-900 font-mono" id="sch-hours-display">2.0 小時</span>
+          <span class="text-sm sm:text-base font-black text-blue-900 font-mono" id="sch-hours-display">2.0 小時</span>
           <input type="hidden" id="sch-hours-val" value="2">
         </div>
 
         <div><label class="block font-bold text-slate-600 mb-1">負責工作 / 服事內容</label><input type="text" id="sch-job" placeholder="例: 四年級課輔陪伴" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
-        <div class="flex space-x-2.5 pt-3 border-t">
+        <div class="flex space-x-2 pt-3 border-t">
           <button type="button" onclick="closeScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
           <button type="submit" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold shadow-md">確認儲存</button>
         </div>
@@ -502,79 +502,74 @@
   </div>
 
   <!-- 人員建檔 / 編輯 彈窗 -->
-  <div id="modal-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
-      <div class="flex justify-between items-center mb-5 border-b pb-3">
+  <div id="modal-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
         <div>
-          <h3 class="text-xl font-black text-slate-800 flex items-center gap-2" id="modal-user-title"><i class="fa-solid fa-id-card text-blue-600"></i> 學員與人員詳細資料表</h3>
-          <p class="text-xs text-slate-400 mt-0.5">完整支援身分證號、雙親聯絡電話、社福身分、疾病過敏與特教註記</p>
+          <h3 class="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2" id="modal-user-title"><i class="fa-solid fa-id-card text-blue-600"></i> 學員與人員詳細資料表</h3>
+          <p class="text-xs text-slate-400 mt-0.5">完整支援身分證號、家長電話、社福身分與特教註記</p>
         </div>
         <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
       </div>
-      <form onsubmit="handleUserSubmit(event)" class="space-y-6 text-xs sm:text-sm">
+      <form onsubmit="handleUserSubmit(event)" class="space-y-5 text-xs sm:text-sm">
         <input type="hidden" id="form-user-mode" value="add">
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+        
+        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
           <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-user text-blue-600"></i> 1. 基本個人身分</h4>
-          <div class="flex flex-col sm:flex-row items-center gap-4">
-            <img id="preview-avatar" src="https://ui-avatars.com/api/?name=User&background=cbd5e1" class="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow">
+          <div class="flex flex-col sm:flex-row items-center gap-3.5">
+            <img id="preview-avatar" src="https://ui-avatars.com/api/?name=User&background=cbd5e1" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-white shadow-xs shrink-0">
             <div class="flex-1 w-full">
               <label class="block font-bold text-slate-600 mb-1">大頭照網址</label>
               <input type="url" id="form-avatar" oninput="updateAvatarPreview()" placeholder="https://..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs">
             </div>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">學號 / 編號 *</label><input type="text" id="form-id" required class="w-full uppercase font-mono font-bold px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">姓名 *</label><input type="text" id="form-name" required class="w-full font-bold px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">性別</label><select id="form-gender" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"><option value="男">男</option><option value="女">女</option></select></div>
             <div><label class="block font-bold text-slate-600 mb-1">出生年月日</label><input type="date" id="form-birth" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono"></div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">身分證字號</label><input type="text" id="form-id-card" placeholder="例: B125******" class="w-full uppercase font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">身分類別</label><select id="form-role" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold"><option value="學生">學生</option><option value="同工">同工</option><option value="老師">老師</option><option value="工讀生">工讀生</option></select></div>
-            <div><label class="block font-bold text-slate-600 mb-1">在學/在職狀態 *</label><select id="form-status" class="w-full px-3 py-2 bg-amber-50 font-bold border border-amber-300 rounded-xl text-amber-900"><option value="在班">在班</option><option value="退班">退班</option><option value="畢業">畢業</option><option value="在職">在職</option><option value="離職">離職</option></select></div>
+            <div><label class="block font-bold text-slate-600 mb-1">狀態 *</label><select id="form-status" class="w-full px-3 py-2 bg-amber-50 font-bold border border-amber-300 rounded-xl text-amber-900"><option value="在班">在班</option><option value="退班">退班</option><option value="畢業">畢業</option><option value="在職">在職</option><option value="離職">離職</option></select></div>
           </div>
         </div>
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+
+        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
           <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-indigo-600"></i> 2. 就讀學校與課輔編制</h4>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">就讀學校</label><input type="text" id="form-school" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">年級</label><input type="text" id="form-grade" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">原校班級</label><input type="text" id="form-class-section" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">責任同工/導師</label><input type="text" id="form-mentor" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">責任同工</label><input type="text" id="form-mentor" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
         </div>
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
-          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-phone text-emerald-600"></i> 3. 聯絡方式與雙家長接送授權</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-phone text-emerald-600"></i> 3. 聯絡方式與雙家長接送</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">本人手機 (密碼)</label><input type="text" id="form-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">住家室內市話</label><input type="text" id="form-home-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">住家市話</label><input type="text" id="form-home-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">夢想點數</label><input type="number" id="form-points" value="0" class="w-full font-bold px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
           <div><label class="block font-bold text-slate-600 mb-1">通訊住址</label><input type="text" id="form-address" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-          <div class="grid grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-200">
             <div><label class="block font-bold text-slate-600 mb-1">主要家長姓名</label><input type="text" id="form-guardian-name" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">稱謂關係</label><input type="text" id="form-guardian-rel" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">家長電話</label><input type="text" id="form-guardian-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div><label class="block font-bold text-slate-600 mb-1">緊急聯絡人</label><input type="text" id="form-emergency-name" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">稱謂關係</label><input type="text" id="form-emergency-rel" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">聯絡電話</label><input type="text" id="form-emergency-phone" class="w-full font-mono px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-          </div>
         </div>
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
-          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福關懷、健康特質與特教學習</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label class="block font-bold text-slate-600 mb-1">家庭福利身分</label><input type="text" id="form-welfare" placeholder="例: 單親、低收入戶、隔代教養" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">家中兄弟姊妹數 / 排行</label><input type="text" id="form-siblings" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-          </div>
-          <div><label class="block font-bold text-slate-600 mb-1">家庭經濟與父母就業備註</label><input type="text" id="form-family-economy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label class="block font-bold text-slate-600 mb-1">特殊疾病 / 重大病史</label><input type="text" id="form-medical" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">飲食習慣 / 過敏原禁忌</label><input type="text" id="form-diet" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+
+        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福與特教學習狀況</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div><label class="block font-bold text-slate-600 mb-1">家庭福利身分</label><input type="text" id="form-welfare" placeholder="例: 單親、低收入戶" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">疾病與過敏史</label><input type="text" id="form-medical" placeholder="例: 輕微地中海貧血、蠶豆症" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
           <div><label class="block font-bold text-slate-600 mb-1">身心特質 / 特教叮嚀</label><textarea id="form-special-needs" rows="2" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></textarea></div>
         </div>
+
         <div class="flex space-x-3 pt-3 border-t">
           <button type="button" onclick="closeUserModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
           <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md">儲存人員資料</button>
@@ -583,78 +578,65 @@
     </div>
   </div>
 
-  <!-- 輔導紀錄 新增/編輯 完整彈窗 (支援快捷標籤勾選) -->
-  <div id="modal-counseling-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
-      <div class="flex justify-between items-center mb-4 border-b pb-3">
+  <!-- 輔導紀錄 彈窗 (支援快捷標籤勾選) -->
+  <div id="modal-counseling-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
+      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
         <div>
-          <h3 class="text-xl font-black text-slate-800 flex items-center gap-2" id="modal-cs-title"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增學童輔導紀錄</h3>
-          <p class="text-xs text-slate-400 mt-1">點擊快捷狀態標籤即可直接帶入描述，減輕同工打字負擔</p>
+          <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2" id="modal-cs-title"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄</h3>
+          <p class="text-xs text-slate-400 mt-0.5">點擊快捷狀態標籤自動帶入描述</p>
         </div>
-        <button onclick="closeAddCounselingModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
+        <button onclick="closeAddCounselingModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
-      <form onsubmit="handleCounselingSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+      <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
         <input type="hidden" id="counsel-edit-id" value="">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div><label class="block font-bold text-slate-600 mb-1">輔導對象 (學生) *</label><select id="counsel-student-select" onchange="onCounselStudentChange()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
           <div><label class="block font-bold text-slate-600 mb-1">輔導老師 / 同工 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
         </div>
-        <div id="counsel-student-info-box" class="hidden p-2.5 bg-amber-50 rounded-xl border border-amber-200/60 text-xs text-amber-900"><span class="font-bold">⚠️ 個案特質提醒：</span><span id="counsel-student-note"></span></div>
-        <div class="grid grid-cols-3 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">紀錄日期 *</label><input type="date" id="counsel-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold"></div>
+        <div id="counsel-student-info-box" class="hidden p-2.5 bg-amber-50 rounded-xl border border-amber-200/60 text-xs text-amber-900"><span class="font-bold">⚠️ 個案提醒：</span><span id="counsel-student-note"></span></div>
+        <div class="grid grid-cols-3 gap-2">
+          <div><label class="block font-bold text-slate-600 mb-1">紀錄日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-xs"></div>
           <div>
             <label class="block font-bold text-slate-600 mb-1">輔導向度</label>
-            <select id="counsel-category" onchange="switchCounselTags()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold">
-              <option value="課業輔導">📖 課業輔導</option><option value="情緒行為">😠 情緒行為</option><option value="家庭關懷">🏠 家庭關懷</option><option value="品格引導">✨ 品格引導</option>
+            <select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs">
+              <option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option>
             </select>
           </div>
-          <div><label class="block font-bold text-slate-600 mb-1">晤談時長 (分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">時長(分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs"></div>
         </div>
 
-        <!-- 快捷勾選標籤區 -->
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5">
-          <label class="block font-bold text-slate-600 mb-2"><i class="fa-solid fa-tags text-blue-500"></i> 快捷狀態勾選 (點擊自動帶入文字)：</label>
-          <div id="counsel-quick-tags" class="flex flex-wrap gap-2"></div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+          <label class="block font-bold text-slate-600 mb-2"><i class="fa-solid fa-tags text-blue-500"></i> 快捷狀態勾選 (點擊帶入)：</label>
+          <div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div>
         </div>
 
-        <div><label class="block font-bold text-slate-600 mb-1">晤談歷程與狀況描述 *</label><textarea id="counsel-content" rows="3" placeholder="點擊上方標籤可自動組合，或在此處補充詳細內容..." required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner"></textarea></div>
-        <div><label class="block font-bold text-slate-600 mb-1">引導處置與後續追蹤事項</label><textarea id="counsel-followup" rows="2" placeholder="例: 明日需檢查作業、已主動聯繫母親..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner"></textarea></div>
-        <div class="flex space-x-3 pt-3 border-t">
-          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold shadow-md">確認儲存紀錄</button>
+        <div><label class="block font-bold text-slate-600 mb-1">晤談歷程描述 *</label><textarea id="counsel-content" rows="3" placeholder="點選上方標籤或手動輸入詳細狀況..." required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner"></textarea></div>
+        <div><label class="block font-bold text-slate-600 mb-1">引導處置與後續追蹤</label><textarea id="counsel-followup" rows="2" placeholder="例: 明日需檢查作業、已連繫母親..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner"></textarea></div>
+        <div class="flex space-x-2.5 pt-3 border-t">
+          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow-md">確認儲存</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- 登入彈窗 (支援姓名或人員編號登入) -->
-  <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl animate-in fade-in zoom-in duration-150">
-      <div class="text-center mb-5">
-        <div class="w-13 h-13 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-2.5 text-2xl font-bold shadow-inner"><i class="fa-solid fa-user-shield"></i></div>
-        <h3 class="text-xl font-black text-slate-800">同工管理者登入</h3>
-        <p class="text-xs text-slate-400 mt-0.5">請輸入同工姓名或編號，與密碼 (手機號碼)</p>
+  <!-- 登入彈窗 (支援姓名或編號) -->
+  <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl">
+      <div class="text-center mb-4 sm:mb-5">
+        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl font-bold"><i class="fa-solid fa-user-shield"></i></div>
+        <h3 class="text-lg font-black text-slate-800">同工管理者登入</h3>
+        <p class="text-xs text-slate-400 mt-0.5">請輸入人員編號或中文姓名</p>
       </div>
       <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">人員編號 或 姓名</label>
-          <input 
-            type="text" 
-            id="login-uid" 
-            placeholder="例如: 吳俊璋 或 2026M0001" 
-            required 
-            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold"
-          >
+          <input type="text" id="login-uid" placeholder="例如: 吳俊璋 或 2026M0001" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">密碼 (手機號碼)</label>
-          <input 
-            type="password" 
-            id="login-pwd" 
-            placeholder="例如: 0986007885" 
-            required 
-            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold font-mono"
-          >
+          <input type="password" id="login-pwd" placeholder="例如: 0986007885" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold font-mono">
         </div>
         <div id="login-err" class="text-xs font-bold text-rose-600 hidden"></div>
         <div class="flex space-x-2 pt-2">
@@ -666,14 +648,14 @@
   </div>
 
   <!-- 金句彈窗 -->
-  <div id="modal-verse-box" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 text-center shadow-2xl">
-      <div class="w-15 h-15 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl shadow-inner"><i class="fa-solid fa-circle-check"></i></div>
-      <h3 class="text-2xl font-black text-slate-800" id="verse-title">簽到成功！</h3>
+  <div id="modal-verse-box" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+      <div class="w-13 h-13 sm:w-15 sm:h-15 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl sm:text-3xl shadow-inner"><i class="fa-solid fa-circle-check"></i></div>
+      <h3 class="text-xl sm:text-2xl font-black text-slate-800" id="verse-title">簽到成功！</h3>
       <p class="text-xs text-slate-500 mt-1" id="verse-sub">已登記出勤紀錄</p>
       <div class="my-4 bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-left shadow-inner">
         <p class="text-xs font-bold text-amber-800 mb-1">📖 今日屬天祝福：</p>
-        <p class="text-sm text-amber-950 font-serif leading-relaxed" id="verse-quote"></p>
+        <p class="text-xs sm:text-sm text-amber-950 font-serif leading-relaxed" id="verse-quote"></p>
       </div>
       <button onclick="closeVerseModal()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md">我知道了 (Enter)</button>
     </div>
@@ -731,12 +713,12 @@
         const el = document.getElementById(`tab-${id}`);
         if (el) el.classList.add('hidden');
         const nav = document.getElementById(`nav-${id}`);
-        if (nav) nav.className = "px-3.5 py-2.5 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap";
+        if (nav) nav.className = "px-3 py-2 rounded-xl text-blue-100/80 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap";
       });
 
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
       const activeNav = document.getElementById(`nav-${tabId}`);
-      if (activeNav) activeNav.className = "tab-btn-active px-3.5 py-2.5 rounded-xl transition flex items-center space-x-1.5 whitespace-nowrap";
+      if (activeNav) activeNav.className = "tab-btn-active px-3 py-2 rounded-xl transition flex items-center space-x-1.5 whitespace-nowrap";
 
       if (tabId === 'checkin') { loadLogs(); setTimeout(() => document.getElementById('scan-code-input').focus(), 150); }
       if (tabId === 'schedules') loadSchedules();
@@ -747,7 +729,7 @@
     }
 
     // -------------------------------------------------------------
-    // 1. 排班管理與互動行事曆 (起訖時間自動計算工時)
+    // 1. 排班管理與互動行事曆
     // -------------------------------------------------------------
     async function loadSchedules() {
       const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
@@ -759,7 +741,7 @@
         if (users) {
           allUsers = users;
           staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-          document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工與老師 (${staffList.length} 人)</option>` + 
+          document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工 (${staffList.length})</option>` + 
             staffList.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
           document.getElementById('sch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` + 
             staffList.map(s => `<option value="${s.id}" data-name="${s.name}" data-role="${s.role_type}">${s.name} - ${s.role_type} (${s.id})</option>`).join('');
@@ -806,13 +788,13 @@
       const viewList = document.getElementById('schedule-list-view');
 
       if (viewType === 'calendar') {
-        btnCal.className = "px-3.5 py-2 rounded-xl bg-white shadow-sm text-blue-700 transition flex items-center gap-1.5 font-bold";
-        btnList.className = "px-3.5 py-2 rounded-xl text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-bold";
+        btnCal.className = "px-3 py-1.5 rounded-lg bg-white shadow-xs text-blue-700 transition font-bold";
+        btnList.className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold";
         viewCal.classList.remove('hidden');
         viewList.classList.add('hidden');
       } else {
-        btnList.className = "px-3.5 py-2 rounded-xl bg-white shadow-sm text-blue-700 transition flex items-center gap-1.5 font-bold";
-        btnCal.className = "px-3.5 py-2 rounded-xl text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-bold";
+        btnList.className = "px-3 py-1.5 rounded-lg bg-white shadow-xs text-blue-700 transition font-bold";
+        btnCal.className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold";
         viewList.classList.remove('hidden');
         viewCal.classList.add('hidden');
       }
@@ -864,7 +846,7 @@
 
       for (let i = 0; i < firstDayIndex; i++) {
         const blank = document.createElement('div');
-        blank.className = "cal-day-cell bg-slate-50/40 p-2 opacity-40";
+        blank.className = "cal-day-cell bg-slate-50/40 p-1.5 sm:p-2 opacity-40";
         grid.appendChild(blank);
       }
 
@@ -875,7 +857,7 @@
         const dayShifts = schedulesByDay[day] || [];
 
         const cell = document.createElement('div');
-        cell.className = `cal-day-cell p-2 flex flex-col justify-between group relative cursor-pointer ${isToday ? 'bg-amber-50/50 ring-2 ring-inset ring-amber-400' : 'bg-white'}`;
+        cell.className = `cal-day-cell p-1 sm:p-2 flex flex-col justify-between group relative cursor-pointer ${isToday ? 'bg-amber-50/50 ring-2 ring-inset ring-amber-400' : 'bg-white'}`;
         
         let badgesHtml = dayShifts.map(s => {
           let badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
@@ -883,22 +865,22 @@
           else if (s.worker_id.includes('P')) badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
 
           return `
-            <div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" title="${s.worker_name} (${s.shift || ''}) - 點擊編輯" class="text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${badgeColor} truncate hover:opacity-80 transition flex items-center justify-between shadow-2xs">
-              <span>${s.worker_name || s.worker_id}</span>
-              <span class="opacity-70 font-mono">${s.hours || 0}h</span>
+            <div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" class="text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded border ${badgeColor} truncate hover:opacity-80 transition flex items-center justify-between">
+              <span class="truncate">${s.worker_name || s.worker_id}</span>
+              <span class="opacity-70 font-mono ml-0.5">${s.hours || 0}h</span>
             </div>
           `;
         }).join('');
 
         cell.innerHTML = `
           <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <span class="font-black font-mono text-xs ${isToday ? 'bg-amber-500 text-white px-1.5 py-0.5 rounded-lg shadow-xs' : 'text-slate-700'}">${day}</span>
-              <button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dateStr}')" title="在此日登記排班" class="w-5 h-5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 rounded-lg flex items-center justify-center text-[10px] opacity-70 group-hover:opacity-100 transition shadow-xs">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-black font-mono text-[10px] sm:text-xs ${isToday ? 'bg-amber-500 text-white px-1 sm:px-1.5 py-0.5 rounded shadow-xs' : 'text-slate-700'}">${day}</span>
+              <button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dateStr}')" title="在此日登記排班" class="w-4 h-4 sm:w-5 sm:h-5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 rounded flex items-center justify-center text-[9px] sm:text-[10px] opacity-80 transition">
                 <i class="fa-solid fa-plus"></i>
               </button>
             </div>
-            <div class="space-y-1 overflow-y-auto max-h-[68px]">
+            <div class="space-y-0.5 sm:space-y-1 overflow-y-auto max-h-[50px] sm:max-h-[68px] custom-scroll">
               ${badgesHtml}
             </div>
           </div>
@@ -912,7 +894,7 @@
       const remaining = (7 - (totalCells % 7)) % 7;
       for (let i = 0; i < remaining; i++) {
         const blank = document.createElement('div');
-        blank.className = "cal-day-cell bg-slate-50/40 p-2 opacity-40";
+        blank.className = "cal-day-cell bg-slate-50/40 p-1.5 sm:p-2 opacity-40";
         grid.appendChild(blank);
       }
     }
@@ -1097,14 +1079,14 @@
           <td class="py-3 px-3 font-bold text-slate-800">${row.student_name}</td>
           <td class="py-3 px-3 text-xs text-slate-500">${row.school} ${row.grade} ${row.class_section}</td>
           <td class="py-3 px-3">
-            <select onchange="updateRollCallField(${idx}, 'attendance', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.attendance === '出席' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (row.attendance === '請假' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')}">
+            <select onchange="updateRollCallField(${idx}, 'attendance', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.attendance === '出席' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (row.attendance === '請假' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')}">
               <option value="出席" ${row.attendance === '出席' ? 'selected' : ''}>出席</option>
               <option value="請假" ${row.attendance === '請假' ? 'selected' : ''}>請假</option>
               <option value="缺席" ${row.attendance === '缺席' ? 'selected' : ''}>缺席</option>
             </select>
           </td>
           <td class="py-3 px-3">
-            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
+            <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
               <option value="已完成" ${row.homework === '已完成' ? 'selected' : ''}>已完成</option>
               <option value="未完成" ${row.homework === '未完成' ? 'selected' : ''}>未完成</option>
               <option value="待訂正" ${row.homework === '待訂正' ? 'selected' : ''}>待訂正</option>
@@ -1112,13 +1094,13 @@
             </select>
           </td>
           <td class="py-3 px-3">
-            <select onchange="updateRollCallField(${idx}, 'signed', this.value)" class="px-2.5 py-1 border rounded-xl text-xs font-bold ${row.signed === '是' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-600 border-slate-200'}">
-              <option value="是" ${row.signed === '是' ? 'selected' : ''}>已核章 (是)</option>
-              <option value="未簽" ${row.signed === '未簽' ? 'selected' : ''}>未核章 (未簽)</option>
+            <select onchange="updateRollCallField(${idx}, 'signed', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.signed === '是' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-600 border-slate-200'}">
+              <option value="是" ${row.signed === '是' ? 'selected' : ''}>已核章</option>
+              <option value="未簽" ${row.signed === '未簽' ? 'selected' : ''}>未核章</option>
             </select>
           </td>
           <td class="py-3 px-3">
-            <input type="text" value="${row.note || ''}" onchange="updateRollCallField(${idx}, 'note', this.value)" placeholder="請假事由或服藥囑咐..." class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+            <input type="text" value="${row.note || ''}" onchange="updateRollCallField(${idx}, 'note', this.value)" placeholder="請假或叮嚀..." class="w-full min-w-[120px] px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg">
           </td>
         </tr>
       `).join('');
@@ -1173,7 +1155,7 @@
     }
 
     // -------------------------------------------------------------
-    // 3. 人員名冊管理模組
+    // 3. 人員名冊管理模組 (含永久刪除功能)
     // -------------------------------------------------------------
     async function loadUsers() {
       const tbody = document.getElementById('students-table');
@@ -1194,30 +1176,34 @@
       }
       tbody.innerHTML = list.map(u => {
         const avatar = u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=3b82f6&color=fff`;
-        let statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">在班</span>';
-        if (u.status === '退班') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">退班</span>';
-        else if (u.status === '畢業') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">畢業</span>';
-        else if (u.status === '離職') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600">離職</span>';
-        else if (u.status === '在職') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">在職</span>';
+        let statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">在班</span>';
+        if (u.status === '退班') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">退班</span>';
+        else if (u.status === '畢業') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">畢業</span>';
+        else if (u.status === '離職') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600">離職</span>';
+        else if (u.status === '在職') statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">在職</span>';
 
         const gInfo = u.guardian_name ? `${u.guardian_name} (${u.guardian_relation || '家長'}): ${u.guardian_phone || '-'}` : (u.phone || '-');
         const special = u.special_needs || u.welfare_status || u.note || '-';
 
         return `
           <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-3"><img src="${avatar}" class="w-9 h-9 rounded-2xl object-cover border border-slate-200 shadow-xs" onerror="this.src='https://ui-avatars.com/api/?name=User'"></td>
-            <td class="py-3 px-3 font-mono font-bold text-slate-800">${u.id}</td>
-            <td class="py-3 px-3 font-bold text-slate-800">${u.name}</td>
-            <td class="py-3 px-3"><span class="text-xs text-slate-500 block mb-0.5">${u.role_type || '學生'}</span>${statusBadge}</td>
-            <td class="py-3 px-3 text-xs text-slate-600 font-medium">${u.school || ''} ${u.grade || ''} ${u.class_section || ''}</td>
-            <td class="py-3 px-3 text-xs text-slate-600 font-mono">${gInfo}</td>
-            <td class="py-3 px-3 text-xs text-rose-700 max-w-xs truncate font-medium" title="${special}">${special}</td>
-            <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">🪙 ${u.points || 0}</span></td>
-            <td class="py-3 px-3 text-center space-x-1 whitespace-nowrap">
-              <button onclick="openUserModal('edit', '${u.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition"><i class="fa-solid fa-pen-to-square mr-0.5"></i>編輯</button>
-              <button onclick="changePoints('${u.id}', 1)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-bold">+1</button>
-              <button onclick="quickSetStatus('${u.id}', '退班')" title="標記退班" class="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded text-xs font-bold">退</button>
-              <button onclick="quickSetStatus('${u.id}', '畢業')" title="標記畢業" class="px-2.5 py-1 bg-slate-100 hover:bg-purple-50 text-purple-600 rounded text-xs font-bold">畢</button>
+            <td class="py-2.5 px-3"><img src="${avatar}" class="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl object-cover border border-slate-200 shadow-2xs" onerror="this.src='https://ui-avatars.com/api/?name=User'"></td>
+            <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${u.id}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-800">${u.name}</td>
+            <td class="py-2.5 px-3"><span class="text-xs text-slate-500 block mb-0.5">${u.role_type || '學生'}</span>${statusBadge}</td>
+            <td class="py-2.5 px-3 text-xs text-slate-600 font-medium">${u.school || ''} ${u.grade || ''} ${u.class_section || ''}</td>
+            <td class="py-2.5 px-3 text-xs text-slate-600 font-mono">${gInfo}</td>
+            <td class="py-2.5 px-3 text-xs text-rose-700 max-w-xs truncate font-medium" title="${special}">${special}</td>
+            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200">🪙 ${u.points || 0}</span></td>
+            <td class="py-2.5 px-3 text-center space-x-1 whitespace-nowrap">
+              <button onclick="openUserModal('edit', '${u.id}')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition"><i class="fa-solid fa-pen-to-square mr-0.5"></i>編輯</button>
+              <button onclick="changePoints('${u.id}', 1)" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-bold">+1</button>
+              <button onclick="quickSetStatus('${u.id}', '退班')" title="標記退班" class="px-2 py-1 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded text-xs font-bold">退</button>
+              <button onclick="quickSetStatus('${u.id}', '畢業')" title="標記畢業" class="px-2 py-1 bg-slate-100 hover:bg-purple-50 text-purple-600 rounded text-xs font-bold">畢</button>
+              <!-- 永久刪除人員 -->
+              <button onclick="deleteUser('${u.id}')" title="永久刪除此人員" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-xs font-bold transition">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
             </td>
           </tr>
         `;
@@ -1264,19 +1250,13 @@
         document.getElementById('form-guardian-name').value = "";
         document.getElementById('form-guardian-rel').value = "";
         document.getElementById('form-guardian-phone').value = "";
-        document.getElementById('form-emergency-name').value = "";
-        document.getElementById('form-emergency-rel').value = "";
-        document.getElementById('form-emergency-phone').value = "";
         document.getElementById('form-welfare').value = "";
-        document.getElementById('form-siblings').value = "";
-        document.getElementById('form-family-economy').value = "";
         document.getElementById('form-medical').value = "";
-        document.getElementById('form-diet').value = "";
         document.getElementById('form-special-needs').value = "";
         document.getElementById('form-avatar').value = "";
         updateAvatarPreview();
       } else {
-        document.getElementById('modal-user-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600"></i> 編輯人員與學員詳細資料`;
+        document.getElementById('modal-user-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600"></i> 編輯人員詳細資料`;
         const u = allUsers.find(x => x.id === uid);
         if (!u) return;
         idInput.disabled = true;
@@ -1298,14 +1278,8 @@
         document.getElementById('form-guardian-name').value = u.guardian_name || "";
         document.getElementById('form-guardian-rel').value = u.guardian_relation || "";
         document.getElementById('form-guardian-phone').value = u.guardian_phone || "";
-        document.getElementById('form-emergency-name').value = u.emergency_name || "";
-        document.getElementById('form-emergency-rel').value = u.emergency_relation || "";
-        document.getElementById('form-emergency-phone').value = u.emergency_phone || "";
         document.getElementById('form-welfare').value = u.welfare_status || "";
-        document.getElementById('form-siblings').value = u.siblings_count || "";
-        document.getElementById('form-family-economy').value = u.family_economy || "";
         document.getElementById('form-medical').value = u.medical_history || "";
-        document.getElementById('form-diet').value = u.dietary_restrictions || "";
         document.getElementById('form-special-needs').value = u.special_needs || u.note || "";
         document.getElementById('form-avatar').value = u.avatar_url || "";
         updateAvatarPreview();
@@ -1342,14 +1316,8 @@
         guardian_name: document.getElementById('form-guardian-name').value.trim(),
         guardian_relation: document.getElementById('form-guardian-rel').value.trim(),
         guardian_phone: document.getElementById('form-guardian-phone').value.trim(),
-        emergency_name: document.getElementById('form-emergency-name').value.trim(),
-        emergency_relation: document.getElementById('form-emergency-rel').value.trim(),
-        emergency_phone: document.getElementById('form-emergency-phone').value.trim(),
         welfare_status: document.getElementById('form-welfare').value.trim(),
-        siblings_count: document.getElementById('form-siblings').value.trim(),
-        family_economy: document.getElementById('form-family-economy').value.trim(),
         medical_history: document.getElementById('form-medical').value.trim(),
-        dietary_restrictions: document.getElementById('form-diet').value.trim(),
         special_needs: document.getElementById('form-special-needs').value.trim(),
         avatar_url: document.getElementById('form-avatar').value.trim() || null
       };
@@ -1359,6 +1327,28 @@
       alert("人員資料已成功儲存！");
       closeUserModal();
       loadUsers();
+    }
+
+    async function deleteUser(uid) {
+      const u = allUsers.find(x => x.id === uid);
+      const userName = u ? u.name : uid;
+      
+      const confirmed = confirm(`⚠️ 警告：確定要永久刪除人員【${uid} ${userName}】嗎？\n\n此操作會自資料庫徹底移除該筆名冊資料，且無法復原！`);
+      if (!confirmed) return;
+
+      try {
+        const { error } = await db.from('users').delete().eq('id', uid);
+        if (error) {
+          alert("刪除失敗：" + error.message);
+          return;
+        }
+
+        alert(`✅ 人員【${userName}】已成功刪除！`);
+        await loadUsers();
+      } catch (err) {
+        console.error(err);
+        alert("刪除連線異常，請檢查網路。");
+      }
     }
 
     async function quickSetStatus(uid, newStatus) {
@@ -1387,7 +1377,7 @@
     }
 
     // -------------------------------------------------------------
-    // 4. 輔導紀錄模組 (快捷標籤勾選自動帶入)
+    // 4. 輔導紀錄模組
     // -------------------------------------------------------------
     async function loadCounseling() {
       const { data, error } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
@@ -1402,7 +1392,7 @@
       const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班');
       const teachers = allUsers.filter(u => u.role_type && u.role_type !== '學生');
 
-      document.getElementById('counsel-filter-student').innerHTML = `<option value="">全部學童輔導紀錄 (${students.length} 人)</option>` +
+      document.getElementById('counsel-filter-student').innerHTML = `<option value="">全部學童 (${students.length})</option>` +
         students.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
 
       document.getElementById('counsel-student-select').innerHTML = `<option value="">請選擇學童...</option>` +
@@ -1420,7 +1410,7 @@
       const tags = counselTagsDict[cat] || counselTagsDict["課業輔導"];
       
       tagsBox.innerHTML = tags.map(tag => `
-        <button type="button" onclick="addTagToContent('${tag}')" class="px-3 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-700 rounded-xl text-xs font-bold transition shadow-2xs hover:scale-105 active:scale-95">
+        <button type="button" onclick="addTagToContent('${tag}')" class="px-2.5 py-1 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-700 rounded-lg text-xs font-bold transition shadow-2xs">
           + ${tag}
         </button>
       `).join('');
@@ -1522,7 +1512,6 @@
       document.getElementById('counsel-content').value = "";
       document.getElementById('counsel-followup').value = "";
       document.getElementById('counsel-student-info-box').classList.add('hidden');
-      
       switchCounselTags();
       document.getElementById('modal-counseling-add').classList.remove('hidden');
     }
@@ -1596,13 +1585,13 @@
       if (!val) return;
 
       const tip = document.getElementById('scan-tip');
-      tip.className = "mt-3.5 text-xs font-bold text-blue-700 bg-blue-50 block";
+      tip.className = "mt-3 text-xs font-bold text-blue-700 bg-blue-50 block";
       tip.textContent = "打卡處理中...";
 
       try {
         const { data: user, error } = await db.from('users').select('*').eq('id', val).maybeSingle();
         if (error || !user) {
-          tip.className = "mt-3.5 text-xs font-bold text-rose-700 bg-rose-50 block";
+          tip.className = "mt-3 text-xs font-bold text-rose-700 bg-rose-50 block";
           tip.textContent = `❌ 查無編號【${val}】，請確認是否已建檔。`;
           input.select();
           return;
@@ -1642,7 +1631,7 @@
         loadLogs();
       } catch (err) {
         console.error(err);
-        tip.className = "mt-3.5 text-xs font-bold text-rose-700 bg-rose-50 block";
+        tip.className = "mt-3 text-xs font-bold text-rose-700 bg-rose-50 block";
         tip.textContent = "連線失敗，請檢查網路。";
       }
     }
@@ -1668,12 +1657,12 @@
 
         return `
           <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-4 font-mono text-slate-500">${t}</td>
-            <td class="py-3 px-4"><img src="${avatar}" class="w-8 h-8 rounded-full object-cover shadow-2xs"></td>
-            <td class="py-3 px-4 font-bold font-mono text-slate-800">${r.target_id}</td>
-            <td class="py-3 px-4 font-bold text-slate-800">${r.target_name || '-'}</td>
-            <td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${role === '學生' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}">${role}</span></td>
-            <td class="py-3 px-4 text-slate-500">${r.action_text || '到班簽到'}</td>
+            <td class="py-2.5 px-3 sm:px-4 font-mono text-slate-500">${t}</td>
+            <td class="py-2.5 px-3 sm:px-4"><img src="${avatar}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"></td>
+            <td class="py-2.5 px-3 sm:px-4 font-bold font-mono text-slate-800">${r.target_id}</td>
+            <td class="py-2.5 px-3 sm:px-4 font-bold text-slate-800">${r.target_name || '-'}</td>
+            <td class="py-2.5 px-3 sm:px-4"><span class="px-2 py-0.5 rounded-full text-xs font-bold ${role === '學生' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}">${role}</span></td>
+            <td class="py-2.5 px-3 sm:px-4 text-slate-500">${r.action_text || '到班簽到'}</td>
           </tr>
         `;
       }).join('');
@@ -1698,7 +1687,7 @@
           <td class="py-3 px-3 text-xs text-slate-700 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/50">${m.parent_message}</td>
           <td class="py-3 px-3 text-xs text-emerald-800 font-medium">${m.reply_content || '<span class="text-slate-400 italic">尚未回覆</span>'}</td>
           <td class="py-3 px-3 text-center">
-            <button onclick="replyParentMsg(${m.id})" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg transition shadow-2xs">回覆</button>
+            <button onclick="replyParentMsg(${m.id})" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg transition">回覆</button>
           </td>
         </tr>
       `).join('');
@@ -1712,7 +1701,7 @@
     }
 
     // -------------------------------------------------------------
-    // 7. 同工登入邏輯 (支援姓名或人員編號 + 手機號碼)
+    // 7. 同工登入邏輯 (支援人員編號或姓名 + 手機號碼)
     // -------------------------------------------------------------
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
@@ -1723,7 +1712,6 @@
       const errEl = document.getElementById('login-err');
       errEl.classList.add('hidden');
 
-      // 同時支援「人員編號」或「姓名」查詢
       const { data: users, error } = await db.from('users')
         .select('*')
         .or(`id.ilike.${rawInput},name.eq.${rawInput}`)
@@ -1737,8 +1725,6 @@
 
       const user = users[0];
       const dbPhone = (user.phone || '').toString().split('.')[0].replace(/\D/g, '');
-
-      // 比對電話號碼
       const cleanInputPhone = pwd.replace(/^0/, '');
       const cleanDbPhone = dbPhone.replace(/^0/, '');
 
@@ -1749,7 +1735,7 @@
         closeLoginModal();
         switchTab('schedules');
       } else {
-        errEl.textContent = "密碼錯誤 (請輸入該同工的手機號碼)！";
+        errEl.textContent = "密碼錯誤 (請輸入手機號碼)！";
         errEl.classList.remove('hidden');
       }
     }
