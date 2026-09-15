@@ -16,7 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- QRCode.js (報表生成 QR Code 專用) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- Html5-Qrcode (相機 QR Code 掃描) -->
+  <!-- Html5-Qrcode (手機鏡頭實時掃描 QR Code 專用) -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <!-- face-api.js (前端輕量級 AI 人臉辨識模組) -->
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
@@ -43,6 +43,10 @@
     .cal-day-cell { min-height: 85px; transition: all 0.15s ease; }
     @media (min-width: 640px) { .cal-day-cell { min-height: 110px; } }
     .cal-day-cell:hover { background-color: #f1f5f9; }
+
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 
     @media print {
       body { background-color: #ffffff !important; padding: 0 !important; }
@@ -229,7 +233,7 @@
           <span class="text-[11px] text-slate-400 font-medium">即時更新</span>
         </div>
         
-        <!-- 手機專屬直式卡片清單 (完全免左右滑動) -->
+        <!-- 手機直式卡片清單 (免左右滑動) -->
         <div class="block md:hidden space-y-2.5" id="logs-cards-mobile">
           <p class="text-center text-xs text-slate-400 py-4">載入今日動態中...</p>
         </div>
@@ -353,7 +357,7 @@
           <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-3 sm:p-4"><span class="text-[11px] sm:text-xs text-purple-600 font-bold block">聯絡簿核章</span><span class="text-lg sm:text-2xl font-black text-purple-900 mt-0.5 block" id="rc-stat-signed">0 人</span></div>
         </div>
 
-        <!-- 手機版直式卡片點名 (完全免向左滑動) -->
+        <!-- 手機直式卡片點名 (免滑動) -->
         <div class="block md:hidden space-y-3" id="rollcall-cards-mobile">
           <p class="text-center text-xs text-slate-400 py-6">載入點名名冊中...</p>
         </div>
@@ -401,7 +405,7 @@
           </div>
         </div>
 
-        <!-- 手機版名冊直式卡片 (完全免向左滑動) -->
+        <!-- 手機名冊直式卡片 (免滑動) -->
         <div class="block md:hidden space-y-3" id="students-cards-mobile">
           <p class="text-center text-xs text-slate-400 py-6">載入名冊中...</p>
         </div>
@@ -563,7 +567,7 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 (支援現場相機拍照採樣特徵碼) -->
+  <!-- 人員建檔 / 編輯 彈窗 (支援現場相機拍照採樣特徵碼並上傳 Supabase Storage) -->
   <div id="modal-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -595,11 +599,11 @@
                 </button>
                 <span id="face-extract-tip" class="text-[11px] font-bold text-slate-400"></span>
               </div>
-              <!-- 手機現場拍照畫布 (隱藏或預覽) -->
+              <!-- 手機現場拍照畫布 -->
               <div id="camera-snap-box" class="hidden p-2 bg-slate-900 rounded-2xl text-center space-y-2">
                 <video id="snap-video" autoplay playsinline muted class="w-full max-w-xs mx-auto rounded-xl aspect-square object-cover"></video>
                 <div class="flex justify-center space-x-2">
-                  <button type="button" onclick="captureAndExtractFace()" class="px-3 py-1 bg-emerald-500 text-white font-bold rounded-lg text-xs">📸 按此拍攝並擷取</button>
+                  <button type="button" onclick="captureAndExtractFace()" class="px-3 py-1 bg-emerald-500 text-white font-bold rounded-lg text-xs">📸 按此拍攝並儲存</button>
                   <button type="button" onclick="stopCameraSnap()" class="px-3 py-1 bg-slate-700 text-white rounded-lg text-xs">取消</button>
                 </div>
               </div>
@@ -766,7 +770,7 @@
     let faceVideoEl = null;
     let faceCanvasEl = null;
     let faceStream = null;
-    let labeledFaceDescriptors = []; // 特徵庫
+    let labeledFaceDescriptors = [];
     let faceMatcher = null;
     let lastFaceMatchTime = {}; // 10秒防重複簽到
 
@@ -822,7 +826,6 @@
     }
 
     function switchTab(tabId) {
-      // 離開打卡頁時關閉相機省電
       if (tabId !== 'checkin') {
         stopFaceRecognition();
         stopCameraScanner();
@@ -872,7 +875,6 @@
       }
     }
 
-    // 構建人臉特徵比對器 (FaceMatcher)
     function buildFaceMatcher() {
       labeledFaceDescriptors = [];
       allUsers.forEach(u => {
@@ -882,7 +884,7 @@
         }
       });
       if (labeledFaceDescriptors.length > 0) {
-        faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.48); // 距離小於 0.48 視為同一人
+        faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.48);
       } else {
         faceMatcher = null;
       }
@@ -897,7 +899,6 @@
     }
 
     async function startFaceRecognition() {
-      // 若開著 QR 掃描則先關閉
       if (isCameraScanning) stopCameraScanner();
 
       const box = document.getElementById('face-recognition-container');
@@ -915,13 +916,11 @@
         return;
       }
 
-      // 確保名冊特徵庫已構建
       buildFaceMatcher();
       if (!faceMatcher) {
         document.getElementById('face-status-text').textContent = "⚠️ 目前名冊尚無學童臉部特徵，請先至人員名冊拍照建檔！";
       }
 
-      // 開啟手機後置鏡頭
       try {
         faceStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
@@ -952,7 +951,6 @@
       document.getElementById('btn-face-text').textContent = "👤 開啟手機人臉辨識打卡";
     }
 
-    // 即時偵測循環
     async function startFaceDetectionLoop() {
       if (!isFaceDetecting || !faceVideoEl) return;
 
@@ -986,9 +984,8 @@
                 if (bestMatch.label !== 'unknown') {
                   const matchedUser = allUsers.find(u => u.id === bestMatch.label);
                   labelText = matchedUser ? `${matchedUser.name} (${Math.round((1 - bestMatch.distance) * 100)}%)` : bestMatch.label;
-                  strokeColor = "#10b981"; // 辨識成功亮綠色
+                  strokeColor = "#10b981";
 
-                  // 觸發打卡 (附帶 10 秒防抖防連續刷卡)
                   const now = Date.now();
                   if (!lastFaceMatchTime[bestMatch.label] || (now - lastFaceMatchTime[bestMatch.label] > 10000)) {
                     lastFaceMatchTime[bestMatch.label] = now;
@@ -998,7 +995,6 @@
                 }
               }
 
-              // 在畫布上即時畫出瞄準框
               ctx.strokeStyle = strokeColor;
               ctx.lineWidth = 3;
               ctx.strokeRect(box.x, box.y, box.width, box.height);
@@ -1010,11 +1006,11 @@
         } catch (e) {
           console.warn("Face loop issue:", e);
         }
-      }, 250); // 每秒採樣 4 次，極度流暢且不卡頓
+      }, 250);
     }
 
     // =============================================================
-    // 名冊編輯時：手機現場拍照 / 網址 自動擷取臉部特徵向量 (128維)
+    // 名冊編輯：手機拍照直存 Supabase Storage (avatars) 並擷取 128 維特徵碼
     // =============================================================
     async function startCameraSnapForFace() {
       await loadFaceApiModels();
@@ -1044,13 +1040,15 @@
     async function captureAndExtractFace() {
       const video = document.getElementById('snap-video');
       const tip = document.getElementById('face-extract-tip');
-      tip.textContent = "AI 臉部分析特徵中...";
+      const uid = document.getElementById('form-id').value.trim().toUpperCase() || 'TEMP_' + Date.now();
+      
+      tip.textContent = "AI 正在分析特徵並上傳儲存桶...";
 
-      // 將畫面轉成臨時 Canvas
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
 
       const detection = await faceapi.detectSingleFace(
         canvas, 
@@ -1058,26 +1056,53 @@
       ).withFaceLandmarks(true).withFaceDescriptor();
 
       if (!detection) {
-        alert("⚠️ 未偵測到清晰人臉，請學童摘下口罩直視鏡頭再拍一次！");
+        alert("⚠️ 未偵測到清晰正面人臉！請學童摘下口罩直視鏡頭再拍一次。");
         tip.textContent = "❌ 偵測失敗";
         return;
       }
 
-      // 擷取成功：存成 128 維陣列
       const descriptorArr = Array.from(detection.descriptor);
       document.getElementById('form-face-descriptor').value = JSON.stringify(descriptorArr);
       document.getElementById('face-enrolled-badge').classList.remove('hidden');
-      tip.textContent = "✅ 現場臉部特徵擷取成功！";
 
-      // 同步預覽大頭照
-      const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      document.getElementById('preview-avatar').src = photoDataUrl;
-      document.getElementById('form-avatar').value = photoDataUrl;
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          tip.textContent = "圖片轉換失敗";
+          return;
+        }
 
-      stopCameraSnap();
+        const fileName = `${uid}_${Date.now()}.jpg`;
+        const filePath = `students/${fileName}`;
+
+        try {
+          const { data, error } = await db.storage.from('avatars').upload(filePath, blob, {
+            contentType: 'image/jpeg',
+            upsert: true
+          });
+
+          if (error) {
+            console.error("Storage upload error:", error);
+            const localDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            document.getElementById('preview-avatar').src = localDataUrl;
+            document.getElementById('form-avatar').value = localDataUrl;
+            tip.textContent = "✅ 特徵已擷取 (圖片存本地)";
+          } else {
+            const { data: publicUrlData } = db.storage.from('avatars').getPublicUrl(filePath);
+            const publicUrl = publicUrlData.publicUrl;
+
+            document.getElementById('preview-avatar').src = publicUrl;
+            document.getElementById('form-avatar').value = publicUrl;
+            tip.textContent = "✅ 已存至 Supabase 儲存桶並完成 AI 特徵建檔！";
+          }
+        } catch (uploadErr) {
+          console.error(uploadErr);
+          tip.textContent = "⚠️ 上傳儲存庫連線異常";
+        }
+
+        stopCameraSnap();
+      }, 'image/jpeg', 0.85);
     }
 
-    // 透過照片網址自動擷取特徵
     async function autoExtractFaceFromUrl() {
       const url = document.getElementById('form-avatar').value.trim();
       const tip = document.getElementById('face-extract-tip');
@@ -1099,7 +1124,7 @@
           tip.textContent = "⚠️ 照片未識別到正面人臉";
         }
       } catch (err) {
-        tip.textContent = "（跨域限制需改用拍照）";
+        tip.textContent = "（跨域限制需改用手機現場拍照）";
       }
     }
 
@@ -1239,7 +1264,7 @@
       
       let stuCount = 0, staffCount = 0;
       
-      // 手機專屬直式卡片清單 (免滑動)
+      // 手機專屬直式卡片清單 (完全免滑動)
       mobileCards.innerHTML = data.map(r => {
         const role = r.role || (r.target_id && r.target_id.includes('S') ? '學生' : '教職員');
         const t = new Date(r.check_time).toLocaleTimeString('zh-TW', { hour12: false });
@@ -1366,7 +1391,6 @@
               </div>
               <p class="text-xs text-slate-500 mt-0.5">${row.school} ${row.grade} ${row.class_section}</p>
             </div>
-            <!-- 出席狀態切換 -->
             <select onchange="updateRollCallField(${idx}, 'attendance', this.value)" class="px-2.5 py-1.5 border rounded-xl text-xs font-bold ${row.attendance === '出席' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : (row.attendance === '請假' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'bg-rose-50 text-rose-700 border-rose-300')}">
               <option value="出席" ${row.attendance === '出席' ? 'selected' : ''}>出席</option>
               <option value="請假" ${row.attendance === '請假' ? 'selected' : ''}>請假</option>
@@ -1667,7 +1691,6 @@
         document.getElementById('form-special-needs').value = u.special_needs || u.note || "";
         document.getElementById('form-avatar').value = u.avatar_url || "";
         
-        // 檢查是否已有特徵碼
         if (u.face_descriptor && Array.isArray(u.face_descriptor)) {
           document.getElementById('form-face-descriptor').value = JSON.stringify(u.face_descriptor);
           document.getElementById('face-enrolled-badge').classList.remove('hidden');
@@ -1729,7 +1752,7 @@
       alert("人員資料及臉部特徵已成功儲存！");
       closeUserModal();
       await loadUsers();
-      buildFaceMatcher(); // 更新記憶體特徵庫
+      buildFaceMatcher();
     }
 
     async function deleteUser(uid) {
