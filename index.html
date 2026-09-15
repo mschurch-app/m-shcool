@@ -325,16 +325,18 @@
           return;
         }
 
-        const isStaff = val.includes('T') || val.includes('M') || val.includes('P');
+        // 判斷身分 (S 為學生，T/M/P 為教職員工)
+        const isStaff = val.includes('T') || val.includes('M') || val.includes('P') || user.role_type !== '學生';
         const nowIso = new Date().toISOString();
         const action = isStaff ? "教職出勤打卡" : "+1 點 (準時簽到)";
+        const roleLabel = isStaff ? (user.role_type || '教職員') : '學生';
 
         // 寫入出勤紀錄
         await db.from('check_in_logs').insert([{
           check_time: nowIso,
           target_id: user.id,
           target_name: user.name,
-          role: isStaff ? '教職員' : '學生',
+          role: roleLabel,
           action_text: action
         }]);
 
@@ -354,7 +356,7 @@
         // 開啟彈窗
         document.getElementById('modal-name').textContent = `${user.name} 簽到成功！`;
         document.getElementById('modal-sub').textContent = isStaff 
-          ? `已完成打卡，感謝您的服事！`
+          ? `已完成出勤打卡，感謝您的服事！`
           : `夢想點數 +1 點！目前總點數：${(user.points || 0) + 1} 點`;
         document.getElementById('modal-verse').textContent = verses[Math.floor(Math.random() * verses.length)];
         document.getElementById('success-modal').classList.remove('hidden');
@@ -364,7 +366,7 @@
         loadLogs();
       } catch (err) {
         console.error(err);
-        showAlert("❌ 連線異常或權限受限，請確認 Supabase RLS 是否已停用。", "bg-rose-50 text-rose-700");
+        showAlert("❌ 連線異常或寫入失敗，請稍後再試。", "bg-rose-50 text-rose-700");
       }
     }
 
@@ -389,7 +391,7 @@
       }
     });
 
-    // 載入打卡紀錄
+    // 載入打卡紀錄 (修正身分 undefined 與狀態判斷)
     async function loadLogs() {
       const tbody = document.getElementById('logs-table');
       const { data, error } = await db.from('check_in_logs').select('*').order('check_time', { ascending: false }).limit(10);
@@ -404,19 +406,28 @@
 
       let stuCount = 0, staffCount = 0;
       tbody.innerHTML = data.map(r => {
-        if (r.role === '學生') stuCount++; else staffCount++;
+        // 身分防呆推導，若為空自動依照代碼字母判斷
+        let roleName = r.role;
+        if (!roleName || roleName === 'undefined') {
+          roleName = (r.target_id && r.target_id.includes('S')) ? '學生' : '教職員';
+        }
+
+        if (roleName === '學生') stuCount++; else staffCount++;
+        
         const t = new Date(r.check_time).toLocaleTimeString('zh-TW', { hour12: false });
+        const actionStatus = (r.action_text && r.action_text !== 'undefined') ? r.action_text : '到班簽到';
+
         return `
           <tr class="hover:bg-slate-50 transition">
             <td class="py-3 px-4 font-mono text-slate-500 text-xs">${t}</td>
             <td class="py-3 px-4 font-bold text-slate-800 font-mono">${r.target_id}</td>
-            <td class="py-3 px-4">${r.target_name}</td>
+            <td class="py-3 px-4 font-bold text-slate-700">${r.target_name || '-'}</td>
             <td class="py-3 px-4">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${r.role === '學生' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}">
-                ${r.role}
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${roleName === '學生' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'}">
+                ${roleName}
               </span>
             </td>
-            <td class="py-3 px-4 text-slate-500 text-xs">${r.action_text || ''}</td>
+            <td class="py-3 px-4 text-slate-500 text-xs font-medium">${actionStatus}</td>
           </tr>
         `;
       }).join('');
@@ -447,7 +458,7 @@
         <tr class="hover:bg-slate-50 transition">
           <td class="py-3 px-4 font-mono font-bold text-slate-800">${u.id}</td>
           <td class="py-3 px-4 font-bold">${u.name}</td>
-          <td class="py-3 px-4 text-xs text-slate-500">${u.role_type || '學生'}</td>
+          <td class="py-3 px-4 text-xs text-slate-500">${u.role_type || (u.id.includes('S') ? '學生' : '教職員')}</td>
           <td class="py-3 px-4 text-xs text-slate-500">${u.school || ''} ${u.grade || ''}</td>
           <td class="py-3 px-4">
             <span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200/50">
@@ -466,7 +477,7 @@
     function filterUsers() {
       const q = document.getElementById('search-user-input').value.trim().toLowerCase();
       renderUsers(cachedUsers.filter(u => 
-        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.name && u.name.toLowerCase().includes(q)) || 
         (u.id && u.id.toLowerCase().includes(q)) ||
         (u.school && u.school.toLowerCase().includes(q))
       ));
