@@ -14,7 +14,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
     body { font-family: 'Noto Sans TC', sans-serif; }
     .tab-active { background-color: rgba(255, 255, 255, 0.22); color: #ffffff; font-weight: 700; border-bottom: 3px solid #facc15; }
-    .cal-day-cell { min-height: 105px; transition: all 0.15s ease; }
+    .cal-day-cell { min-height: 110px; transition: all 0.15s ease; }
     .cal-day-cell:hover { background-color: #f8fafc; }
   </style>
 </head>
@@ -31,7 +31,7 @@
           <div>
             <div class="flex items-center space-x-2">
               <h1 class="text-base sm:text-lg font-bold">M+ 大雅教會</h1>
-              <span class="bg-blue-900/60 text-blue-200 text-xs px-2 py-0.5 rounded-full border border-blue-400/30">課輔行政全功能</span>
+              <span class="bg-blue-900/60 text-blue-200 text-xs px-2 py-0.5 rounded-full border border-blue-400/30">課輔行政管理系統</span>
             </div>
             <p class="text-xs text-blue-200 font-mono" id="clock-display">載入中...</p>
           </div>
@@ -54,16 +54,16 @@
         </div>
       </div>
 
-      <!-- 模組分頁選單 -->
+      <!-- 系統全功能模組導航選單 -->
       <nav class="flex space-x-1 overflow-x-auto pb-1 text-xs sm:text-sm font-medium border-t border-blue-600/50 pt-1">
         <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-active px-3 py-2 rounded-t-lg transition flex items-center space-x-1 whitespace-nowrap">
           <i class="fa-solid fa-qrcode"></i><span>刷卡打卡</span>
         </button>
-        <button onclick="requireTab('rollcall')" id="nav-rollcall" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
-          <i class="fa-solid fa-clipboard-check"></i><span>點名與聯絡簿</span>
-        </button>
         <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
           <i class="fa-solid fa-calendar-check"></i><span>排班與行事曆</span>
+        </button>
+        <button onclick="requireTab('rollcall')" id="nav-rollcall" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
+          <i class="fa-solid fa-clipboard-check"></i><span>點名與聯絡簿</span>
         </button>
         <button onclick="requireTab('students')" id="nav-students" class="px-3 py-2 rounded-t-lg text-blue-100 hover:bg-white/10 transition flex items-center space-x-1 whitespace-nowrap">
           <i class="fa-solid fa-users"></i><span>學員與人員名冊</span>
@@ -126,42 +126,122 @@
       </div>
     </div>
 
-    <!-- 2. 課堂點名與聯絡簿核章 (完整原版每日陪讀工作台全面恢復) -->
+    <!-- 2. 排班管理與互動行事曆 (自動工時計算 + 點選排班) -->
+    <div id="tab-schedules" class="hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        
+        <!-- 頂部工具列 -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-calendar-days text-blue-600"></i> 教職員排班與互動行事曆
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">起訖時間自動計算工時；點選日曆上的日期可立即登記排班</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <!-- 視圖切換按鈕組 -->
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
+              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-blue-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-calendar"></i><span>行事曆月曆</span>
+              </button>
+              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1">
+                <i class="fa-solid fa-list-ul"></i><span>清單列表</span>
+              </button>
+            </div>
+
+            <!-- 同工篩選 -->
+            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-600">
+              <option value="">全部同工與老師</option>
+            </select>
+
+            <!-- 手動新增排班 -->
+            <button onclick="openScheduleModal('add')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+              <i class="fa-solid fa-plus"></i><span>排班登記</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 統計數據看板 -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5"><span class="text-xs text-blue-600 font-bold block">本月排定班次</span><span class="text-xl font-black text-blue-900" id="total-count-badge">0 班</span></div>
+          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5"><span class="text-xs text-indigo-600 font-bold block">排定總工時</span><span class="text-xl font-black text-indigo-900" id="total-shift-badge">0 小時</span></div>
+          <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3.5"><span class="text-xs text-emerald-600 font-bold block">服事同工人數</span><span class="text-xl font-black text-emerald-900" id="total-workers-badge">0 人</span></div>
+          <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-3.5"><span class="text-xs text-amber-600 font-bold block">預估薪資支出</span><span class="text-xl font-black text-amber-900" id="total-wage-badge">$0</span></div>
+        </div>
+
+        <!-- 視圖 A: 互動行事曆月曆視圖 -->
+        <div id="schedule-calendar-view" class="space-y-3">
+          <div class="flex justify-between items-center bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200">
+            <div class="flex items-center space-x-2">
+              <button onclick="prevMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100 transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+              <h3 class="text-base font-black text-slate-800 font-mono" id="calendar-month-title">2026 年 09 月</h3>
+              <button onclick="nextMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100 transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+            </div>
+            <button onclick="goToCurrentMonth()" class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100 transition">回到本月</button>
+          </div>
+
+          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            <div class="grid grid-cols-7 text-center font-bold text-xs py-2.5 bg-slate-100/80 border-b border-slate-200 text-slate-600">
+              <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-200 text-xs"></div>
+          </div>
+          <p class="text-xs text-slate-400 italic text-center">💡 點擊任何日期方格右上角的「+」或空白處，即可直接為該日登記排班（工時自動計算）！</p>
+        </div>
+
+        <!-- 視圖 B: 清單表格視圖 -->
+        <div id="schedule-list-view" class="hidden overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+              <tr>
+                <th class="py-3 px-3">排班日期</th>
+                <th class="py-3 px-3">同工編號</th>
+                <th class="py-3 px-3">同工姓名</th>
+                <th class="py-3 px-3">班別時段</th>
+                <th class="py-3 px-3">負責工作</th>
+                <th class="py-3 px-3">工時</th>
+                <th class="py-3 px-3 text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="schedules-list" class="divide-y divide-slate-100 font-medium">
+              <tr><td colspan="7" class="py-6 text-center text-slate-400">載入排班中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3. 課堂點名與作業聯絡簿核章 -->
     <div id="tab-rollcall" class="hidden space-y-6">
       <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
         
-        <!-- 頂部功能區：日期選擇、批次操作與儲存 -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div>
             <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-clipboard-check text-blue-600"></i> 課堂點名與作業聯絡簿核章
             </h2>
-            <p class="text-xs text-slate-400 mt-1">管理孩子每日到班狀況、作業訂正完成度、學校聯絡簿簽名與家長請假連動</p>
+            <p class="text-xs text-slate-400 mt-1">管理每日學童到班、學校作業訂正進度與聯絡簿親師簽核</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <!-- 點名日期選擇 -->
             <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono focus:outline-none focus:border-blue-600">
-            <!-- 一鍵全部出席 -->
             <button onclick="batchSetAll('attendance', '出席')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
               <i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席
             </button>
-            <!-- 一鍵作業全完成 -->
             <button onclick="batchSetAll('homework', '已完成')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
               <i class="fa-solid fa-book mr-1 text-blue-600"></i>作業全完成
             </button>
-            <!-- 一鍵全體已核章 -->
-            <button onclick="batchSetAll('sign', '是')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+            <button onclick="batchSetAll('signed', '是')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
               <i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體已核章
             </button>
-            <!-- 儲存當天點名紀錄按鈕 -->
             <button onclick="saveRollCallSheet()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
               <i class="fa-solid fa-floppy-disk"></i><span>儲存點名紀錄</span>
             </button>
           </div>
         </div>
 
-        <!-- 點名進度看板 -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5"><span class="text-xs text-blue-600 font-bold block">應到學員人數</span><span class="text-xl font-black text-blue-900" id="rc-stat-total">0 人</span></div>
           <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3.5"><span class="text-xs text-emerald-600 font-bold block">實到出席人數</span><span class="text-xl font-black text-emerald-900" id="rc-stat-attend">0 人</span></div>
@@ -169,7 +249,6 @@
           <div class="bg-purple-50/60 border border-purple-100 rounded-2xl p-3.5"><span class="text-xs text-purple-600 font-bold block">聯絡簿已核章</span><span class="text-xl font-black text-purple-900" id="rc-stat-signed">0 人</span></div>
         </div>
 
-        <!-- 點名與核章工作表 -->
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs sm:text-sm">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
@@ -178,9 +257,9 @@
                 <th class="py-3 px-3">學生姓名</th>
                 <th class="py-3 px-3">學校 / 年級</th>
                 <th class="py-3 px-3">出席狀態</th>
-                <th class="py-3 px-3">學校作業完成狀況</th>
+                <th class="py-3 px-3">學校作業狀況</th>
                 <th class="py-3 px-3">聯絡簿核章</th>
-                <th class="py-3 px-3">備註 (家長請假 / 叮嚀)</th>
+                <th class="py-3 px-3">備註 (請假事由 / 叮嚀)</th>
               </tr>
             </thead>
             <tbody id="rollcall-table-body" class="divide-y divide-slate-100 font-medium">
@@ -192,66 +271,13 @@
       </div>
     </div>
 
-    <!-- 3. 教職員排班管理 (行事曆 + 清單) -->
-    <div id="tab-schedules" class="hidden space-y-6">
-      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-          <div>
-            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-blue-600"></i> 教職員排班與互動行事曆</h2>
-            <p class="text-xs text-slate-400 mt-1">點擊日曆上的任一天即可快速登記排班，隨時切換月曆或清單檢視</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
-              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-blue-700 transition flex items-center gap-1"><i class="fa-solid fa-calendar"></i><span>行事曆月曆</span></button>
-              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1"><i class="fa-solid fa-list-ul"></i><span>清單列表</span></button>
-            </div>
-            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
-            <button onclick="openScheduleModal('add')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5"><i class="fa-solid fa-plus"></i><span>排班登記</span></button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5"><span class="text-xs text-blue-600 font-bold block">本月排定班次</span><span class="text-xl font-black text-blue-900" id="total-count-badge">0 班</span></div>
-          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5"><span class="text-xs text-indigo-600 font-bold block">排定總工時</span><span class="text-xl font-black text-indigo-900" id="total-shift-badge">0 小時</span></div>
-          <div class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3.5"><span class="text-xs text-emerald-600 font-bold block">服事同工人數</span><span class="text-xl font-black text-emerald-900" id="total-workers-badge">0 人</span></div>
-          <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-3.5"><span class="text-xs text-amber-600 font-bold block">預估薪資支出</span><span class="text-xl font-black text-amber-900" id="total-wage-badge">$0</span></div>
-        </div>
-
-        <div id="schedule-calendar-view" class="space-y-3">
-          <div class="flex justify-between items-center bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200">
-            <div class="flex items-center space-x-2">
-              <button onclick="prevMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-              <h3 class="text-base font-black text-slate-800 font-mono" id="calendar-month-title">2026 年 09 月</h3>
-              <button onclick="nextMonth()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-            </div>
-            <button onclick="goToCurrentMonth()" class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100">回到本月</button>
-          </div>
-          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-            <div class="grid grid-cols-7 text-center font-bold text-xs py-2.5 bg-slate-100/80 border-b border-slate-200 text-slate-600">
-              <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
-            </div>
-            <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-200 text-xs"></div>
-          </div>
-        </div>
-
-        <div id="schedule-list-view" class="hidden overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
-              <tr><th class="py-3 px-3">排班日期</th><th class="py-3 px-3">同工編號</th><th class="py-3 px-3">同工姓名</th><th class="py-3 px-3">班別時段</th><th class="py-3 px-3">負責工作</th><th class="py-3 px-3">工時</th><th class="py-3 px-3 text-center">操作</th></tr>
-            </thead>
-            <tbody id="schedules-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="7" class="py-6 text-center text-slate-400">載入排班中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. 學員與人員名冊 (完整社工收案欄位) -->
+    <!-- 4. 學員與人員名冊 (完整社工收案/特教欄位) -->
     <div id="tab-students" class="hidden space-y-6">
       <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-address-book text-blue-600"></i> 學員與人員全資料管理</h2>
-            <p class="text-xs text-slate-400 mt-1">包含社福弱勢身分、雙家長接送聯絡人、身心健康特教紀錄與照片完整檢視</p>
+            <p class="text-xs text-slate-400 mt-1">包含社福身分、身分證字號、雙家長電話、疾病過敏與特教叮嚀</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
@@ -309,7 +335,7 @@
 
   <!-- ======================== 彈窗區域 ======================== -->
 
-  <!-- 排班彈窗 -->
+  <!-- 排班彈窗 (起訖時間自動計算工時) -->
   <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -320,14 +346,32 @@
         <input type="hidden" id="sch-edit-id" value="">
         <div><label class="block font-bold text-slate-600 mb-1">排班日期 *</label><input type="date" id="sch-date" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono"></div>
         <div><label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label><select id="sch-worker-select" onchange="onWorkerSelectChange()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select></div>
+        
+        <!-- 起訖時間 -->
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">班別時段 *</label><input type="text" id="sch-shift" placeholder="例: 16:00 - 18:00" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">工時 (小時) *</label><input type="number" step="0.5" id="sch-hours" value="2" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">開始時間 <span class="text-rose-500">*</span></label>
+            <input type="time" id="sch-start-time" value="16:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">結束時間 <span class="text-rose-500">*</span></label>
+            <input type="time" id="sch-end-time" value="18:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
         </div>
+
+        <!-- 工時自動核算卡片 -->
+        <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-100 flex justify-between items-center">
+          <span class="text-xs font-bold text-blue-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-calculator"></i> 系統自動核算工時：
+          </span>
+          <span class="text-base font-black text-blue-900 font-mono" id="sch-hours-display">2.0 小時</span>
+          <input type="hidden" id="sch-hours-val" value="2">
+        </div>
+
         <div><label class="block font-bold text-slate-600 mb-1">負責工作 / 服事內容</label><input type="text" id="sch-job" placeholder="例: 四年級課輔陪伴" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
         <div class="flex space-x-2 pt-3 border-t">
           <button type="button" onclick="closeScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold shadow">確認儲存</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold shadow">確認儲存班表</button>
         </div>
       </form>
     </div>
@@ -397,7 +441,7 @@
         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
           <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福關懷、健康特質與特教學習</h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label class="block font-bold text-slate-600 mb-1">家庭福利身分</label><input type="text" id="form-welfare" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">家庭福利身分</label><input type="text" id="form-welfare" placeholder="例: 單親、低收入戶、隔代教養" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">家中兄弟姊妹數 / 排行</label><input type="text" id="form-siblings" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
           <div><label class="block font-bold text-slate-600 mb-1">家庭經濟與父母就業備註</label><input type="text" id="form-family-economy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
@@ -474,7 +518,7 @@
     let allUsers = [];
     let staffList = [];
     let rawSchedules = [];
-    let activeRollCallList = []; // 當前編輯的點名表格資料
+    let activeRollCallList = [];
     let currentUser = null;
 
     let currentCalYear = 2026;
@@ -505,7 +549,7 @@
     }
 
     function switchTab(tabId) {
-      ['checkin', 'rollcall', 'schedules', 'students', 'counseling', 'messages'].forEach(id => {
+      ['checkin', 'schedules', 'rollcall', 'students', 'counseling', 'messages'].forEach(id => {
         const el = document.getElementById(`tab-${id}`);
         if (el) el.classList.add('hidden');
         const nav = document.getElementById(`nav-${id}`);
@@ -517,180 +561,15 @@
       if (activeNav) activeNav.className = "tab-active px-3 py-2 rounded-t-lg transition flex items-center space-x-1 whitespace-nowrap";
 
       if (tabId === 'checkin') { loadLogs(); setTimeout(() => document.getElementById('scan-code-input').focus(), 150); }
-      if (tabId === 'rollcall') initRollCallTab();
       if (tabId === 'schedules') loadSchedules();
+      if (tabId === 'rollcall') initRollCallTab();
       if (tabId === 'students') loadUsers();
       if (tabId === 'counseling') loadCounseling();
       if (tabId === 'messages') loadMessages();
     }
 
     // -------------------------------------------------------------
-    // 課堂點名與作業聯絡簿核章 (完整復原 Google 每日陪讀工作台)
-    // -------------------------------------------------------------
-    async function initRollCallTab() {
-      const picker = document.getElementById('rollcall-date-picker');
-      if (!picker.value) {
-        picker.value = new Date().toISOString().split('T')[0];
-      }
-      loadRollCallsForDate();
-    }
-
-    async function loadRollCallsForDate() {
-      const targetDate = document.getElementById('rollcall-date-picker').value;
-      const tbody = document.getElementById('rollcall-table-body');
-      tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">正在整理【${targetDate}】點名資料...</td></tr>`;
-
-      // 1. 確保名冊已載入
-      if (allUsers.length === 0) {
-        const { data: users } = await db.from('users').select('*').order('id');
-        if (users) allUsers = users;
-      }
-
-      // 篩選所有在班學生
-      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
-
-      // 2. 從 roll_calls 資料庫抓取該日期的歷史點名紀錄
-      const startIso = `${targetDate}T00:00:00.000Z`;
-      const endIso = `${targetDate}T23:59:59.999Z`;
-
-      const { data: savedRecords } = await db.from('roll_calls')
-        .select('*')
-        .gte('created_at', startIso)
-        .lte('created_at', endIso);
-
-      // 3. 抓取家長留言或請假備註
-      const { data: messages } = await db.from('parent_messages')
-        .select('*')
-        .gte('created_at', startIso)
-        .lte('created_at', endIso);
-
-      const msgMap = {};
-      (messages || []).forEach(m => {
-        msgMap[m.student_id] = m.parent_message;
-      });
-
-      // 4. 將在班學生與當日已存紀錄進行合併 (已存紀錄優先，尚未登記則帶入預設)
-      const recordMap = {};
-      (savedRecords || []).forEach(r => {
-        recordMap[r.student_id] = r;
-      });
-
-      activeRollCallList = activeStudents.map(s => {
-        const saved = recordMap[s.id];
-        const parentNote = msgMap[s.id] || "";
-        return {
-          id: saved?.id || null,
-          student_id: s.id,
-          student_name: s.name,
-          school: s.school || "",
-          grade: s.grade || "",
-          class_section: s.class_section || "",
-          attendance: saved?.attendance_status || (parentNote.includes('請假') ? '請假' : '出席'),
-          homework: saved?.homework_status || '已完成',
-          signed: saved?.contact_book_signed || '是',
-          note: saved?.note || parentNote || ''
-        };
-      });
-
-      renderRollCallRows();
-      updateRollCallStats();
-    }
-
-    function renderRollCallRows() {
-      const tbody = document.getElementById('rollcall-table-body');
-      if (activeRollCallList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">目前名冊中無在班學生</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = activeRollCallList.map((row, idx) => {
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-3 font-mono font-bold text-slate-800">${row.student_id}</td>
-            <td class="py-3 px-3 font-bold text-slate-800">${row.student_name}</td>
-            <td class="py-3 px-3 text-xs text-slate-500">${row.school} ${row.grade} ${row.class_section}</td>
-            <td class="py-3 px-3">
-              <select onchange="updateRollCallField(${idx}, 'attendance', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.attendance === '出席' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (row.attendance === '請假' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')}">
-                <option value="出席" ${row.attendance === '出席' ? 'selected' : ''}>出席</option>
-                <option value="請假" ${row.attendance === '請假' ? 'selected' : ''}>請假</option>
-                <option value="缺席" ${row.attendance === '缺席' ? 'selected' : ''}>缺席</option>
-              </select>
-            </td>
-            <td class="py-3 px-3">
-              <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
-                <option value="已完成" ${row.homework === '已完成' ? 'selected' : ''}>已完成</option>
-                <option value="未完成" ${row.homework === '未完成' ? 'selected' : ''}>未完成</option>
-                <option value="待訂正" ${row.homework === '待訂正' ? 'selected' : ''}>待訂正</option>
-                <option value="無作業" ${row.homework === '無作業' ? 'selected' : ''}>無作業</option>
-              </select>
-            </td>
-            <td class="py-3 px-3">
-              <select onchange="updateRollCallField(${idx}, 'signed', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.signed === '是' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-600 border-slate-200'}">
-                <option value="是" ${row.signed === '是' ? 'selected' : ''}>已核章 (是)</option>
-                <option value="未簽" ${row.signed === '未簽' ? 'selected' : ''}>未核章 (未簽)</option>
-              </select>
-            </td>
-            <td class="py-3 px-3">
-              <input type="text" value="${row.note || ''}" onchange="updateRollCallField(${idx}, 'note', this.value)" placeholder="請假事由或服藥囑咐..." class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg">
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function updateRollCallField(idx, field, value) {
-      activeRollCallList[idx][field] = value;
-      updateRollCallStats();
-    }
-
-    function batchSetAll(field, value) {
-      activeRollCallList.forEach(r => {
-        r[field] = value;
-      });
-      renderRollCallRows();
-      updateRollCallStats();
-    }
-
-    function updateRollCallStats() {
-      const total = activeRollCallList.length;
-      const attend = activeRollCallList.filter(r => r.attendance === '出席').length;
-      const hwDone = activeRollCallList.filter(r => r.homework === '已完成').length;
-      const signed = activeRollCallList.filter(r => r.signed === '是').length;
-
-      document.getElementById('rc-stat-total').textContent = `${total} 人`;
-      document.getElementById('rc-stat-attend').textContent = `${attend} 人`;
-      document.getElementById('rc-stat-hw').textContent = total > 0 ? `${Math.round((hwDone / total) * 100)}%` : `0%`;
-      document.getElementById('rc-stat-signed').textContent = `${signed} 人`;
-    }
-
-    async function saveRollCallSheet() {
-      const targetDate = document.getElementById('rollcall-date-picker').value;
-      if (activeRollCallList.length === 0) return;
-
-      const payload = activeRollCallList.map(r => ({
-        created_at: `${targetDate}T16:00:00.000Z`,
-        course_name: "課後輔導",
-        student_id: r.student_id,
-        student_name: r.student_name,
-        attendance_status: r.attendance,
-        homework_status: r.homework,
-        contact_book_signed: r.signed,
-        note: r.note || ''
-      }));
-
-      // 儲存至 Supabase
-      const { error } = await db.from('roll_calls').insert(payload);
-      if (error) {
-        alert("儲存失敗：" + error.message);
-        return;
-      }
-
-      alert(`✅【${targetDate}】點名、作業進度與聯絡簿核章紀錄已成功儲存！`);
-      loadRollCallsForDate();
-    }
-
-    // -------------------------------------------------------------
-    // 排班管理模組
+    // 排班管理模組 (起訖時間自動計算工時 + 互動行事曆)
     // -------------------------------------------------------------
     async function loadSchedules() {
       const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
@@ -709,6 +588,36 @@
         }
       }
       renderActiveScheduleView();
+    }
+
+    function autoCalcHours() {
+      const start = document.getElementById('sch-start-time').value;
+      const end = document.getElementById('sch-end-time').value;
+      if (!start || !end) return;
+
+      const [sH, sM] = start.split(':').map(Number);
+      const [eH, eM] = end.split(':').map(Number);
+      let diffMinutes = (eH * 60 + eM) - (sH * 60 + sM);
+      if (diffMinutes < 0) diffMinutes += 24 * 60; // 跨午夜容錯
+
+      const calcHours = Math.round((diffMinutes / 60) * 10) / 10;
+      document.getElementById('sch-hours-val').value = calcHours;
+      document.getElementById('sch-hours-display').textContent = `${calcHours} 小時`;
+    }
+
+    function onWorkerSelectChange() {
+      const sel = document.getElementById('sch-worker-select');
+      const opt = sel.options[sel.selectedIndex];
+      if (opt && opt.value.includes('P')) {
+        document.getElementById('sch-start-time').value = "17:00";
+        document.getElementById('sch-end-time').value = "20:00";
+        document.getElementById('sch-job').value = "四年級課輔陪伴";
+      } else {
+        document.getElementById('sch-start-time').value = "16:00";
+        document.getElementById('sch-end-time').value = "18:00";
+        document.getElementById('sch-job').value = "課輔陪伴";
+      }
+      autoCalcHours();
     }
 
     function setScheduleView(viewType) {
@@ -811,7 +720,7 @@
                 <i class="fa-solid fa-plus"></i>
               </button>
             </div>
-            <div class="space-y-1 overflow-y-auto max-h-[68px]">
+            <div class="space-y-1 overflow-y-auto max-h-[72px]">
               ${badgesHtml}
             </div>
           </div>
@@ -835,9 +744,10 @@
       document.getElementById('modal-sch-title').innerHTML = `<i class="fa-solid fa-calendar-plus text-blue-600"></i> 新增排班 (${dateStr})`;
       document.getElementById('sch-date').value = dateStr;
       document.getElementById('sch-worker-select').value = "";
-      document.getElementById('sch-shift').value = "16:00 - 18:00";
-      document.getElementById('sch-hours').value = "2";
+      document.getElementById('sch-start-time').value = "16:00";
+      document.getElementById('sch-end-time').value = "18:00";
       document.getElementById('sch-job').value = "課輔陪伴";
+      autoCalcHours();
       document.getElementById('modal-schedule').classList.remove('hidden');
     }
 
@@ -878,8 +788,8 @@
         document.getElementById('modal-sch-title').innerHTML = `<i class="fa-solid fa-calendar-plus text-blue-600"></i> 新增教職員排班`;
         document.getElementById('sch-date').value = new Date().toISOString().split('T')[0];
         document.getElementById('sch-worker-select').value = "";
-        document.getElementById('sch-shift').value = "16:00 - 18:00";
-        document.getElementById('sch-hours').value = "2";
+        document.getElementById('sch-start-time').value = "16:00";
+        document.getElementById('sch-end-time').value = "18:00";
         document.getElementById('sch-job').value = "課輔陪伴";
       } else {
         document.getElementById('modal-sch-title').innerHTML = `<i class="fa-solid fa-calendar-check text-indigo-600"></i> 編輯排班時段`;
@@ -887,39 +797,36 @@
         if (!item) return;
         document.getElementById('sch-date').value = item.date;
         document.getElementById('sch-worker-select').value = item.worker_id;
-        document.getElementById('sch-shift').value = item.shift || "";
-        document.getElementById('sch-hours').value = item.hours || 2;
         document.getElementById('sch-job').value = item.job_desc || "課輔陪伴";
+
+        if (item.shift && item.shift.includes('-')) {
+          const parts = item.shift.split('-').map(s => s.trim());
+          document.getElementById('sch-start-time').value = parts[0].padStart(5, '0');
+          document.getElementById('sch-end-time').value = parts[1].padStart(5, '0');
+        }
       }
+      autoCalcHours();
       document.getElementById('modal-schedule').classList.remove('hidden');
     }
 
     function closeScheduleModal() { document.getElementById('modal-schedule').classList.add('hidden'); }
-    function onWorkerSelectChange() {
-      const sel = document.getElementById('sch-worker-select');
-      const opt = sel.options[sel.selectedIndex];
-      if (opt && opt.value.includes('P')) {
-        document.getElementById('sch-shift').value = "17:00 - 20:00";
-        document.getElementById('sch-hours').value = "3";
-        document.getElementById('sch-job').value = "四年級課輔陪伴";
-      } else {
-        document.getElementById('sch-shift').value = "16:00 - 18:00";
-        document.getElementById('sch-hours').value = "2";
-        document.getElementById('sch-job').value = "課後輔導陪讀";
-      }
-    }
 
     async function handleScheduleSubmit(e) {
       e.preventDefault();
       const editId = document.getElementById('sch-edit-id').value;
+      const startTime = document.getElementById('sch-start-time').value;
+      const endTime = document.getElementById('sch-end-time').value;
+      const hours = parseFloat(document.getElementById('sch-hours-val').value) || 0;
+
       const payload = {
         date: document.getElementById('sch-date').value,
         worker_id: document.getElementById('sch-worker-select').value,
         worker_name: document.getElementById('sch-worker-select').selectedOptions[0].getAttribute('data-name'),
-        shift: document.getElementById('sch-shift').value.trim(),
-        hours: parseFloat(document.getElementById('sch-hours').value) || 0,
+        shift: `${startTime} - ${endTime}`,
+        hours: hours,
         job_desc: document.getElementById('sch-job').value.trim()
       };
+
       if (editId) { await db.from('schedules').update(payload).eq('id', editId); }
       else { await db.from('schedules').insert([payload]); }
       closeScheduleModal();
@@ -930,6 +837,155 @@
       if (!confirm("確定要刪除這筆排班紀錄嗎？")) return;
       await db.from('schedules').delete().eq('id', id);
       loadSchedules();
+    }
+
+    // -------------------------------------------------------------
+    // 課堂點名與作業聯絡簿核章
+    // -------------------------------------------------------------
+    async function initRollCallTab() {
+      const picker = document.getElementById('rollcall-date-picker');
+      if (!picker.value) {
+        picker.value = new Date().toISOString().split('T')[0];
+      }
+      loadRollCallsForDate();
+    }
+
+    async function loadRollCallsForDate() {
+      const targetDate = document.getElementById('rollcall-date-picker').value;
+      const tbody = document.getElementById('rollcall-table-body');
+      tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">正在整理【${targetDate}】點名資料...</td></tr>`;
+
+      if (allUsers.length === 0) {
+        const { data: users } = await db.from('users').select('*').order('id');
+        if (users) allUsers = users;
+      }
+
+      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
+
+      const startIso = `${targetDate}T00:00:00.000Z`;
+      const endIso = `${targetDate}T23:59:59.999Z`;
+
+      const { data: savedRecords } = await db.from('roll_calls')
+        .select('*')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso);
+
+      const { data: messages } = await db.from('parent_messages')
+        .select('*')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso);
+
+      const msgMap = {};
+      (messages || []).forEach(m => { msgMap[m.student_id] = m.parent_message; });
+
+      const recordMap = {};
+      (savedRecords || []).forEach(r => { recordMap[r.student_id] = r; });
+
+      activeRollCallList = activeStudents.map(s => {
+        const saved = recordMap[s.id];
+        const parentNote = msgMap[s.id] || "";
+        return {
+          id: saved?.id || null,
+          student_id: s.id,
+          student_name: s.name,
+          school: s.school || "",
+          grade: s.grade || "",
+          class_section: s.class_section || "",
+          attendance: saved?.attendance_status || (parentNote.includes('請假') ? '請假' : '出席'),
+          homework: saved?.homework_status || '已完成',
+          signed: saved?.contact_book_signed || '是',
+          note: saved?.note || parentNote || ''
+        };
+      });
+
+      renderRollCallRows();
+      updateRollCallStats();
+    }
+
+    function renderRollCallRows() {
+      const tbody = document.getElementById('rollcall-table-body');
+      if (activeRollCallList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">目前名冊中無在班學生</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = activeRollCallList.map((row, idx) => {
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3 font-mono font-bold text-slate-800">${row.student_id}</td>
+            <td class="py-3 px-3 font-bold text-slate-800">${row.student_name}</td>
+            <td class="py-3 px-3 text-xs text-slate-500">${row.school} ${row.grade} ${row.class_section}</td>
+            <td class="py-3 px-3">
+              <select onchange="updateRollCallField(${idx}, 'attendance', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.attendance === '出席' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (row.attendance === '請假' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200')}">
+                <option value="出席" ${row.attendance === '出席' ? 'selected' : ''}>出席</option>
+                <option value="請假" ${row.attendance === '請假' ? 'selected' : ''}>請假</option>
+                <option value="缺席" ${row.attendance === '缺席' ? 'selected' : ''}>缺席</option>
+              </select>
+            </td>
+            <td class="py-3 px-3">
+              <select onchange="updateRollCallField(${idx}, 'homework', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.homework === '已完成' ? 'bg-blue-50 text-blue-700 border-blue-200' : (row.homework === '未完成' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200')}">
+                <option value="已完成" ${row.homework === '已完成' ? 'selected' : ''}>已完成</option>
+                <option value="未完成" ${row.homework === '未完成' ? 'selected' : ''}>未完成</option>
+                <option value="待訂正" ${row.homework === '待訂正' ? 'selected' : ''}>待訂正</option>
+                <option value="無作業" ${row.homework === '無作業' ? 'selected' : ''}>無作業</option>
+              </select>
+            </td>
+            <td class="py-3 px-3">
+              <select onchange="updateRollCallField(${idx}, 'signed', this.value)" class="px-2 py-1 border rounded-lg text-xs font-bold ${row.signed === '是' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-600 border-slate-200'}">
+                <option value="是" ${row.signed === '是' ? 'selected' : ''}>已核章 (是)</option>
+                <option value="未簽" ${row.signed === '未簽' ? 'selected' : ''}>未核章 (未簽)</option>
+              </select>
+            </td>
+            <td class="py-3 px-3">
+              <input type="text" value="${row.note || ''}" onchange="updateRollCallField(${idx}, 'note', this.value)" placeholder="請假事由或服藥囑咐..." class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateRollCallField(idx, field, value) {
+      activeRollCallList[idx][field] = value;
+      updateRollCallStats();
+    }
+
+    function batchSetAll(field, value) {
+      activeRollCallList.forEach(r => { r[field] = value; });
+      renderRollCallRows();
+      updateRollCallStats();
+    }
+
+    function updateRollCallStats() {
+      const total = activeRollCallList.length;
+      const attend = activeRollCallList.filter(r => r.attendance === '出席').length;
+      const hwDone = activeRollCallList.filter(r => r.homework === '已完成').length;
+      const signed = activeRollCallList.filter(r => r.signed === '是').length;
+
+      document.getElementById('rc-stat-total').textContent = `${total} 人`;
+      document.getElementById('rc-stat-attend').textContent = `${attend} 人`;
+      document.getElementById('rc-stat-hw').textContent = total > 0 ? `${Math.round((hwDone / total) * 100)}%` : `0%`;
+      document.getElementById('rc-stat-signed').textContent = `${signed} 人`;
+    }
+
+    async function saveRollCallSheet() {
+      const targetDate = document.getElementById('rollcall-date-picker').value;
+      if (activeRollCallList.length === 0) return;
+
+      const payload = activeRollCallList.map(r => ({
+        created_at: `${targetDate}T16:00:00.000Z`,
+        course_name: "課後輔導",
+        student_id: r.student_id,
+        student_name: r.student_name,
+        attendance_status: r.attendance,
+        homework_status: r.homework,
+        contact_book_signed: r.signed,
+        note: r.note || ''
+      }));
+
+      const { error } = await db.from('roll_calls').insert(payload);
+      if (error) { alert("儲存失敗：" + error.message); return; }
+      alert(`✅【${targetDate}】點名、作業進度與聯絡簿核章紀錄已成功儲存！`);
+      loadRollCallsForDate();
     }
 
     // -------------------------------------------------------------
@@ -1335,7 +1391,7 @@
         localStorage.setItem('mplus_current_user', JSON.stringify(user));
         updateAuthUI();
         closeLoginModal();
-        switchTab('rollcall');
+        switchTab('schedules');
       } else {
         errEl.textContent = "密碼錯誤 (請輸入手機號碼)！";
         errEl.classList.remove('hidden');
