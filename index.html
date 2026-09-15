@@ -48,7 +48,34 @@
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
     .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 
-    /* 列印專用 CSS：支援整月橫向列印 (A4 Landscape) */
+    /* 快捷核取標籤樣式 */
+    .chip-btn {
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid #e2e8f0;
+      background-color: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      user-select: none;
+    }
+    .chip-btn:hover {
+      border-color: #94a3b8;
+      background-color: #f8fafc;
+    }
+    .chip-btn-active {
+      background-color: #eff6ff !important;
+      border-color: #3b82f6 !important;
+      color: #1d4ed8 !important;
+      box-shadow: 0 1px 2px rgba(59, 130, 246, 0.1);
+    }
+
+    /* 列印專用 CSS：A4 橫向列印 (A4 Landscape) 且支援自動強制分頁 */
     @media print {
       @page {
         size: landscape;
@@ -59,6 +86,7 @@
       main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
       #tab-print-center { display: block !important; }
       .print-page-box { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
+      .print-page-break { page-break-after: always; break-after: page; }
     }
   </style>
 </head>
@@ -221,13 +249,13 @@
       </div>
     </div>
 
-    <!-- 2. 排班管理與互動行事曆 -->
+    <!-- 2. 排班管理與互動行事曆 (含快速批次排班規則) -->
     <div id="tab-schedules" class="hidden space-y-5 sm:space-y-6">
       <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-5">
           <div>
             <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-blue-600"></i> 教職員排班行事曆</h2>
-            <p class="text-xs text-slate-400 mt-0.5">點擊月曆任意日期即可快速排班，時段起訖自動換算工時</p>
+            <p class="text-xs text-slate-400 mt-0.5">點擊任意日期登記排班，亦可使用「快速排班規則」一鍵產生全月固定班表</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
@@ -235,7 +263,14 @@
               <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
             </div>
             <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
-            <button onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-xs"><i class="fa-solid fa-plus"></i><span>新增排班</span></button>
+            
+            <!-- 🌟 恢復：快速排班規則按鈕 -->
+            <button onclick="openBatchScheduleModal()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-xs">
+              <i class="fa-solid fa-bolt"></i><span>快速排班規則</span>
+            </button>
+            <button onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-xs">
+              <i class="fa-solid fa-plus"></i><span>單筆排班</span>
+            </button>
           </div>
         </div>
 
@@ -311,7 +346,7 @@
       </div>
     </div>
 
-    <!-- 4. 學員與人員名冊 -->
+    <!-- 4. 學員與人員名冊 (手機 RWD 全展開卡片化，免橫向滑動) -->
     <div id="tab-students" class="hidden space-y-5 sm:space-y-6">
       <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
@@ -399,17 +434,25 @@
             <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white">同工(M)限定</span>
             <h2 class="text-lg sm:text-2xl font-black text-slate-800">報表與條碼列印中心</h2>
           </div>
-          <p class="text-xs text-slate-400 mt-1">支援全月點名出席總清冊、QR Code 裁切卡、工時明細與名冊</p>
+          <p class="text-xs text-slate-400 mt-1">支援國小班/國中班獨立分開核銷點名總表、QR Code 裁切卡、工時明細與名冊</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <select id="print-report-type" onchange="renderSelectedReport()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
-            <option value="month_rollcall" selected>📋 當月整月學生出席點名總表 (專案核銷)</option>
+          <select id="print-report-type" onchange="onReportTypeChange()" class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <option value="month_rollcall" selected>📋 當月學生出席點名總表 (專案核銷)</option>
             <option value="qrcode">🏷️ 學生識別 QR Code 裁切卡</option>
             <option value="rollcall">📋 現場單日點名與聯絡簿核章紙本表</option>
             <option value="workhours">⏱️ 教職與工讀每月工時明細表</option>
             <option value="roster">📑 課輔班完整學生與家長名冊</option>
           </select>
+
+          <!-- 班別選擇 (國小班 / 國中班 / 兩班分頁並列) -->
+          <select id="print-class-filter" onchange="renderSelectedReport()" class="px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-bold text-amber-900">
+            <option value="elementary" selected>🎒 國小班點名表</option>
+            <option value="junior">🎓 國中班點名表</option>
+            <option value="both">📑 國小＋國中班 (自動分頁)</option>
+          </select>
+
           <input type="month" id="print-month-filter" value="2026-09" onchange="renderSelectedReport()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono">
           <button onclick="window.print()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-black shadow-md flex items-center space-x-1.5">
             <i class="fa-solid fa-print"></i><span>列印 A4</span>
@@ -423,7 +466,75 @@
 
   <!-- ======================== 彈窗區域 ======================== -->
 
-  <!-- 排班彈窗 -->
+  <!-- 🌟 快速自動批次排班規則 彈窗 -->
+  <div id="modal-batch-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
+      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
+        <div>
+          <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-bolt text-amber-500"></i> 快速批次排班規則生成器
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">自選月份與星期規律，一鍵自動排定全月份固定班次</p>
+        </div>
+        <button onclick="closeBatchScheduleModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form onsubmit="handleBatchScheduleSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">目標月份 *</label>
+            <input type="month" id="batch-sch-month" value="2026-09" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">服事同工 *</label>
+            <select id="batch-sch-worker" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1.5">每週固定服事日 (可複選) *</label>
+          <div class="flex flex-wrap gap-2" id="batch-weekday-chips">
+            <button type="button" onclick="toggleBatchWeekday(this, 1)" class="chip-btn chip-btn-active" data-day="1">週一</button>
+            <button type="button" onclick="toggleBatchWeekday(this, 2)" class="chip-btn chip-btn-active" data-day="2">週二</button>
+            <button type="button" onclick="toggleBatchWeekday(this, 3)" class="chip-btn chip-btn-active" data-day="3">週三</button>
+            <button type="button" onclick="toggleBatchWeekday(this, 4)" class="chip-btn chip-btn-active" data-day="4">週四</button>
+            <button type="button" onclick="toggleBatchWeekday(this, 5)" class="chip-btn chip-btn-active" data-day="5">週五</button>
+            <button type="button" onclick="toggleBatchWeekday(this, 6)" class="chip-btn text-blue-600" data-day="6">週六</button>
+            <button type="button" onclick="toggleBatchWeekday(this, 0)" class="chip-btn text-rose-600" data-day="0">週日</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">開始時間 *</label>
+            <input type="time" id="batch-sch-start" value="16:00" onchange="autoCalcBatchHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">結束時間 *</label>
+            <input type="time" id="batch-sch-end" value="18:00" onchange="autoCalcBatchHours()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+          </div>
+        </div>
+
+        <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200/60 flex justify-between items-center text-xs">
+          <span class="font-bold text-amber-900"><i class="fa-solid fa-calculator mr-1"></i>每班換算時數：</span>
+          <span class="font-black text-amber-950 font-mono text-sm" id="batch-sch-hours-display">2.0 小時</span>
+          <input type="hidden" id="batch-sch-hours-val" value="2">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">工作內容 / 服事項目</label>
+          <input type="text" id="batch-sch-job" value="課後輔導陪伴" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+        </div>
+
+        <div class="flex space-x-2.5 pt-3 border-t">
+          <button type="button" onclick="closeBatchScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold shadow-md">一鍵批次排入整月</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 單筆排班彈窗 -->
   <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll">
       <div class="flex justify-between items-center mb-3.5 border-b pb-3">
@@ -455,13 +566,13 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 -->
+  <!-- 人員建檔 / 編輯 彈窗 (🌟 全新：社福與特教狀況標籤核取化，免手動打字) -->
   <div id="modal-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
         <div>
           <h3 class="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2" id="modal-user-title"><i class="fa-solid fa-id-card text-blue-600"></i> 學員與人員詳細資料表</h3>
-          <p class="text-xs text-slate-400 mt-0.5">完整支援身分證號、家長電話、社福身分與 AI 臉部特徵庫採樣</p>
+          <p class="text-xs text-slate-400 mt-0.5">社福與特教狀況採用快捷多選核取標籤，動態依點擊次序排序組合</p>
         </div>
         <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
       </div>
@@ -469,6 +580,7 @@
         <input type="hidden" id="form-user-mode" value="add">
         <input type="hidden" id="form-face-descriptor" value="">
         
+        <!-- 1. 基本身分與人臉拍照 -->
         <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
           <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-user text-blue-600"></i> 1. 基本身分與 AI 人臉建檔</h4>
           <div class="flex flex-col sm:flex-row items-center gap-3.5">
@@ -510,16 +622,18 @@
           </div>
         </div>
 
+        <!-- 2. 就讀學校與編制 -->
         <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
-          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-indigo-600"></i> 2. 就讀學校與課輔編制</h4>
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-indigo-600"></i> 2. 就讀學校與班級 (自動判定國小/國中)</h4>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div><label class="block font-bold text-slate-600 mb-1">就讀學校</label><input type="text" id="form-school" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">年級</label><input type="text" id="form-grade" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">就讀學校</label><input type="text" id="form-school" placeholder="例: 大雅國小 或 大雅國中" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">年級 (例: 四年級 / 七年級)</label><input type="text" id="form-grade" placeholder="例: 四年級 或 國一" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">原校班級</label><input type="text" id="form-class-section" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">責任同工</label><input type="text" id="form-mentor" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
         </div>
 
+        <!-- 3. 聯絡方式與家長 -->
         <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
           <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-phone text-emerald-600"></i> 3. 聯絡方式與雙家長接送</h4>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -535,13 +649,89 @@
           </div>
         </div>
 
-        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
-          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福與特教學習狀況</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div><label class="block font-bold text-slate-600 mb-1">家庭福利身分</label><input type="text" id="form-welfare" placeholder="例: 單親、低收入戶" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">疾病與過敏史</label><input type="text" id="form-medical" placeholder="例: 輕微地中海貧血、蠶豆症" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+        <!-- 4. 🌟 全新：社福標準與特教學習狀況 (依定義規格複選與排序) -->
+        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 space-y-4">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h4 class="font-black text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福與特教學習狀況 (標準多選標籤)</h4>
+            <span class="text-[11px] text-slate-400 font-bold">點擊標籤即可切換選取／取消</span>
           </div>
-          <div><label class="block font-bold text-slate-600 mb-1">身心特質 / 特教叮嚀</label><textarea id="form-special-needs" rows="2" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></textarea></div>
+
+          <!-- A. 經濟與社福扶助身分 -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span>(1) 經濟扶助身分 (政府社福類別)：</span>
+              <input type="text" id="form-welfare" placeholder="點擊下方快捷標籤自動帶入..." class="text-xs px-2.5 py-1 bg-white border rounded-lg w-1/2 font-medium">
+            </label>
+            <div class="flex flex-wrap gap-1.5" id="chips-welfare">
+              <button type="button" onclick="toggleWelfareChip(this, '一般家庭')" class="chip-btn">一般家庭</button>
+              <button type="button" onclick="toggleWelfareChip(this, '低收入戶(一款)')" class="chip-btn">低收入戶(一款)</button>
+              <button type="button" onclick="toggleWelfareChip(this, '低收入戶(二款)')" class="chip-btn">低收入戶(二款)</button>
+              <button type="button" onclick="toggleWelfareChip(this, '低收入戶(三款)')" class="chip-btn">低收入戶(三款)</button>
+              <button type="button" onclick="toggleWelfareChip(this, '中低收入戶')" class="chip-btn">中低收入戶</button>
+              <button type="button" onclick="toggleWelfareChip(this, '特殊境遇家庭')" class="chip-btn">特殊境遇家庭</button>
+              <button type="button" onclick="toggleWelfareChip(this, '弱勢兒少緊急生活扶助')" class="chip-btn">弱勢兒少緊急扶助</button>
+              <button type="button" onclick="toggleWelfareChip(this, '邊緣戶/經濟弱勢')" class="chip-btn">邊緣戶/經濟弱勢</button>
+            </div>
+          </div>
+
+          <!-- B. 家庭結構狀況 (依複選點擊次序排序) -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span>(2) 家庭結構與處境狀況 (依點選次序排序)：</span>
+              <span class="text-[11px] text-blue-600 font-bold" id="family-order-tip">已選：無</span>
+            </label>
+            <div class="flex flex-wrap gap-1.5 mb-2" id="chips-family-struct">
+              <button type="button" onclick="toggleFamilyStructChip(this, '雙親家庭')" class="chip-btn">雙親家庭</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '單親(父)')" class="chip-btn">單親(父)</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '單親(母)')" class="chip-btn">單親(母)</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '隔代教養(祖父母)')" class="chip-btn">隔代教養(祖父母)</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '親屬代養')" class="chip-btn">親屬代養</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '新住民家庭')" class="chip-btn">新住民家庭</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '原住民家庭')" class="chip-btn">原住民家庭</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '受刑人子女')" class="chip-btn">受刑人子女</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '家長重症/失能')" class="chip-btn">家長重症/失能</button>
+              <button type="button" onclick="toggleFamilyStructChip(this, '脆弱家庭/社工列管')" class="chip-btn">脆弱家庭/社工列管</button>
+            </div>
+          </div>
+
+          <!-- C. 特教身分與身心特質 (多選) -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span>(3) 身心特質與特教學習狀況 (教育部/社福障礙與行為分類)：</span>
+              <button type="button" onclick="clearSpecialNeedsChips()" class="text-[11px] text-slate-400 hover:text-slate-600">清空</button>
+            </label>
+            <div class="flex flex-wrap gap-1.5 mb-2" id="chips-special-needs">
+              <button type="button" onclick="toggleSpecialNeedChip(this, 'ADHD注意力不足/過動')" class="chip-btn">ADHD過動/注意力不足</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '自閉症/亞斯伯格')" class="chip-btn">自閉症/亞斯伯格</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '學習障礙(讀寫困難)')" class="chip-btn">學習障礙(讀寫困難)</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '學習障礙(數學理解)')" class="chip-btn">學習障礙(數學理解)</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '情緒行為障礙')" class="chip-btn">情緒行為障礙</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '發展遲緩')" class="chip-btn">發展遲緩</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '妥瑞氏症')" class="chip-btn">妥瑞氏症</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '智能障礙(輕度/中度)')" class="chip-btn">智能障礙</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '語言障礙/構音困難')" class="chip-btn">語言障礙</button>
+              <button type="button" onclick="toggleSpecialNeedChip(this, '拒學/嚴重校園適應困難')" class="chip-btn">拒學/嚴重適應困難</button>
+            </div>
+            <!-- 整合呈現與補充備註文字框 -->
+            <textarea id="form-special-needs" rows="2" placeholder="點擊上方標籤帶入，亦可在此補充日常陪伴叮嚀..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-inner text-xs"></textarea>
+          </div>
+
+          <!-- D. 健康醫療與過敏史 -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">
+              <span>(4) 疾病、過敏與用藥警訊：</span>
+            </label>
+            <div class="flex flex-wrap gap-1.5 mb-2" id="chips-medical">
+              <button type="button" onclick="appendMedicalChip('蠶豆症(G6PD)')" class="chip-btn">蠶豆症(G6PD)</button>
+              <button type="button" onclick="appendMedicalChip('氣喘')" class="chip-btn">氣喘</button>
+              <button type="button" onclick="appendMedicalChip('地中海貧血')" class="chip-btn">地中海貧血</button>
+              <button type="button" onclick="appendMedicalChip('癲癇病史')" class="chip-btn">癲癇病史</button>
+              <button type="button" onclick="appendMedicalChip('重大食物過敏')" class="chip-btn">重大食物過敏</button>
+              <button type="button" onclick="appendMedicalChip('定期服藥囑咐')" class="chip-btn">定期服藥囑咐</button>
+            </div>
+            <input type="text" id="form-medical" placeholder="點擊上方標籤或手動填寫 (例: 蠶豆症不可接觸樟腦丸)..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs">
+          </div>
+
         </div>
 
         <div class="flex space-x-3 pt-3 border-t">
@@ -673,6 +863,9 @@
 
     let snapStream = null;
 
+    // 社福家庭狀況選取陣列 (依點選次序記錄)
+    let selectedFamilyOrder = [];
+
     const verses = [
       "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
       "「應當一無掛慮，只要凡事藉著禱告、祈求，和感謝，將你們所要的告訴神。」（腓立比書 4:6）",
@@ -745,7 +938,7 @@
     }
 
     // =============================================================
-    // 1. 排班管理與互動行事曆
+    // 1. 排班管理與互動行事曆 (含快速批次自動排班規則)
     // =============================================================
     async function loadSchedules() {
       renderActiveScheduleView();
@@ -759,6 +952,7 @@
             
             const filterEl = document.getElementById('schedule-worker-filter');
             const selectEl = document.getElementById('sch-worker-select');
+            const batchWorkerEl = document.getElementById('batch-sch-worker');
             
             if (filterEl) {
               filterEl.innerHTML = `<option value="">全部同工 (${staffList.length})</option>` + 
@@ -767,6 +961,10 @@
             if (selectEl) {
               selectEl.innerHTML = `<option value="">請選擇同工...</option>` + 
                 staffList.map(s => `<option value="${s.id}" data-name="${s.name}" data-role="${s.role_type}">${s.name} - ${s.role_type} (${s.id})</option>`).join('');
+            }
+            if (batchWorkerEl) {
+              batchWorkerEl.innerHTML = `<option value="">請選擇同工...</option>` + 
+                staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
             }
           }
         } catch (err) {
@@ -1053,6 +1251,101 @@
     async function deleteSchedule(id) {
       if (!confirm("確定要刪除這筆排班紀錄嗎？")) return;
       await db.from('schedules').delete().eq('id', id);
+      loadSchedules();
+    }
+
+    // -------------------------------------------------------------
+    // 🌟 快速排班規則生成器模組 (Batch Scheduler)
+    // -------------------------------------------------------------
+    function openBatchScheduleModal() {
+      document.getElementById('batch-sch-month').value = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}`;
+      autoCalcBatchHours();
+      document.getElementById('modal-batch-schedule').classList.remove('hidden');
+    }
+
+    function closeBatchScheduleModal() {
+      document.getElementById('modal-batch-schedule').classList.add('hidden');
+    }
+
+    function toggleBatchWeekday(btn, dayNum) {
+      btn.classList.toggle('chip-btn-active');
+    }
+
+    function autoCalcBatchHours() {
+      const start = document.getElementById('batch-sch-start').value;
+      const end = document.getElementById('batch-sch-end').value;
+      if (!start || !end) return;
+
+      const [sH, sM] = start.split(':').map(Number);
+      const [eH, eM] = end.split(':').map(Number);
+      let diffMinutes = (eH * 60 + eM) - (sH * 60 + sM);
+      if (diffMinutes < 0) diffMinutes += 24 * 60;
+
+      const calcHours = Math.round((diffMinutes / 60) * 10) / 10;
+      document.getElementById('batch-sch-hours-val').value = calcHours;
+      document.getElementById('batch-sch-hours-display').textContent = `${calcHours} 小時`;
+    }
+
+    async function handleBatchScheduleSubmit(e) {
+      e.preventDefault();
+      const monthStr = document.getElementById('batch-sch-month').value; // YYYY-MM
+      const workerSelect = document.getElementById('batch-sch-worker');
+      const workerId = workerSelect.value;
+      const workerName = workerSelect.selectedOptions[0]?.getAttribute('data-name') || workerId;
+      const startTime = document.getElementById('batch-sch-start').value;
+      const endTime = document.getElementById('batch-sch-end').value;
+      const hours = parseFloat(document.getElementById('batch-sch-hours-val').value) || 2;
+      const jobDesc = document.getElementById('batch-sch-job').value.trim();
+
+      // 取得選取的星期幾
+      const selectedDays = [];
+      document.querySelectorAll('#batch-weekday-chips button.chip-btn-active').forEach(b => {
+        selectedDays.push(parseInt(b.getAttribute('data-day'), 10));
+      });
+
+      if (selectedDays.length === 0) {
+        alert("請至少選擇一個星期幾！");
+        return;
+      }
+
+      const [yStr, mStr] = monthStr.split('-');
+      const y = parseInt(yStr, 10);
+      const m = parseInt(mStr, 10);
+      const daysCount = new Date(y, m, 0).getDate();
+
+      const newSchedules = [];
+      for (let d = 1; d <= daysCount; d++) {
+        const dt = new Date(y, m - 1, d);
+        if (selectedDays.includes(dt.getDay())) {
+          const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          newSchedules.push({
+            date: dateStr,
+            worker_id: workerId,
+            worker_name: workerName,
+            shift: `${startTime} - ${endTime}`,
+            hours: hours,
+            job_desc: jobDesc
+          });
+        }
+      }
+
+      if (newSchedules.length === 0) {
+        alert("所選的條件在該月份沒有對應的日期。");
+        return;
+      }
+
+      if (!confirm(`確定要在【${monthStr}】為【${workerName}】一鍵排定 ${newSchedules.length} 班次嗎？`)) {
+        return;
+      }
+
+      const { error } = await db.from('schedules').insert(newSchedules);
+      if (error) {
+        alert("批次排班儲存失敗：" + error.message);
+        return;
+      }
+
+      alert(`✅ 成功排定 ${newSchedules.length} 班次！`);
+      closeBatchScheduleModal();
       loadSchedules();
     }
 
@@ -1848,7 +2141,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. 人員名冊管理
+    // 5. 人員名冊管理 (含社福標籤多選與排序處理)
     // -------------------------------------------------------------
     async function loadUsers() {
       const tbody = document.getElementById('students-table');
@@ -1969,6 +2262,107 @@
       renderUsers(filtered);
     }
 
+    // --- 社福與特教快捷核取標籤處理邏輯 ---
+    function toggleWelfareChip(btn, val) {
+      const input = document.getElementById('form-welfare');
+      let cur = input.value.split(',').map(s => s.trim()).filter(Boolean);
+      if (cur.includes(val)) {
+        cur = cur.filter(x => x !== val);
+        btn.classList.remove('chip-btn-active');
+      } else {
+        cur.push(val);
+        btn.classList.add('chip-btn-active');
+      }
+      input.value = cur.join(', ');
+    }
+
+    function toggleFamilyStructChip(btn, val) {
+      const tip = document.getElementById('family-order-tip');
+      const textarea = document.getElementById('form-special-needs');
+
+      if (selectedFamilyOrder.includes(val)) {
+        selectedFamilyOrder = selectedFamilyOrder.filter(x => x !== val);
+        btn.classList.remove('chip-btn-active');
+      } else {
+        selectedFamilyOrder.push(val);
+        btn.classList.add('chip-btn-active');
+      }
+
+      tip.textContent = selectedFamilyOrder.length > 0 ? `已依序選取：${selectedFamilyOrder.join(' ➔ ')}` : '已選：無';
+      rebuildSpecialNeedsText();
+    }
+
+    function toggleSpecialNeedChip(btn, val) {
+      btn.classList.toggle('chip-btn-active');
+      rebuildSpecialNeedsText();
+    }
+
+    function clearSpecialNeedsChips() {
+      document.querySelectorAll('#chips-special-needs button').forEach(b => b.classList.remove('chip-btn-active'));
+      selectedFamilyOrder = [];
+      document.querySelectorAll('#chips-family-struct button').forEach(b => b.classList.remove('chip-btn-active'));
+      document.getElementById('family-order-tip').textContent = '已選：無';
+      document.getElementById('form-special-needs').value = '';
+    }
+
+    function rebuildSpecialNeedsText() {
+      const activeNeeds = [];
+      document.querySelectorAll('#chips-special-needs button.chip-btn-active').forEach(b => {
+        activeNeeds.push(b.textContent.trim());
+      });
+
+      const parts = [];
+      if (selectedFamilyOrder.length > 0) {
+        parts.push(`【家庭: ${selectedFamilyOrder.join('、')}】`);
+      }
+      if (activeNeeds.length > 0) {
+        parts.push(`【特教: ${activeNeeds.join('、')}】`);
+      }
+
+      const textarea = document.getElementById('form-special-needs');
+      // 保留手動追加備註
+      let currentVal = textarea.value.trim();
+      currentVal = currentVal.replace(/【家庭:.*?】/g, '').replace(/【特教:.*?】/g, '').trim();
+
+      textarea.value = (parts.join(' ') + (currentVal ? ' ' + currentVal : '')).trim();
+    }
+
+    function appendMedicalChip(val) {
+      const input = document.getElementById('form-medical');
+      let currentVal = input.value.trim();
+      if (currentVal.includes(val)) return;
+      if (currentVal && !currentVal.endsWith(' ')) currentVal += '、';
+      input.value = currentVal + val;
+    }
+
+    function syncFormChipsFromText(welfareText, specialText) {
+      // 1. 同步社福標籤
+      document.querySelectorAll('#chips-welfare button').forEach(b => {
+        const t = b.textContent.trim();
+        if (welfareText && welfareText.includes(t)) b.classList.add('chip-btn-active');
+        else b.classList.remove('chip-btn-active');
+      });
+
+      // 2. 同步家庭結構與特教標籤
+      selectedFamilyOrder = [];
+      document.querySelectorAll('#chips-family-struct button').forEach(b => {
+        const t = b.textContent.trim();
+        if (specialText && specialText.includes(t)) {
+          b.classList.add('chip-btn-active');
+          selectedFamilyOrder.push(t);
+        } else {
+          b.classList.remove('chip-btn-active');
+        }
+      });
+      document.getElementById('family-order-tip').textContent = selectedFamilyOrder.length > 0 ? `已依序選取：${selectedFamilyOrder.join(' ➔ ')}` : '已選：無';
+
+      document.querySelectorAll('#chips-special-needs button').forEach(b => {
+        const t = b.textContent.trim();
+        if (specialText && specialText.includes(t)) b.classList.add('chip-btn-active');
+        else b.classList.remove('chip-btn-active');
+      });
+    }
+
     function openUserModal(mode, uid = null) {
       document.getElementById('form-user-mode').value = mode;
       const idInput = document.getElementById('form-id');
@@ -2002,6 +2396,8 @@
         document.getElementById('form-medical').value = "";
         document.getElementById('form-special-needs').value = "";
         document.getElementById('form-avatar').value = "";
+        clearSpecialNeedsChips();
+        syncFormChipsFromText("", "");
         updateAvatarPreview();
       } else {
         document.getElementById('modal-user-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600"></i> 編輯人員詳細資料`;
@@ -2031,6 +2427,8 @@
         document.getElementById('form-special-needs').value = u.special_needs || u.note || "";
         document.getElementById('form-avatar').value = u.avatar_url || "";
         
+        syncFormChipsFromText(u.welfare_status || "", u.special_needs || u.note || "");
+
         if (u.face_descriptor) {
           document.getElementById('form-face-descriptor').value = typeof u.face_descriptor === 'string' ? u.face_descriptor : JSON.stringify(u.face_descriptor);
           document.getElementById('face-enrolled-badge').classList.remove('hidden');
@@ -2253,7 +2651,7 @@
             <td class="py-3 px-3 text-xs font-bold text-indigo-700 whitespace-nowrap">${c.teacher_name}</td>
             <td class="py-3 px-3 text-xs font-bold text-slate-600 whitespace-nowrap">${c.duration_min || 30} 分鐘</td>
             <td class="py-3 px-3 text-xs text-slate-700 max-w-sm leading-relaxed">${c.content}</td>
-            <td class="py-3 px-3 text-xs text-rose-700 max-w-xs leading-relaxed font-medium">${c.follow_up || '<span class="text-slate-300 italic">無</span>'}</td>
+            <td class="py-3 px-3 text-rose-700 max-w-xs leading-relaxed font-medium">${c.follow_up || '<span class="text-slate-300 italic">無</span>'}</td>
             <td class="py-3 px-3 text-center whitespace-nowrap space-x-1">
               <button onclick="editCounseling(${c.id})" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-pen mr-0.5"></i>編輯</button>
               <button onclick="deleteCounseling(${c.id})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-trash-can mr-0.5"></i>刪除</button>
@@ -2373,11 +2771,32 @@
     }
 
     // =============================================================
-    // 8. 列印報表中心 (新增社福核銷：當月整月學生出席點名總表)
+    // 8. 列印報表中心 (國小班 / 國中班 獨立分開點名總表)
     // =============================================================
+    function onReportTypeChange() {
+      const type = document.getElementById('print-report-type').value;
+      const classFilter = document.getElementById('print-class-filter');
+      if (type === 'month_rollcall') {
+        classFilter.classList.remove('hidden');
+      } else {
+        classFilter.classList.add('hidden');
+      }
+      renderSelectedReport();
+    }
+
+    function isJuniorHighStudent(stu) {
+      const gradeStr = (stu.grade || '').trim();
+      const schoolStr = (stu.school || '').trim();
+      return gradeStr.includes('七') || gradeStr.includes('八') || gradeStr.includes('九') ||
+             gradeStr.includes('7') || gradeStr.includes('8') || gradeStr.includes('9') ||
+             gradeStr.includes('國一') || gradeStr.includes('國二') || gradeStr.includes('國三') ||
+             schoolStr.includes('國中') || schoolStr.includes('中學');
+    }
+
     async function renderSelectedReport() {
       const type = document.getElementById('print-report-type').value;
-      const targetMonth = document.getElementById('print-month-filter').value; // YYYY-MM
+      const targetMonth = document.getElementById('print-month-filter').value;
+      const classOption = document.getElementById('print-class-filter').value;
       const container = document.getElementById('print-paper-content');
 
       if (allUsers.length === 0) {
@@ -2388,17 +2807,16 @@
       const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班');
 
       // -------------------------------------------------------------
-      // 🌟 新增：社福核銷專用「當月整月學生出席點名總表」
+      // 🌟 當月學生出席點名總表 (社福核銷標準格式)
       // -------------------------------------------------------------
       if (type === 'month_rollcall') {
-        container.innerHTML = `<div class="text-center py-10 font-bold text-slate-500">正在統計【${targetMonth}】全月出席紀錄中...</div>`;
+        container.innerHTML = `<div class="text-center py-10 font-bold text-slate-500">正在統計【${targetMonth}】出席紀錄中...</div>`;
 
         const [yStr, mStr] = targetMonth.split('-');
         const yearNum = parseInt(yStr, 10);
-        const rocYear = yearNum - 1911; // 轉民國年
+        const rocYear = yearNum - 1911;
         const monthNum = parseInt(mStr, 10);
 
-        // 1. 計算該月所有「週一到週五（上課日）」
         const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
         const schoolDays = [];
         const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
@@ -2406,7 +2824,6 @@
         for (let d = 1; d <= daysInMonth; d++) {
           const dt = new Date(yearNum, monthNum - 1, d);
           const dayOfWeek = dt.getDay();
-          // 週一至週五為課輔上課日 (1 ~ 5)
           if (dayOfWeek >= 1 && dayOfWeek <= 5) {
             const dateStr = `${yearNum}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             schoolDays.push({
@@ -2417,7 +2834,6 @@
           }
         }
 
-        // 2. 從資料庫讀取該月所有學生的出勤紀錄 (check_in_logs)
         const startOfMonthIso = `${targetMonth}-01T00:00:00.000Z`;
         const endOfMonthIso = `${targetMonth}-${String(daysInMonth).padStart(2, '0')}T23:59:59.999Z`;
 
@@ -2426,7 +2842,6 @@
           .gte('check_time', startOfMonthIso)
           .lte('check_time', endOfMonthIso);
 
-        // 整理打卡數據 Map: logsByStudentDate[studentId][YYYY-MM-DD] = 打卡紀錄
         const logsByStudentDate = {};
         (monthLogs || []).forEach(log => {
           if (!logsByStudentDate[log.target_id]) logsByStudentDate[log.target_id] = {};
@@ -2434,114 +2849,145 @@
           logsByStudentDate[log.target_id][logDate] = log;
         });
 
-        // 3. 計算每位學生的出席統計
-        let totalAttendSlots = 0;
-        const totalPossibleSlots = activeStudents.length * schoolDays.length;
+        const elementaryStudents = activeStudents.filter(s => !isJuniorHighStudent(s));
+        const juniorStudents = activeStudents.filter(s => isJuniorHighStudent(s));
 
-        const studentRowsData = activeStudents.map((stu, sIdx) => {
-          let presentCount = 0;
-          const dayStatus = schoolDays.map(sd => {
-            const log = logsByStudentDate[stu.id] ? logsByStudentDate[stu.id][sd.dateStr] : null;
-            if (log) {
-              const checkHour = new Date(log.check_time).getHours();
-              const checkMin = new Date(log.check_time).getMinutes();
-              const totalMins = checkHour * 60 + checkMin;
-              // 遲到判定：超過 16:30 (16*60 + 30 = 990 分鐘)
-              if (totalMins > 990) {
-                presentCount++;
-                return { text: '遲', cls: 'text-amber-700 font-bold bg-amber-50' };
+        function generateSingleClassReportHtml(classNameTitle, studentsList, isSecondPage = false) {
+          const classTag = classNameTitle.includes("國小") ? "國小" : "國中";
+
+          if (studentsList.length === 0) {
+            return `
+              <div class="${isSecondPage ? 'print-page-break pt-8' : ''} space-y-4">
+                <div class="text-center space-y-1 border-b-2 border-slate-900 pb-3">
+                  <h1 class="text-xl sm:text-2xl font-black tracking-wider text-slate-900 font-serif">社團法人台灣基督教社會關懷協會 夢想加油站</h1>
+                  <h2 class="text-base sm:text-lg font-black tracking-wide text-slate-800">中華民國 ${rocYear} 年 ${monthNum} 月 點名表</h2>
+                  <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-2 px-2">
+                    <span>班級：大雅課後陪讀班 ${classTag}</span>
+                    <span>本月應到：0 位</span>
+                    <span>全班出席率：0 ％</span>
+                  </div>
+                </div>
+                <p class="text-center text-xs py-8 text-slate-400">本月份大雅課後陪讀班 ${classTag} 尚無在班學生資料</p>
+              </div>
+            `;
+          }
+
+          let totalAttendSlots = 0;
+          const totalPossibleSlots = studentsList.length * schoolDays.length;
+
+          const rowsData = studentsList.map((stu, sIdx) => {
+            let presentCount = 0;
+            const dayStatus = schoolDays.map(sd => {
+              const log = logsByStudentDate[stu.id] ? logsByStudentDate[stu.id][sd.dateStr] : null;
+              if (log) {
+                const checkHour = new Date(log.check_time).getHours();
+                const checkMin = new Date(log.check_time).getMinutes();
+                const totalMins = checkHour * 60 + checkMin;
+                if (totalMins > 990) {
+                  presentCount++;
+                  return { text: '遲', cls: 'text-amber-700 font-bold bg-amber-50' };
+                } else {
+                  presentCount++;
+                  return { text: '✔', cls: 'text-emerald-700 font-black' };
+                }
               } else {
-                presentCount++;
-                return { text: '✔', cls: 'text-emerald-700 font-black' };
+                return { text: '曠', cls: 'text-rose-600 font-bold' };
               }
-            } else {
-              // 沒到：當天若在今天之前則為曠課/缺席
-              return { text: '曠', cls: 'text-rose-600 font-bold' };
-            }
+            });
+
+            totalAttendSlots += presentCount;
+            const rate = schoolDays.length > 0 ? Math.round((presentCount / schoolDays.length) * 100) : 0;
+
+            return {
+              seq: sIdx + 1,
+              id: stu.id,
+              name: stu.name,
+              schoolGrade: `${stu.school || ''} ${stu.grade || ''}`,
+              dayStatus: dayStatus,
+              attendRate: `${rate}%`
+            };
           });
 
-          totalAttendSlots += presentCount;
-          const rate = schoolDays.length > 0 ? Math.round((presentCount / schoolDays.length) * 100) : 0;
+          const classRate = totalPossibleSlots > 0 ? Math.round((totalAttendSlots / totalPossibleSlots) * 100) : 0;
 
-          return {
-            seq: sIdx + 1,
-            id: stu.id,
-            name: stu.name,
-            dayStatus: dayStatus,
-            attendRate: `${rate}%`
-          };
-        });
-
-        // 全班平均出席率
-        const classRate = totalPossibleSlots > 0 ? Math.round((totalAttendSlots / totalPossibleSlots) * 100) : 0;
-
-        // 4. 渲染列印報表
-        container.innerHTML = `
-          <div class="space-y-4">
-            <!-- 報表正式表頭 -->
-            <div class="text-center space-y-1 border-b-2 border-slate-900 pb-3">
-              <h1 class="text-xl sm:text-2xl font-black tracking-wider text-slate-900 font-serif">社團法人台灣基督教社會關懷協會 夢想加油站</h1>
-              <h2 class="text-base sm:text-lg font-black tracking-wide text-slate-800">中華民國 ${rocYear} 年 ${monthNum} 月 國小班 點名表</h2>
-              <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-2 px-2">
-                <span>班級：大雅課後陪伴班</span>
-                <span>本月應到：${activeStudents.length} 位</span>
-                <span>上課日：共 ${schoolDays.length} 天</span>
-                <span>全班出席率：${classRate} ％</span>
-                <span>列印日期：${new Date().toLocaleDateString('zh-TW')}</span>
+          return `
+            <div class="${isSecondPage ? 'print-page-break pt-6' : ''} space-y-3">
+              <!-- 報表正式表頭 -->
+              <div class="text-center space-y-1 border-b-2 border-slate-900 pb-2.5">
+                <h1 class="text-xl sm:text-2xl font-black tracking-wider text-slate-900 font-serif">社團法人台灣基督教社會關懷協會 夢想加油站</h1>
+                <h2 class="text-base sm:text-lg font-black tracking-wide text-slate-800">中華民國 ${rocYear} 年 ${monthNum} 月 點名表</h2>
+                <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-1.5 px-1">
+                  <span class="text-sm font-black text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-300">班級：大雅課後陪讀班 ${classTag}</span>
+                  <span>本月應到：${studentsList.length} 位</span>
+                  <span>上課日：共 ${schoolDays.length} 天</span>
+                  <span>全班出席率：${classRate} ％</span>
+                  <span>列印日期：${new Date().toLocaleDateString('zh-TW')}</span>
+                </div>
               </div>
-            </div>
 
-            <!-- 月出席矩陣表格 (A4橫式排版) -->
-            <div class="overflow-x-auto">
-              <table class="w-full text-center border-collapse border-2 border-slate-800 text-[10px] sm:text-xs">
-                <thead>
-                  <tr class="bg-slate-100 font-bold border-b-2 border-slate-800 text-slate-900">
-                    <th class="border border-slate-600 p-1 w-7">序</th>
-                    <th class="border border-slate-600 p-1 w-16">學號</th>
-                    <th class="border border-slate-600 p-1 w-16">姓名</th>
-                    ${schoolDays.map(sd => `
-                      <th class="border border-slate-600 p-0.5 min-w-[20px]">
-                        <div>${sd.day}</div>
-                        <div class="text-[8px] text-slate-500 font-normal">(${sd.weekday})</div>
-                      </th>
-                    `).join('')}
-                    <th class="border border-slate-600 p-1 w-14 font-black">出席率</th>
-                    <th class="border border-slate-600 p-1 w-20">學生/家長簽名</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${studentRowsData.map(row => `
-                    <tr class="border-b border-slate-400 hover:bg-slate-50">
-                      <td class="border border-slate-400 p-1 font-mono font-bold">${row.seq}</td>
-                      <td class="border border-slate-400 p-1 font-mono font-bold text-left">${row.id}</td>
-                      <td class="border border-slate-400 p-1 font-black text-slate-900">${row.name}</td>
-                      ${row.dayStatus.map(ds => `
-                        <td class="border border-slate-300 p-0.5 text-center ${ds.cls}">
-                          ${ds.text}
-                        </td>
+              <!-- 月出席矩陣表格 -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-center border-collapse border-2 border-slate-800 text-[10px] sm:text-xs">
+                  <thead>
+                    <tr class="bg-slate-100 font-bold border-b-2 border-slate-800 text-slate-900">
+                      <th class="border border-slate-600 p-1 w-7">序</th>
+                      <th class="border border-slate-600 p-1 w-16">學號</th>
+                      <th class="border border-slate-600 p-1 w-16">姓名</th>
+                      <th class="border border-slate-600 p-1 w-20">學校/年級</th>
+                      ${schoolDays.map(sd => `
+                        <th class="border border-slate-600 p-0.5 min-w-[20px]">
+                          <div>${sd.day}</div>
+                          <div class="text-[8px] text-slate-500 font-normal">(${sd.weekday})</div>
+                        </th>
                       `).join('')}
-                      <td class="border border-slate-400 p-1 font-mono font-black text-blue-900 bg-slate-50">${row.attendRate}</td>
-                      <td class="border border-slate-400 p-1 text-slate-300"></td>
+                      <th class="border border-slate-600 p-1 w-14 font-black">出席率</th>
+                      <th class="border border-slate-600 p-1 w-20">學生/家長簽名</th>
                     </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    ${rowsData.map(row => `
+                      <tr class="border-b border-slate-400 hover:bg-slate-50">
+                        <td class="border border-slate-400 p-1 font-mono font-bold">${row.seq}</td>
+                        <td class="border border-slate-400 p-1 font-mono font-bold text-left">${row.id}</td>
+                        <td class="border border-slate-400 p-1 font-black text-slate-900">${row.name}</td>
+                        <td class="border border-slate-400 p-0.5 text-[9px] text-slate-600 truncate">${row.schoolGrade}</td>
+                        ${row.dayStatus.map(ds => `
+                          <td class="border border-slate-300 p-0.5 text-center ${ds.cls}">${ds.text}</td>
+                        `).join('')}
+                        <td class="border border-slate-400 p-1 font-mono font-black text-blue-900 bg-slate-50">${row.attendRate}</td>
+                        <td class="border border-slate-400 p-1 text-slate-300"></td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
 
-            <!-- 頁底備註與簽章欄 (核銷正式規範) -->
-            <div class="flex justify-between items-end text-xs text-slate-700 pt-3 px-2">
-              <div class="space-y-0.5 text-[11px] text-slate-600">
-                <p>※ 符號說明：【 ✔ 】準時到班 ｜ 【 遲 】逾時到班 (16:30後) ｜ 【 假 】准假 ｜ 【 曠 】缺席未到</p>
-                <p>※ 本表為內政部/衛福部社會關懷方案專案查核與經費核銷正式受稽文件，請詳實核對並妥善保管。</p>
-              </div>
-              <div class="flex space-x-8 text-xs font-bold text-slate-800">
-                <div>輔導老師簽章：_____________</div>
-                <div>方案督導簽章：_____________</div>
-                <div>協會負責人：_____________</div>
+              <!-- 頁底符號說明與簽章欄 -->
+              <div class="flex justify-between items-end text-xs text-slate-700 pt-2 px-1">
+                <div class="text-[11px] text-slate-600 font-medium">
+                  ※ 符號說明：【 ✔ 】準時到班 ｜ 【 遲 】逾時到班 (16:30後) ｜ 【 假 】准假 ｜ 【 曠 】缺席未到
+                </div>
+                <div class="flex space-x-6 text-xs font-bold text-slate-800">
+                  <div>輔導同工：_____________</div>
+                  <div>專案督導：_____________</div>
+                  <div>負責人：_____________</div>
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        }
+
+        let finalHtml = "";
+        if (classOption === 'elementary') {
+          finalHtml = generateSingleClassReportHtml("國小班", elementaryStudents, false);
+        } else if (classOption === 'junior') {
+          finalHtml = generateSingleClassReportHtml("國中班", juniorStudents, false);
+        } else {
+          finalHtml = generateSingleClassReportHtml("國小班", elementaryStudents, false) +
+                      generateSingleClassReportHtml("國中班", juniorStudents, true);
+        }
+
+        container.innerHTML = finalHtml;
 
       } else if (type === 'qrcode') {
         container.innerHTML = `
