@@ -279,7 +279,7 @@
         <div id="scan-tip" class="mt-3 text-xs font-bold hidden py-2 px-3 rounded-xl"></div>
       </div>
 
-      <!-- 即時出勤動態流水 -->
+      <!-- 即時動態流水 -->
       <div class="clean-card rounded-3xl p-4 sm:p-6">
         <div class="flex justify-between items-center mb-3">
           <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center space-x-2">
@@ -505,7 +505,7 @@
 
   </main>
 
-  <!-- 🌟 手機專屬底部黑色懸浮導航欄 (未登入時隱藏，同工M登入後自動浮現) -->
+  <!-- 🌟 手機專屬底部黑色懸浮膠囊導航欄 (未登入時隱藏，同工M登入後自動浮現) -->
   <nav id="mobile-bottom-dock" class="hidden md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl justify-around items-center text-[10px] font-bold text-slate-400">
     <button onclick="switchTab('checkin')" id="m-nav-checkin" class="flex flex-col items-center py-1 text-amber-400 font-black">
       <i class="fa-solid fa-qrcode text-base mb-0.5"></i><span>打卡</span>
@@ -558,13 +558,13 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 -->
+  <!-- 人員建檔 / 編輯 彈窗 (🌟 內含點選式複選標籤系統) -->
   <div id="modal-user" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll border border-slate-100">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
         <div>
           <h3 class="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2" id="modal-user-title"><i class="fa-solid fa-id-card text-indigo-600"></i> 學員與人員詳細資料表</h3>
-          <p class="text-xs text-slate-400 mt-0.5">完整支援身分證號、家長電話、社福身分與 AI 臉部特徵庫採樣</p>
+          <p class="text-xs text-slate-400 mt-0.5">完整支援身分證號、家長電話、複選社福標籤與 AI 臉部特徵庫採樣</p>
         </div>
         <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
       </div>
@@ -637,30 +637,44 @@
           </div>
         </div>
 
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-          <h4 class="font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 4. 社福與支持系統身分</h4>
-          <div>
-            <label class="block font-bold text-slate-600 mb-1">家庭福利與支持系統身分</label>
-            <select id="form-welfare" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800">
-              <option value="">一般家庭 / 無特殊註記</option>
-              <option value="低收入戶">低收入戶</option>
-              <option value="中低收入戶">中低收入戶</option>
-              <option value="單親家庭">單親家庭</option>
-              <option value="隔代教養">隔代教養</option>
-              <option value="原住民家庭">原住民家庭</option>
-              <option value="新住民家庭">新住民家庭</option>
-              <option value="脆弱家庭">脆弱家庭 / 特殊境遇</option>
-            </select>
+        <!-- 🌟 4. 家庭與支持系統身分 (點選式複選標籤群組) -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
+          <h4 class="font-bold text-slate-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-people-roof text-rose-600"></i> 4. 家庭結構與福利身分 (可複選，先點選者為優先狀況)
+          </h4>
+
+          <input type="hidden" id="form-welfare" value="">
+
+          <div class="bg-white p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-500">已選取的身分標籤 (依優先順序)：</span>
+            <div id="selected-tags-preview" class="flex flex-wrap gap-1.5 items-center">
+              <span class="text-xs text-slate-400 italic">尚未點選任何標籤</span>
+            </div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+
+          <div class="space-y-1.5">
+            <p class="text-[11px] font-bold text-slate-500">點擊下方按鈕進行複選（再次點擊可取消）：</p>
+            <div id="clickable-tags-container" class="flex flex-wrap gap-2">
+              <button type="button" onclick="toggleStudentTag('低收入戶')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 低收入戶</button>
+              <button type="button" onclick="toggleStudentTag('中低收入戶')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 中低收入戶</button>
+              <button type="button" onclick="toggleStudentTag('單親家庭')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 單親家庭</button>
+              <button type="button" onclick="toggleStudentTag('隔代教養')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 隔代教養</button>
+              <button type="button" onclick="toggleStudentTag('原住民家庭')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 原住民家庭</button>
+              <button type="button" onclick="toggleStudentTag('新住民家庭')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 新住民家庭</button>
+              <button type="button" onclick="toggleStudentTag('脆弱家庭')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 脆弱家庭</button>
+              <button type="button" onclick="toggleStudentTag('特殊境遇')" class="tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs">＋ 特殊境遇</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-200">
             <div><label class="block font-bold text-slate-600 mb-1">疾病與過敏史</label><input type="text" id="form-medical" placeholder="例: 輕微蠶豆症" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">身心特質 / 特教叮嚀</label><input type="text" id="form-special-needs" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">身心特質 / 特教叮嚀</label><input type="text" id="form-special-needs" placeholder="例: 注意過動注意力" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></div>
           </div>
         </div>
 
         <div class="flex space-x-3 pt-3 border-t">
           <button type="button" onclick="closeUserModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">儲存人員資料</button>
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
         </div>
       </form>
     </div>
@@ -792,6 +806,9 @@
     let lastScanTime = 0;
 
     let snapStream = null;
+
+    // 🌟 複選標籤陣列
+    let currentSelectedTags = [];
 
     const verses = [
       "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
@@ -1571,7 +1588,7 @@
           return;
         }
 
-        const isManagerStaff = val.includes('M'); // 只有編號含 M 的同工具備管理身分
+        const isManagerStaff = val.includes('M');
         const isTeacherOrIntern = val.includes('T') || val.includes('P') || (user.role_type && (user.role_type === '老師' || user.role_type === '工讀生'));
         const isStaff = isManagerStaff || isTeacherOrIntern || (user.role_type && user.role_type !== '學生');
         
@@ -1991,7 +2008,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. 人員名冊管理
+    // 5. 人員名冊管理 (含複選標籤邏輯)
     // -------------------------------------------------------------
     async function loadUsers() {
       const tbody = document.getElementById('students-table');
@@ -2112,6 +2129,46 @@
       renderUsers(filtered);
     }
 
+    // 🌟 複選標籤點擊控制
+    function toggleStudentTag(tagName) {
+      const idx = currentSelectedTags.indexOf(tagName);
+      if (idx > -1) {
+        currentSelectedTags.splice(idx, 1);
+      } else {
+        currentSelectedTags.push(tagName);
+      }
+      updateTagsUI();
+    }
+
+    function updateTagsUI() {
+      document.getElementById('form-welfare').value = currentSelectedTags.join(',');
+      const previewBox = document.getElementById('selected-tags-preview');
+
+      if (currentSelectedTags.length === 0) {
+        previewBox.innerHTML = `<span class="text-xs text-slate-400 italic">尚未點選任何標籤 (預設一般家庭)</span>`;
+      } else {
+        previewBox.innerHTML = currentSelectedTags.map((t, i) => `
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-black ${i === 0 ? 'bg-indigo-600 text-white shadow-2xs' : 'bg-slate-200 text-slate-700'}">
+            ${i === 0 ? '⭐ 主: ' : ''}${t}
+            <button type="button" onclick="toggleStudentTag('${t}')" class="ml-1 text-current hover:opacity-70">&times;</button>
+          </span>
+        `).join('');
+      }
+
+      const buttons = document.querySelectorAll('#clickable-tags-container button');
+      buttons.forEach(btn => {
+        const text = btn.textContent.replace('＋ ', '').replace('✓ ', '').replace(' (優先)', '').trim();
+        if (currentSelectedTags.includes(text)) {
+          const isPrimary = currentSelectedTags[0] === text;
+          btn.className = `tag-chip px-3 py-1.5 rounded-xl text-xs font-black transition shadow-2xs ${isPrimary ? 'bg-indigo-600 text-white border-2 border-indigo-700' : 'bg-indigo-50 text-indigo-700 border border-indigo-300'}`;
+          btn.innerHTML = `✓ ${text}${isPrimary ? ' (優先)' : ''}`;
+        } else {
+          btn.className = `tag-chip px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition hover:border-indigo-400 shadow-2xs`;
+          btn.innerHTML = `＋ ${text}`;
+        }
+      });
+    }
+
     function openUserModal(mode, uid = null) {
       document.getElementById('form-user-mode').value = mode;
       const idInput = document.getElementById('form-id');
@@ -2119,6 +2176,8 @@
       document.getElementById('face-enrolled-badge').classList.add('hidden');
       document.getElementById('face-extract-tip').textContent = "";
       stopCameraSnap();
+
+      currentSelectedTags = [];
 
       if (mode === 'add') {
         document.getElementById('modal-user-title').innerHTML = `<i class="fa-solid fa-user-plus text-emerald-600"></i> 新增學員/人員建檔`;
@@ -2141,7 +2200,6 @@
         document.getElementById('form-guardian-name').value = "";
         document.getElementById('form-guardian-rel').value = "";
         document.getElementById('form-guardian-phone').value = "";
-        document.getElementById('form-welfare').value = "";
         document.getElementById('form-medical').value = "";
         document.getElementById('form-special-needs').value = "";
         document.getElementById('form-avatar').value = "";
@@ -2169,11 +2227,14 @@
         document.getElementById('form-guardian-name').value = u.guardian_name || "";
         document.getElementById('form-guardian-rel').value = u.guardian_relation || "";
         document.getElementById('form-guardian-phone').value = u.guardian_phone || "";
-        document.getElementById('form-welfare').value = u.welfare_status || "";
         document.getElementById('form-medical').value = u.medical_history || "";
         document.getElementById('form-special-needs').value = u.special_needs || u.note || "";
         document.getElementById('form-avatar').value = u.avatar_url || "";
         
+        if (u.welfare_status) {
+          currentSelectedTags = u.welfare_status.split(',').map(s => s.trim()).filter(Boolean);
+        }
+
         if (u.face_descriptor) {
           document.getElementById('form-face-descriptor').value = typeof u.face_descriptor === 'string' ? u.face_descriptor : JSON.stringify(u.face_descriptor);
           document.getElementById('face-enrolled-badge').classList.remove('hidden');
@@ -2181,6 +2242,7 @@
         }
         updateAvatarPreview();
       }
+      updateTagsUI();
       document.getElementById('modal-user').classList.remove('hidden');
     }
 
@@ -2223,7 +2285,7 @@
         guardian_name: document.getElementById('form-guardian-name').value.trim(),
         guardian_relation: document.getElementById('form-guardian-rel').value.trim(),
         guardian_phone: document.getElementById('form-guardian-phone').value.trim(),
-        welfare_status: document.getElementById('form-welfare').value.trim(),
+        welfare_status: document.getElementById('form-welfare').value.trim(), // 複選標籤字串
         medical_history: document.getElementById('form-medical').value.trim(),
         special_needs: document.getElementById('form-special-needs').value.trim(),
         avatar_url: document.getElementById('form-avatar').value.trim() || null,
@@ -2232,7 +2294,7 @@
 
       const { error } = await db.from('users').upsert([payload]);
       if (error) { alert("儲存失敗：" + error.message); return; }
-      alert("人員資料及臉部特徵已成功儲存！");
+      alert("人員資料及福利標籤已成功儲存！");
       closeUserModal();
       await loadUsers();
       await buildFaceMatcher();
@@ -2998,7 +3060,6 @@
           printTabNav.classList.add('hidden');
         }
 
-        // 🌟 登入後浮現手機底部導航欄
         if (mobileDock) {
           mobileDock.classList.remove('hidden');
           mobileDock.classList.add('flex');
@@ -3009,7 +3070,6 @@
         document.getElementById('auth-logged').classList.remove('flex');
         printTabNav.classList.add('hidden');
 
-        // 🌟 未登入時完全隱藏底部導航欄
         if (mobileDock) {
           mobileDock.classList.add('hidden');
           mobileDock.classList.remove('flex');
