@@ -289,8 +289,14 @@
             <p class="text-xs text-slate-400 mt-0.5">完整支援個資查看、家庭狀況、健康備註與快捷編輯</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
-              <option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班學員</option><option value="畢業">畢業學員</option><option value="在職">在職教職</option><option value="離職">離職同工</option>
+            <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+              <option value="全部">全部人員</option>
+              <option value="學生" selected>🎒 在班學員</option>
+              <option value="同工">💼 教職同工</option>
+              <option value="老師">📚 輔導老師</option>
+              <option value="工讀生">⚡ 工讀生</option>
+              <option value="退班">🛑 退班學員</option>
+              <option value="離職">🚫 離職人員</option>
             </select>
             <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/狀況..." class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
             <button onclick="openUserModal('add')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-user-plus"></i><span>新增建檔</span></button>
@@ -1274,8 +1280,29 @@
     }
 
     function filterUsersList() {
-      const q = document.getElementById('user-filter').value.toLowerCase(), st = document.getElementById('user-status-filter').value;
-      renderUsers(allUsers.filter(u => (!q || (u.name&&u.name.toLowerCase().includes(q)) || (u.id&&u.id.toLowerCase().includes(q)) || (u.family_status&&u.family_status.toLowerCase().includes(q))) && (st === '全部' || u.status === st)));
+      const q = document.getElementById('user-filter').value.toLowerCase();
+      const filterVal = document.getElementById('user-status-filter').value;
+
+      const filtered = allUsers.filter(u => {
+        const nameMatch = !q || (u.name && u.name.toLowerCase().includes(q)) || (u.id && u.id.toLowerCase().includes(q)) || (u.family_status && u.family_status.toLowerCase().includes(q));
+        
+        if (!nameMatch) return false;
+
+        const role = u.role_type || (u.id.includes('S') ? '學生' : '同工');
+        const status = u.status || '在班';
+
+        if (filterVal === '全部') return true;
+        if (filterVal === '學生') return role === '學生' && status !== '退班' && status !== '畢業';
+        if (filterVal === '同工') return role === '同工';
+        if (filterVal === '老師') return role === '老師';
+        if (filterVal === '工讀生') return role === '工讀生';
+        if (filterVal === '退班') return status === '退班';
+        if (filterVal === '離職') return status === '離職';
+
+        return true;
+      });
+
+      renderUsers(filtered);
     }
 
     // 點選式標籤控制：家庭狀況
