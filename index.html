@@ -58,12 +58,14 @@
     .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     @media print {
       @page { size: landscape; margin: 8mm; }
-      body { background: #ffffff !important; padding: 0 !important; }
+      body { background: #ffffff !important; padding: 0 !important; color: #000000 !important; }
       header, nav, #print-controls-bar, #mobile-bottom-dock, .no-print { display: none !important; }
       main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
       #tab-print-center { display: block !important; }
       .print-page-box { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
       .print-page-break { page-break-after: always; break-after: page; }
+      table { border-collapse: collapse !important; width: 100% !important; }
+      th, td { border: 1px solid #000000 !important; }
     }
   </style>
 </head>
@@ -316,7 +318,7 @@
       </div>
     </div>
 
-    <!-- 5. 個別輔導 -->
+    <!-- 5. 個別輔導 (🌟 完整恢復向度切換與點選式複選標籤系統) -->
     <div id="tab-counseling" class="hidden space-y-4">
       <div class="clean-card rounded-3xl p-4 sm:p-7">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
@@ -329,7 +331,7 @@
             <select id="counsel-filter-category" onchange="filterCounselingList()" class="flex-1 sm:flex-none px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
               <option value="">全部向度</option><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option>
             </select>
-            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition active:scale-95"><i class="fa-solid fa-pen-nib"></i><span>新增輔導</span></button>
+            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition active:scale-95"><i class="fa-solid fa-pen-nib"></i><span>新增輔導紀錄</span></button>
           </div>
         </div>
 
@@ -367,7 +369,7 @@
       </div>
     </div>
 
-    <!-- 7. 列印報表中心 (同工M限定) -->
+    <!-- 7. 列印報表中心 (同工M限定，完整支援 5 大報表) -->
     <div id="tab-print-center" class="hidden space-y-4">
       <div id="print-controls-bar" class="clean-card rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -375,7 +377,7 @@
             <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white">同工(M)限定</span>
             <h2 class="text-lg sm:text-xl font-black text-slate-800">報表與條碼列印中心</h2>
           </div>
-          <p class="text-xs text-slate-400 mt-1">支援國小班/國中班獨立分開核銷點名總表、QR Code 裁切卡、工時明細與名冊</p>
+          <p class="text-xs text-slate-400 mt-1">完整支援專案核銷點名總表、學生 QR 裁切卡、紙本點名簿、每月工時明細、全校總名冊</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
@@ -505,7 +507,7 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 (🌟 點選式複選標籤系統 + 正確對齊 SQL 欄位) -->
+  <!-- 人員建檔 / 編輯 彈窗 -->
   <div id="modal-user" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -571,51 +573,39 @@
           <div><label class="block font-bold text-slate-600 mb-1">夢想點數</label><input type="number" id="form-points" value="0" class="w-32 font-bold px-3 py-2 bg-white border rounded-xl"></div>
         </div>
 
-        <!-- 🌟 4. 家庭與經濟狀況 (點選式複選標籤，先點選者為第一優先) -->
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
-          <div class="flex justify-between items-center">
-            <h4 class="font-bold text-slate-700"><i class="fa-solid fa-people-roof text-rose-600"></i> 4. 家庭與經濟狀況 (點選複選，先點選者為主要狀況)</h4>
-            <input type="hidden" id="form-family-status" value="">
-          </div>
+          <div class="flex justify-between items-center"><h4 class="font-bold text-slate-700"><i class="fa-solid fa-people-roof text-rose-600"></i> 4. 家庭與經濟狀況</h4><input type="hidden" id="form-family-status" value=""></div>
           <div class="bg-white p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span class="text-xs font-bold text-slate-500">已選取家庭/經濟標籤：</span>
             <div id="selected-family-preview" class="flex flex-wrap gap-1.5 items-center"><span class="text-xs text-slate-400 italic">尚未點選</span></div>
           </div>
-          <div class="space-y-1.5">
-            <div id="family-tags-container" class="flex flex-wrap gap-2">
-              <button type="button" onclick="toggleFamilyTag('單親')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 單親</button>
-              <button type="button" onclick="toggleFamilyTag('低收入戶')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 低收入戶</button>
-              <button type="button" onclick="toggleFamilyTag('中低收入戶')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 中低收入戶</button>
-              <button type="button" onclick="toggleFamilyTag('隔代教養')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 隔代教養</button>
-              <button type="button" onclick="toggleFamilyTag('新住民家庭')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 新住民家庭</button>
-              <button type="button" onclick="toggleFamilyTag('原住民家庭')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 原住民家庭</button>
-              <button type="button" onclick="toggleFamilyTag('雙親')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 雙親</button>
-              <button type="button" onclick="toggleFamilyTag('脆弱家庭')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 脆弱家庭</button>
-            </div>
+          <div id="family-tags-container" class="flex flex-wrap gap-2">
+            <button type="button" onclick="toggleFamilyTag('單親')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 單親</button>
+            <button type="button" onclick="toggleFamilyTag('低收入戶')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 低收入戶</button>
+            <button type="button" onclick="toggleFamilyTag('中低收入戶')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 中低收入戶</button>
+            <button type="button" onclick="toggleFamilyTag('隔代教養')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 隔代教養</button>
+            <button type="button" onclick="toggleFamilyTag('新住民家庭')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 新住民家庭</button>
+            <button type="button" onclick="toggleFamilyTag('原住民家庭')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 原住民家庭</button>
+            <button type="button" onclick="toggleFamilyTag('雙親')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 雙親</button>
+            <button type="button" onclick="toggleFamilyTag('脆弱家庭')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 脆弱家庭</button>
           </div>
         </div>
 
-        <!-- 🌟 5. 個人身心/健康備註 (點選式複選標籤) -->
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
-          <div class="flex justify-between items-center">
-            <h4 class="font-bold text-slate-700"><i class="fa-solid fa-notes-medical text-teal-600"></i> 5. 個人身心狀況與健康備註 (點選複選或手動備註)</h4>
-            <input type="hidden" id="form-health-notes" value="">
-          </div>
+          <div class="flex justify-between items-center"><h4 class="font-bold text-slate-700"><i class="fa-solid fa-notes-medical text-teal-600"></i> 5. 個人身心狀況與健康備註</h4><input type="hidden" id="form-health-notes" value=""></div>
           <div class="bg-white p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span class="text-xs font-bold text-slate-500">已選取身心/健康標籤：</span>
             <div id="selected-health-preview" class="flex flex-wrap gap-1.5 items-center"><span class="text-xs text-slate-400 italic">無特殊狀況</span></div>
           </div>
-          <div class="space-y-1.5">
-            <div id="health-tags-container" class="flex flex-wrap gap-2">
-              <button type="button" onclick="toggleHealthTag('ADHD')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ ADHD</button>
-              <button type="button" onclick="toggleHealthTag('自閉症')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 自閉症</button>
-              <button type="button" onclick="toggleHealthTag('地中海型貧血')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 地中海型貧血</button>
-              <button type="button" onclick="toggleHealthTag('輕度智力不足')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 輕度智力不足</button>
-              <button type="button" onclick="toggleHealthTag('染色體異常')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 染色體異常</button>
-              <button type="button" onclick="toggleHealthTag('蠶豆症')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 蠶豆症</button>
-              <button type="button" onclick="toggleHealthTag('過敏體質')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 過敏體質</button>
-              <button type="button" onclick="toggleHealthTag('無')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 無</button>
-            </div>
+          <div id="health-tags-container" class="flex flex-wrap gap-2">
+            <button type="button" onclick="toggleHealthTag('ADHD')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ ADHD</button>
+            <button type="button" onclick="toggleHealthTag('自閉症')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 自閉症</button>
+            <button type="button" onclick="toggleHealthTag('地中海型貧血')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 地中海型貧血</button>
+            <button type="button" onclick="toggleHealthTag('輕度智力不足')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 輕度智力不足</button>
+            <button type="button" onclick="toggleHealthTag('染色體異常')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 染色體異常</button>
+            <button type="button" onclick="toggleHealthTag('蠶豆症')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 蠶豆症</button>
+            <button type="button" onclick="toggleHealthTag('過敏體質')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 過敏體質</button>
+            <button type="button" onclick="toggleHealthTag('無')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 無</button>
           </div>
           <div>
             <label class="block font-bold text-slate-600 mb-1">其他詳細備註或特殊叮嚀</label>
@@ -631,30 +621,51 @@
     </div>
   </div>
 
-  <!-- 輔導紀錄 彈窗 -->
+  <!-- 🌟 新增/編輯個別輔導紀錄彈窗 (完整恢復勾選標籤與向度切換) -->
   <div id="modal-counseling-add" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-3.5 border-b pb-3">
-        <h3 class="text-base sm:text-lg font-black text-slate-800">新增個別學童輔導紀錄</h3>
+        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄</h3>
         <button onclick="closeAddCounselingModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
-      <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
+      <form onsubmit="handleCounselingSubmit(event)" class="space-y-4 text-xs sm:text-sm">
         <input type="hidden" id="counsel-edit-id" value="">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div><label class="block font-bold text-slate-600 mb-1">輔導對象 *</label><select id="counsel-student-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
-          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導對象學童 *</label><select id="counsel-student-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-bold text-xs"></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 / 同工 *</label><select id="counsel-teacher-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-bold text-xs"></select></div>
         </div>
         <div class="grid grid-cols-3 gap-2">
-          <div><label class="block font-bold text-slate-600 mb-1">日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">向度</label><select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2 py-2 bg-slate-50 border rounded-xl font-bold text-xs"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
-          <div><label class="block font-bold text-slate-600 mb-1">時長(分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">晤談日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">輔導向度 *</label>
+            <select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs">
+              <option value="課業輔導">課業輔導</option>
+              <option value="情緒行為">情緒行為</option>
+              <option value="家庭關懷">家庭關懷</option>
+              <option value="品格引導">品格引導</option>
+            </select>
+          </div>
+          <div><label class="block font-bold text-slate-600 mb-1">陪伴時長 *</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
         </div>
-        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">快捷狀態點選：</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
-        <div><label class="block font-bold text-slate-600 mb-1">晤談描述 *</label><textarea id="counsel-content" rows="3" required class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
-        <div><label class="block font-bold text-slate-600 mb-1">後續追蹤</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
+
+        <!-- 🌟 動態快捷點選標籤 -->
+        <div class="bg-slate-50 border rounded-2xl p-3.5 space-y-2">
+          <label class="block font-bold text-slate-700 text-xs">💡 點選下方項目快速加入晤談描述：</label>
+          <div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">狀況描述與晤談要點 *</label>
+          <textarea id="counsel-content" rows="3" required placeholder="點選上方標籤或自行輸入晤談過程與觀察..." class="w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">後續處置與追蹤計劃</label>
+          <textarea id="counsel-followup" rows="2" placeholder="後續需要家長配合或持續觀察之事項..." class="w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs"></textarea>
+        </div>
+
         <div class="flex space-x-2.5 pt-3 border-t">
           <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
+          <button type="submit" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-sm">確認儲存輔導紀錄</button>
         </div>
       </form>
     </div>
@@ -721,12 +732,12 @@
     let currentHealthTags = [];
 
     const verses = [
-      "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
+      "「你當剛強壯膽！不要懼怕，也不要驚惶;因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
       "「應當一無掛慮，只要凡事藉著禱告、祈求，和感謝，將你們所要的告訴神。」（腓立比書 4:6）",
       "「你的話是我腳前的燈，是我路上的光。」（詩篇 119:105）",
       "「耶和華是我的牧者，我必不致缺乏。」（詩篇 23:1）",
       "「教養孩童，使他走當行的道，就是到老他也不偏離。」（箴言 22:6）",
-      "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
+      "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰;他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
     ];
 
     const counselTagsDict = {
@@ -959,7 +970,6 @@
       });
 
       if (labeledFaceDescriptors.length > 0) {
-        // 🌟 嚴格門檻 0.48，防止將他人誤判為管理者
         faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.48);
         if (faceStatus) {
           faceStatus.className = "text-emerald-300 font-bold";
@@ -1121,7 +1131,6 @@
         const action = cnt === 0 ? "上班簽到" : "下班簽退";
         await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: user.role_type || '教職員', action_text: action }]);
         
-        // 🌟 移除隨意覆寫 currentUser 的邏輯，避免打卡機將當前操作員強制切換
         if (window.confetti) confetti({ particleCount: 50, spread: 50, origin: { y: 0.65 } });
         showPunchSuccessModal(cnt === 0 ? `💼 ${user.name} 上班簽到成功！` : `🌙 ${user.name} 下班簽退成功！`, `出勤已登記`); loadLogs();
       } catch (e) {}
@@ -1188,10 +1197,10 @@
     function batchSetAll(f, v) { activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
 
     // =============================================================
-    // 5. 人員名冊管理 (精準對齊 SQL 資料庫 16 個欄位)
+    // 5. 人員名冊管理 (精準對齊 SQL 16 個欄位)
     // =============================================================
     async function loadUsers() { 
-      const { data, error } = await db.from('users').select('*').order('id'); 
+      const { data } = await db.from('users').select('*').order('id'); 
       allUsers = data || []; 
       filterUsersList(); 
     }
@@ -1223,7 +1232,6 @@
         let statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">在班</span>';
         if (u.status === '退班') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">退班</span>';
         else if (u.status === '畢業') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">畢業</span>';
-        else if (u.status === '離職') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600">離職</span>';
         else if (u.status === '在職') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">在職</span>';
 
         const gInfo = u.parent_name ? `${u.parent_name} (${u.parent_relation || '家長'}): ${u.parent_phone || '-'}` : (u.parent_phone || u.phone || '-');
@@ -1443,17 +1451,108 @@
     }
 
     // =============================================================
-    // 6 & 7. 輔導、留言與報表中心
+    // 6 & 7. 輔導、留言與報表中心 (🌟 完整恢復動態標籤向度切換)
     // =============================================================
     async function loadCounseling() {
+      if (allUsers.length === 0) {
+        const { data: uData } = await db.from('users').select('*');
+        if (uData) allUsers = uData;
+      }
+      const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生'));
+      document.getElementById('counsel-student-select').innerHTML = `<option value="">請選擇學童...</option>` +
+        students.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
+
+      const staff = allUsers.filter(u => u.id.includes('M') || u.id.includes('T') || u.role_type !== '學生');
+      document.getElementById('counsel-teacher-select').innerHTML = `<option value="">請選擇輔導老師...</option>` +
+        staff.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
+
+      document.getElementById('counsel-filter-student').innerHTML = `<option value="">全部學童</option>` +
+        students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
       const { data } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
       rawCounselingList = data || [];
-      document.getElementById('counseling-list').innerHTML = rawCounselingList.map(c => `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 font-mono text-xs">${new Date(c.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${c.student_name}</td><td class="py-2.5 px-3">${c.category||'課業'}</td><td class="py-2.5 px-3">${c.teacher_name}</td><td class="py-2.5 px-3">${c.content}</td><td class="py-2.5 px-3 text-center"><button onclick="deleteCounseling(${c.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
+      renderCounselingTable(rawCounselingList);
+      updateCounselingStats(rawCounselingList);
+      switchCounselTags();
     }
-    function openAddCounselingModal() { document.getElementById('modal-counseling-add').classList.remove('hidden'); }
+
+    function switchCounselTags() {
+      const cat = document.getElementById('counsel-category').value;
+      const tags = counselTagsDict[cat] || [];
+      const box = document.getElementById('counsel-quick-tags');
+      box.innerHTML = tags.map(t => `<button type="button" onclick="appendCounselTag('${t}')" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-rose-50 hover:border-rose-400 text-slate-700 rounded-lg text-xs font-bold transition">＋ ${t}</button>`).join('');
+    }
+
+    function appendCounselTag(t) {
+      const ta = document.getElementById('counsel-content');
+      ta.value = ta.value ? ta.value + "、" + t : t;
+    }
+
+    function renderCounselingTable(list) {
+      document.getElementById('counseling-list').innerHTML = list.length === 0 ? `<tr><td colspan="8" class="py-6 text-center text-slate-400">目前無個別輔導紀錄</td></tr>` :
+        list.map(c => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3 font-mono text-xs">${c.created_at ? c.created_at.split('T')[0] : '-'}</td>
+            <td class="py-3 px-3 font-bold">${c.student_name} <span class="text-[10px] font-mono text-slate-400">(${c.student_id})</span></td>
+            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700">${c.category || '課業輔導'}</span></td>
+            <td class="py-3 px-3 font-bold text-slate-700">${c.teacher_name}</td>
+            <td class="py-3 px-3 font-mono font-bold text-indigo-700">${c.duration || 30} 分鐘</td>
+            <td class="py-3 px-3 text-xs text-slate-700 max-w-xs">${c.content}</td>
+            <td class="py-3 px-3 text-xs text-slate-500 max-w-xs">${c.follow_up || '無'}</td>
+            <td class="py-3 px-3 text-center"><button onclick="deleteCounseling(${c.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs">刪除</button></td>
+          </tr>`).join('');
+    }
+
+    function updateCounselingStats(list) {
+      let totalMins = 0;
+      const stuSet = new Set();
+      list.forEach(c => {
+        totalMins += Number(c.duration || 30);
+        stuSet.add(c.student_id);
+      });
+      document.getElementById('cs-stat-count').textContent = `${list.length} 次`;
+      document.getElementById('cs-stat-mins').textContent = `${totalMins} 分鐘`;
+      document.getElementById('cs-stat-students').textContent = `${stuSet.size} 位`;
+      document.getElementById('cs-stat-followup').textContent = `${list.filter(x => x.follow_up && x.follow_up.trim()).length} 案`;
+    }
+
+    function filterCounselingList() {
+      const sId = document.getElementById('counsel-filter-student').value;
+      const cat = document.getElementById('counsel-filter-category').value;
+      const filtered = rawCounselingList.filter(c => (!sId || c.student_id === sId) && (!cat || c.category === cat));
+      renderCounselingTable(filtered);
+    }
+
+    function openAddCounselingModal() {
+      document.getElementById('counsel-edit-id').value = "";
+      document.getElementById('counsel-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('counsel-content').value = "";
+      document.getElementById('counsel-followup').value = "";
+      document.getElementById('modal-counseling-add').classList.remove('hidden');
+    }
     function closeAddCounselingModal() { document.getElementById('modal-counseling-add').classList.add('hidden'); }
-    async function handleCounselingSubmit(e) { e.preventDefault(); alert("已儲存"); closeAddCounselingModal(); loadCounseling(); }
-    async function deleteCounseling(id) { await db.from('counseling_logs').delete().eq('id', id); loadCounseling(); }
+
+    async function handleCounselingSubmit(e) {
+      e.preventDefault();
+      const sSel = document.getElementById('counsel-student-select');
+      const tSel = document.getElementById('counsel-teacher-select');
+      const payload = {
+        student_id: sSel.value,
+        student_name: sSel.selectedOptions[0]?.getAttribute('data-name') || '',
+        teacher_id: tSel.value,
+        teacher_name: tSel.selectedOptions[0]?.getAttribute('data-name') || '',
+        created_at: document.getElementById('counsel-date').value,
+        category: document.getElementById('counsel-category').value,
+        duration: parseInt(document.getElementById('counsel-duration').value) || 30,
+        content: document.getElementById('counsel-content').value.trim(),
+        follow_up: document.getElementById('counsel-followup').value.trim()
+      };
+      const { error } = await db.from('counseling_logs').insert([payload]);
+      if (error) { alert("儲存失敗：" + error.message); return; }
+      alert("✅ 輔導紀錄已成功儲存！");
+      closeAddCounselingModal(); loadCounseling();
+    }
+    async function deleteCounseling(id) { if (!confirm("確定刪除此筆輔導紀錄？")) return; await db.from('counseling_logs').delete().eq('id', id); loadCounseling(); }
 
     async function loadMessages() {
       const { data } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
@@ -1548,30 +1647,50 @@
       alert(`✅ 成功匯入 ${successCount} 筆學員完整資料！`); loadUsers(); switchTab('students');
     }
 
+    // =============================================================
+    // 列印報表中心
+    // =============================================================
     function onReportTypeChange() {
       const t = document.getElementById('print-report-type').value;
-      document.getElementById('print-class-filter').classList.toggle('hidden', t !== 'month_rollcall');
+      const classFilter = document.getElementById('print-class-filter');
+      const monthFilter = document.getElementById('print-month-filter');
+
+      classFilter.classList.toggle('hidden', t !== 'month_rollcall');
+      monthFilter.classList.toggle('hidden', t === 'roster' || t === 'qrcode');
       renderSelectedReport();
-    }
-    function isJuniorHighStudent(stu) {
-      const g = (stu.grade || '').trim(), s = (stu.school || '').trim();
-      return g.includes('七') || g.includes('八') || g.includes('九') || g.includes('7') || g.includes('8') || g.includes('9') || g.includes('國一') || s.includes('國中');
     }
 
     async function renderSelectedReport() {
       const type = document.getElementById('print-report-type').value;
-      const targetMonth = document.getElementById('print-month-filter').value;
+      const targetMonth = document.getElementById('print-month-filter').value || '2026-09';
       const classOption = document.getElementById('print-class-filter').value;
       const container = document.getElementById('print-paper-content');
-      if (allUsers.length === 0) { const { data } = await db.from('users').select('*'); if (data) allUsers = data; }
-      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班');
+
+      if (allUsers.length === 0) {
+        const { data } = await db.from('users').select('*').order('id');
+        if (data) allUsers = data;
+      }
+      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
 
       if (type === 'month_rollcall') {
-        const [y, m] = targetMonth.split('-').map(Number); const rocY = y - 1911;
-        const daysInM = new Date(y, m, 0).getDate(); const schoolDays = [];
-        for (let d = 1; d <= daysInM; d++) { const dt = new Date(y, m - 1, d); if (dt.getDay() >= 1 && dt.getDay() <= 5) schoolDays.push({ day: d, dateStr: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` }); }
-        const { data: mLogs } = await db.from('check_in_logs').select('*').gte('check_time', `${targetMonth}-01T00:00:00.000Z`).lte('check_time', `${targetMonth}-${daysInM}T23:59:59.999Z`);
-        const map = {}; (mLogs||[]).forEach(l => { if (!map[l.target_id]) map[l.target_id]={}; map[l.target_id][new Date(l.check_time).toLocaleDateString('en-CA')] = true; });
+        const [y, m] = targetMonth.split('-').map(Number);
+        const rocY = y - 1911;
+        const daysInM = new Date(y, m, 0).getDate();
+        const schoolDays = [];
+        for (let d = 1; d <= daysInM; d++) {
+          const dt = new Date(y, m - 1, d);
+          if (dt.getDay() >= 1 && dt.getDay() <= 5) schoolDays.push({ day: d, dateStr: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` });
+        }
+
+        const { data: mLogs } = await db.from('check_in_logs').select('*')
+          .gte('check_time', `${targetMonth}-01T00:00:00.000Z`)
+          .lte('check_time', `${targetMonth}-${daysInM}T23:59:59.999Z`);
+
+        const map = {};
+        (mLogs || []).forEach(l => {
+          if (!map[l.target_id]) map[l.target_id] = {};
+          map[l.target_id][new Date(l.check_time).toLocaleDateString('en-CA')] = true;
+        });
 
         const elem = activeStudents.filter(s => !isJuniorHighStudent(s));
         const jun = activeStudents.filter(s => isJuniorHighStudent(s));
@@ -1580,21 +1699,124 @@
           <div class="space-y-3">
             <div class="text-center border-b-2 border-slate-900 pb-2">
               <h1 class="text-xl font-black font-serif">社團法人台灣基督教社會關懷協會 夢想加油站</h1>
-              <h2 class="text-base font-black">中華民國 ${rocY} 年 ${m} 月 點名表</h2>
-              <div class="flex justify-between text-xs font-bold pt-1"><span>班級：大雅課後陪讀班 ${title}</span><span>應到：${list.length}位</span><span>上課日：${schoolDays.length}天</span></div>
+              <h2 class="text-base font-black">中華民國 ${rocY} 年 ${m} 月 學生出勤點名總表</h2>
+              <div class="flex justify-between text-xs font-bold pt-1">
+                <span>班級：大雅課後陪讀班（${title}）</span>
+                <span>應到學員：${list.length} 位</span>
+                <span>應上課日：${schoolDays.length} 天</span>
+              </div>
             </div>
-            <table class="w-full text-center border-collapse border-2 border-slate-800 text-[10px]">
-              <thead><tr class="bg-slate-100 font-bold border-b-2 border-slate-800"><th class="border p-1">序</th><th class="border p-1">學號</th><th class="border p-1">姓名</th>${schoolDays.map(sd=>`<th class="border p-0.5">${sd.day}</th>`).join('')}<th class="border p-1">出席率</th><th class="border p-1">簽名</th></tr></thead>
-              <tbody>${list.map((s, i) => {
-                let p = 0;
-                const days = schoolDays.map(sd => { const ok = map[s.id]?.[sd.dateStr]; if(ok) p++; return `<td class="border p-0.5 ${ok?'text-emerald-700 font-black':'text-rose-600 font-bold'}">${ok?'✔':'曠'}</td>`; }).join('');
-                return `<tr><td class="border p-1">${i+1}</td><td class="border p-1 font-mono">${s.id}</td><td class="border p-1 font-bold">${s.name}</td>${days}<td class="border p-1 font-bold">${Math.round((p/schoolDays.length)*100)}%</td><td class="border p-1"></td></tr>`;
-              }).join('')}</tbody>
+            <table class="w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
+              <thead>
+                <tr class="bg-slate-100 font-bold border-b-2 border-slate-900">
+                  <th class="border p-1 w-7">序</th>
+                  <th class="border p-1 w-20">學號</th>
+                  <th class="border p-1 w-16">姓名</th>
+                  ${schoolDays.map(sd => `<th class="border p-0.5">${sd.day}</th>`).join('')}
+                  <th class="border p-1 w-12">出席率</th>
+                  <th class="border p-1 w-14">簽核</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${list.map((s, i) => {
+                  let p = 0;
+                  const days = schoolDays.map(sd => {
+                    const ok = map[s.id]?.[sd.dateStr];
+                    if (ok) p++;
+                    return `<td class="border p-0.5 ${ok ? 'text-emerald-700 font-black' : 'text-rose-600 font-bold'}">${ok ? '✔' : '曠'}</td>`;
+                  }).join('');
+                  const rate = schoolDays.length > 0 ? Math.round((p / schoolDays.length) * 100) : 0;
+                  return `
+                    <tr>
+                      <td class="border p-1">${i + 1}</td>
+                      <td class="border p-1 font-mono">${s.id}</td>
+                      <td class="border p-1 font-bold">${s.name}</td>
+                      ${days}
+                      <td class="border p-1 font-bold">${rate}%</td>
+                      <td class="border p-1"></td>
+                    </tr>`;
+                }).join('')}
+              </tbody>
             </table>
           </div>`;
-        container.innerHTML = classOption === 'elementary' ? renderTbl("國小", elem) : classOption === 'junior' ? renderTbl("國中", jun) : renderTbl("國小", elem) + `<div class="print-page-break pt-8"></div>` + renderTbl("國中", jun);
-      } else {
-        container.innerHTML = `<div class="text-center py-12 text-slate-400 font-bold">請點選專案核銷點名總表</div>`;
+
+        container.innerHTML = classOption === 'elementary' ? renderTbl("國小班", elem) :
+                              classOption === 'junior' ? renderTbl("國中班", jun) :
+                              renderTbl("國小班", elem) + `<div class="print-page-break pt-8"></div>` + renderTbl("國中班", jun);
+      }
+      else if (type === 'qrcode') {
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="text-center border-b pb-2">
+              <h2 class="text-lg font-black">M+ 大雅教會 課輔班 學生識別 QR Code 裁切名片卡</h2>
+            </div>
+            <div id="qrcode-cards-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+          </div>`;
+        const grid = document.getElementById('qrcode-cards-grid');
+        grid.innerHTML = activeStudents.map((s, idx) => `
+          <div class="border-2 border-dashed border-slate-300 p-4 rounded-2xl flex items-center space-x-3 bg-white">
+            <div id="qr-box-${idx}" class="shrink-0 w-24 h-24 bg-slate-50 border p-1 rounded-xl flex items-center justify-center"></div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">M+ 大雅課輔</span>
+              <h3 class="text-base font-black text-slate-900 mt-1 truncate">${s.name}</h3>
+              <p class="text-xs font-mono font-bold text-indigo-700 mt-0.5">${s.id}</p>
+            </div>
+          </div>
+        `).join('');
+        activeStudents.forEach((s, idx) => {
+          const el = document.getElementById(`qr-box-${idx}`);
+          if (el && window.QRCode) {
+            new QRCode(el, { text: s.id, width: 88, height: 88, correctLevel: QRCode.CorrectLevel.M });
+          }
+        });
+      }
+      else if (type === 'rollcall') {
+        container.innerHTML = `
+          <div class="space-y-3">
+            <div class="text-center border-b-2 border-slate-900 pb-2">
+              <h1 class="text-xl font-black font-serif">M+ 大雅教會 課輔班 現場點名與聯絡簿核章簽核表</h1>
+            </div>
+            <table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
+              <thead><tr class="bg-slate-100 font-bold border-b-2 border-slate-900"><th class="border p-2">序</th><th class="border p-2">學號</th><th class="border p-2">姓名</th><th class="border p-2">出席</th><th class="border p-2">作業完成</th><th class="border p-2">聯絡簿核章</th><th class="border p-2">家長簽名</th></tr></thead>
+              <tbody>
+                ${activeStudents.map((s, i) => `
+                  <tr><td class="border p-2">${i+1}</td><td class="border p-2 font-mono">${s.id}</td><td class="border p-2 font-bold">${s.name}</td><td class="border p-2">□ 到 □ 假</td><td class="border p-2">□ 完 □ 未</td><td class="border p-2">□ 已 □ 缺</td><td class="border p-2"></td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+      else if (type === 'workhours') {
+        const { data: monthSchedules } = await db.from('schedules').select('*').gte('date', `${targetMonth}-01`).lte('date', `${targetMonth}-31`);
+        const shifts = monthSchedules || [];
+        const summary = {};
+        shifts.forEach(s => {
+          if (!summary[s.worker_id]) summary[s.worker_id] = { id: s.worker_id, name: s.worker_name, hours: 0, shifts: [] };
+          summary[s.worker_id].hours += Number(s.hours || 0);
+          summary[s.worker_id].shifts.push(s);
+        });
+        const workers = Object.values(summary);
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="text-center border-b-2 border-slate-900 pb-2"><h1 class="text-xl font-black font-serif">教職員與工讀同工每月工時領據明細表</h1></div>
+            <table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
+              <thead><tr class="bg-slate-100 font-bold border-b border-slate-900"><th class="border p-2">編號</th><th class="border p-2">姓名</th><th class="border p-2">班次</th><th class="border p-2">總工時</th><th class="border p-2">預估薪資($190/h)</th><th class="border p-2">簽名</th></tr></thead>
+              <tbody>
+                ${workers.map(w => `<tr><td class="border p-2 font-mono">${w.id}</td><td class="border p-2 font-bold">${w.name}</td><td class="border p-2">${w.shifts.length}</td><td class="border p-2 font-mono">${w.hours}h</td><td class="border p-2 font-mono font-black">$${w.hours*190}</td><td class="border p-2"></td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+      else if (type === 'roster') {
+        container.innerHTML = `
+          <div class="space-y-3">
+            <div class="text-center border-b-2 border-slate-900 pb-2"><h1 class="text-xl font-black font-serif">M+ 大雅教會 課輔班 全校學員通訊名冊</h1></div>
+            <table class="w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
+              <thead><tr class="bg-slate-100 font-bold border-b-2 border-slate-900"><th class="border p-1">學號</th><th class="border p-1">姓名</th><th class="border p-1">學校/年級</th><th class="border p-1">家長</th><th class="border p-1">關係</th><th class="border p-1">電話</th><th class="border p-1">地址</th></tr></thead>
+              <tbody>
+                ${activeStudents.map(s => `<tr><td class="border p-1 font-mono">${s.id}</td><td class="border p-1 font-bold">${s.name}</td><td class="border p-1">${s.school||''} ${s.grade||''}</td><td class="border p-1">${s.parent_name||'-'}</td><td class="border p-1">${s.parent_relation||'-'}</td><td class="border p-1 font-mono">${s.parent_phone||s.phone||'-'}</td><td class="border p-1 text-left">${s.address||'-'}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
       }
     }
 
