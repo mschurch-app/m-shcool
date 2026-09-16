@@ -318,7 +318,7 @@
       </div>
     </div>
 
-    <!-- 5. 個別輔導 (🌟 完整恢復向度切換與點選式複選標籤系統) -->
+    <!-- 5. 個別輔導 (🌟 完整恢復四大向度、複選標籤與後續處置勾選) -->
     <div id="tab-counseling" class="hidden space-y-4">
       <div class="clean-card rounded-3xl p-4 sm:p-7">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
@@ -369,7 +369,7 @@
       </div>
     </div>
 
-    <!-- 7. 列印報表中心 (同工M限定，完整支援 5 大報表) -->
+    <!-- 7. 列印報表中心 (同工M限定) -->
     <div id="tab-print-center" class="hidden space-y-4">
       <div id="print-controls-bar" class="clean-card rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -621,56 +621,6 @@
     </div>
   </div>
 
-  <!-- 🌟 新增/編輯個別輔導紀錄彈窗 (完整恢復勾選標籤與向度切換) -->
-  <div id="modal-counseling-add" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
-      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
-        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導紀錄</h3>
-        <button onclick="closeAddCounselingModal()" class="text-slate-400 font-bold text-xl">&times;</button>
-      </div>
-      <form onsubmit="handleCounselingSubmit(event)" class="space-y-4 text-xs sm:text-sm">
-        <input type="hidden" id="counsel-edit-id" value="">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div><label class="block font-bold text-slate-600 mb-1">輔導對象學童 *</label><select id="counsel-student-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-bold text-xs"></select></div>
-          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 / 同工 *</label><select id="counsel-teacher-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-bold text-xs"></select></div>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <div><label class="block font-bold text-slate-600 mb-1">晤談日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
-          <div>
-            <label class="block font-bold text-slate-600 mb-1">輔導向度 *</label>
-            <select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs">
-              <option value="課業輔導">課業輔導</option>
-              <option value="情緒行為">情緒行為</option>
-              <option value="家庭關懷">家庭關懷</option>
-              <option value="品格引導">品格引導</option>
-            </select>
-          </div>
-          <div><label class="block font-bold text-slate-600 mb-1">陪伴時長 *</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
-        </div>
-
-        <!-- 🌟 動態快捷點選標籤 -->
-        <div class="bg-slate-50 border rounded-2xl p-3.5 space-y-2">
-          <label class="block font-bold text-slate-700 text-xs">💡 點選下方項目快速加入晤談描述：</label>
-          <div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">狀況描述與晤談要點 *</label>
-          <textarea id="counsel-content" rows="3" required placeholder="點選上方標籤或自行輸入晤談過程與觀察..." class="w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs"></textarea>
-        </div>
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">後續處置與追蹤計劃</label>
-          <textarea id="counsel-followup" rows="2" placeholder="後續需要家長配合或持續觀察之事項..." class="w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs"></textarea>
-        </div>
-
-        <div class="flex space-x-2.5 pt-3 border-t">
-          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-sm">確認儲存輔導紀錄</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- 登入彈窗 -->
   <div id="modal-login" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl border">
@@ -727,9 +677,9 @@
     let snapStream = null;
     let activeBatchDates = [];
 
-    // 🌟 點選式標籤陣列
     let currentFamilyTags = [];
     let currentHealthTags = [];
+    let currentCounselingTags = []; // 🌟 個別輔導複選標籤
 
     const verses = [
       "「你當剛強壯膽！不要懼怕，也不要驚惶;因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
@@ -740,11 +690,12 @@
       "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰;他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
     ];
 
+    // 🌟 四大向度與豐富的快捷複選標籤
     const counselTagsDict = {
-      "課業輔導": ["專注度良好", "完成度高", "需要一對一指導", "數學理解困難", "容易分心", "排斥寫作業", "字體潦草需重寫", "段考前複習狀態佳"],
-      "情緒行為": ["情緒平穩", "起伏大容易生氣", "與同儕發生衝突", "哭鬧難以安撫", "退縮不說話", "過度興奮坐不住", "願意道歉和好", "需要暫離冷靜"],
-      "家庭關懷": ["家長晚接", "未吃晚餐", "家中有突發變故", "孩子表達想念家人", "衣服單薄需關心", "提供物資協助", "已主動聯繫家長了解"],
-      "品格引導": ["主動協助同儕", "樂意分享", "說粗話需糾正", "說謊行為", "不服從老師規範", "物歸原主", "懂得感恩", "態度敷衍需教導"]
+      "課業輔導": ["專注度良好", "作業完成度高", "需要一對一指導", "數學觀念卡住", "國文閱讀需加強", "容易分心走神", "排斥寫作業", "字體潦草需重寫", "段考前複習狀態佳"],
+      "情緒行為": ["情緒平穩", "起伏大容易暴怒", "與同儕發生衝突", "哭鬧難以安撫", "退縮不說話", "過度興奮坐不住", "願意道歉和好", "需要暫離冷靜空間"],
+      "家庭關懷": ["家長晚接", "未吃晚餐肚子餓", "家中有突發變故", "孩子表達想念家人", "衣著單薄需關心", "提供愛心物資協助", "已聯繫家長了解狀況"],
+      "品格引導": ["主動協助同儕", "樂意分享食物", "說粗話需糾正", "有說謊或拿取行為", "不服從老師規範", "物歸原主有禮貌", "懂得感恩道謝", "態度敷衍需教導"]
     };
 
     function updateClock() {
@@ -1316,11 +1267,9 @@
       });
     }
 
-    // 🌟 徹底解決資料殘留：每次開啟或關閉皆徹底 reset 表單與暫存變數
     function resetUserForm() {
       const form = document.querySelector('#modal-user form');
       if (form) form.reset();
-
       document.getElementById('form-user-mode').value = "add";
       document.getElementById('form-face-descriptor').value = "";
       document.getElementById('form-family-status').value = "";
@@ -1330,17 +1279,14 @@
       document.getElementById('face-enrolled-badge').classList.add('hidden');
       const tip = document.getElementById('face-extract-tip');
       if (tip) tip.textContent = "";
-
       currentFamilyTags = [];
       currentHealthTags = [];
       updateFamilyTagsUI();
       updateHealthTagsUI();
     }
 
-    // 🌟 打開人員編輯彈窗（完整讀取 SQL 16 個欄位 + 標籤陣列還原）
     function openUserModal(mode, uid = null) {
       resetUserForm();
-
       if (mode === 'add') {
         document.getElementById('modal-user-title').textContent = "新增學員 / 人員建檔";
         document.getElementById('form-id').disabled = false;
@@ -1364,7 +1310,6 @@
         document.getElementById('form-address').value = u.address || "";
         document.getElementById('form-phone').value = u.phone || "";
         
-        // 🌟 正確帶入父母資訊
         document.getElementById('form-parent-name').value = u.parent_name || "";
         document.getElementById('form-parent-relation').value = u.parent_relation || "";
         document.getElementById('form-parent-phone').value = u.parent_phone || "";
@@ -1380,13 +1325,11 @@
           if (tip) tip.textContent = "AI 特徵已建立";
         }
 
-        // 還原家庭狀況標籤
         if (u.family_status) {
           currentFamilyTags = u.family_status.split(/[,、]/).map(s=>s.trim()).filter(Boolean);
         }
         updateFamilyTagsUI();
 
-        // 還原健康狀況標籤
         if (u.health_notes) {
           const hItems = u.health_notes.split(/[,、]/).map(s=>s.trim()).filter(Boolean);
           const knownList = ['ADHD', '自閉症', '地中海型貧血', '輕度智力不足', '染色體異常', '蠶豆症', '過敏體質', '無'];
@@ -1407,7 +1350,6 @@
       document.getElementById('modal-user').classList.add('hidden');
     }
 
-    // 🌟 儲存人員資料（完整寫入 SQL 16 個欄位）
     async function handleUserSubmit(e) {
       e.preventDefault();
       const extra = document.getElementById('form-health-extra').value.trim();
@@ -1451,7 +1393,7 @@
     }
 
     // =============================================================
-    // 6 & 7. 輔導、留言與報表中心 (🌟 完整恢復動態標籤向度切換)
+    // 6 & 7. 輔導與留言板 (🌟 支援多向度勾選與後續處置、轉介、牧者報告)
     // =============================================================
     async function loadCounseling() {
       if (allUsers.length === 0) {
@@ -1476,9 +1418,34 @@
       switchCounselTags();
     }
 
+    // 🌟 點選式向度控制（支援多向度複選）
+    function toggleCounselCategory(catName) {
+      const idx = currentCounselingTags.indexOf(catName);
+      if (idx > -1) currentCounselingTags.splice(idx, 1); else currentCounselingTags.push(catName);
+      updateCounselCategoryUI();
+      switchCounselTags();
+    }
+    function updateCounselCategoryUI() {
+      document.getElementById('form-counsel-category').value = currentCounselingTags.join('、');
+      const box = document.getElementById('selected-counsel-category-preview');
+      box.innerHTML = currentCounselingTags.length === 0 ? `<span class="text-xs text-slate-400 italic">請至少勾選一個輔導向度</span>` : currentCounselingTags.map((t, i) => `<span class="px-2 py-0.5 rounded text-[11px] font-black ${i===0?'bg-indigo-600 text-white':'bg-slate-200 text-slate-700'}">${i===0?'⭐主: ':''}${t}</span>`).join(' ');
+      document.querySelectorAll('#counsel-category-container button').forEach(btn => {
+        const txt = btn.textContent.replace('＋ ', '').replace('✓ ', '').replace(' (優先)', '').trim();
+        if (currentCounselingTags.includes(txt)) {
+          const isP = currentCounselingTags[0] === txt;
+          btn.className = `px-3 py-1.5 rounded-xl text-xs font-black transition ${isP ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700 border border-indigo-300'}`;
+          btn.innerHTML = `✓ ${txt}${isP ? ' (優先)' : ''}`;
+        } else {
+          btn.className = `px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold`;
+          btn.innerHTML = `＋ ${txt}`;
+        }
+      });
+    }
+
     function switchCounselTags() {
-      const cat = document.getElementById('counsel-category').value;
-      const tags = counselTagsDict[cat] || [];
+      // 根據第一個被勾選的向度列出快捷標籤，若無則預設課業輔導
+      const primaryCat = currentCounselingTags[0] || "課業輔導";
+      const tags = counselTagsDict[primaryCat] || counselTagsDict["課業輔導"];
       const box = document.getElementById('counsel-quick-tags');
       box.innerHTML = tags.map(t => `<button type="button" onclick="appendCounselTag('${t}')" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-rose-50 hover:border-rose-400 text-slate-700 rounded-lg text-xs font-bold transition">＋ ${t}</button>`).join('');
     }
@@ -1486,6 +1453,16 @@
     function appendCounselTag(t) {
       const ta = document.getElementById('counsel-content');
       ta.value = ta.value ? ta.value + "、" + t : t;
+    }
+
+    // 🌟 後續處置複選控制
+    function toggleFollowupAction(actionName) {
+      const checkboxes = document.querySelectorAll('.followup-checkbox:checked');
+      const actions = Array.from(checkboxes).map(cb => cb.value);
+      const extra = document.getElementById('counsel-followup-extra').value.trim();
+      const combined = [...actions];
+      if (extra && !combined.includes(extra)) combined.push(extra);
+      document.getElementById('counsel-followup').value = combined.join('、');
     }
 
     function renderCounselingTable(list) {
@@ -1519,7 +1496,7 @@
     function filterCounselingList() {
       const sId = document.getElementById('counsel-filter-student').value;
       const cat = document.getElementById('counsel-filter-category').value;
-      const filtered = rawCounselingList.filter(c => (!sId || c.student_id === sId) && (!cat || c.category === cat));
+      const filtered = rawCounselingList.filter(c => (!sId || c.student_id === sId) && (!cat || (c.category && c.category.includes(cat))));
       renderCounselingTable(filtered);
     }
 
@@ -1528,12 +1505,25 @@
       document.getElementById('counsel-date').value = new Date().toISOString().split('T')[0];
       document.getElementById('counsel-content').value = "";
       document.getElementById('counsel-followup').value = "";
+      document.getElementById('counsel-followup-extra').value = "";
+      document.querySelectorAll('.followup-checkbox').forEach(cb => cb.checked = false);
+      currentCounselingTags = ["課業輔導"];
+      updateCounselCategoryUI();
+      switchCounselTags();
       document.getElementById('modal-counseling-add').classList.remove('hidden');
     }
     function closeAddCounselingModal() { document.getElementById('modal-counseling-add').classList.add('hidden'); }
 
     async function handleCounselingSubmit(e) {
       e.preventDefault();
+      if (currentCounselingTags.length === 0) { alert("請至少勾選一個輔導向度！"); return; }
+      
+      // 自動組合後續處置文字
+      const checkboxes = document.querySelectorAll('.followup-checkbox:checked');
+      const actions = Array.from(checkboxes).map(cb => cb.value);
+      const extra = document.getElementById('counsel-followup-extra').value.trim();
+      const combinedFollowup = [...actions, ...(extra ? [extra] : [])].join('、');
+
       const sSel = document.getElementById('counsel-student-select');
       const tSel = document.getElementById('counsel-teacher-select');
       const payload = {
@@ -1542,11 +1532,12 @@
         teacher_id: tSel.value,
         teacher_name: tSel.selectedOptions[0]?.getAttribute('data-name') || '',
         created_at: document.getElementById('counsel-date').value,
-        category: document.getElementById('counsel-category').value,
+        category: currentCounselingTags.join('、'),
         duration: parseInt(document.getElementById('counsel-duration').value) || 30,
         content: document.getElementById('counsel-content').value.trim(),
-        follow_up: document.getElementById('counsel-followup').value.trim()
+        follow_up: combinedFollowup
       };
+
       const { error } = await db.from('counseling_logs').insert([payload]);
       if (error) { alert("儲存失敗：" + error.message); return; }
       alert("✅ 輔導紀錄已成功儲存！");
@@ -1561,7 +1552,7 @@
     async function replyParentMsg(id) { const txt = prompt("回覆："); if (!txt) return; await db.from('parent_messages').update({ reply_content: txt }).eq('id', id); loadMessages(); }
 
     // =============================================================
-    // 舊資料 CSV 智慧匯入精靈 (完美支援 SQL 16 欄位)
+    // 舊資料 CSV 智慧匯入精靈
     // =============================================================
     let parsedCsvHeaders = []; let parsedCsvRows = [];
     function handleCsvFileUpload(e) {
@@ -1843,7 +1834,7 @@
         if (currentUser.id.includes('M')) { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
         if (dock) { dock.classList.remove('hidden'); dock.classList.add('flex'); }
       } else {
-        document.getElementById('auth-unlogged').classList.remove('hidden');
+        document.getElementById('auth-unlogged').classList.add('hidden');
         document.getElementById('auth-logged').classList.add('hidden'); document.getElementById('auth-logged').classList.remove('flex');
         printNav.classList.add('hidden'); importNav.classList.add('hidden');
         if (dock) { dock.classList.add('hidden'); dock.classList.remove('flex'); }
