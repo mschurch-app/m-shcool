@@ -221,59 +221,65 @@
     </div>
 
     <!-- 2. 排班行事曆 (🌟 恢復批次週期排班功能) -->
-    <div id="tab-schedules" class="hidden space-y-4">
-      <div class="clean-card rounded-3xl p-4 sm:p-7">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
+    <!-- 🌟 恢復完美的「動態即時清單與自由移除日期」批次排班彈窗 -->
+  <div id="modal-batch-schedule" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll border border-slate-100">
+      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-calendar-plus text-emerald-600"></i> 每週週期批次排班產生器
+        </h3>
+        <button onclick="closeBatchScheduleModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      <div class="space-y-3.5 text-xs sm:text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
-            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-indigo-600"></i> 教職員排班行事曆</h2>
-            <p class="text-xs text-slate-400 mt-0.5">點擊月曆快速排班，或使用「每週週期批次排班」快速生成</p>
+            <label class="block font-bold text-slate-600 mb-1">選擇目標月份 *</label>
+            <input type="month" id="batch-month" value="2026-09" onchange="previewBatchDates()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono text-xs">
           </div>
-          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
-              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 font-bold shadow-xs"><i class="fa-solid fa-calendar mr-1"></i>月曆</button>
-              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
-            </div>
-            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
-            <!-- 🌟 批次週期排班按鈕 -->
-            <button onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm"><i class="fa-solid fa-calendar-plus"></i><span>每週週期批次排班</span></button>
-            <button onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm"><i class="fa-solid fa-plus"></i><span>單日排班</span></button>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label>
+            <select id="batch-worker-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs"></select>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-indigo-600 block">本月總班次</span><span class="text-lg sm:text-xl font-black text-indigo-950 mt-0.5 block" id="total-count-badge">0 班</span></div>
-          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-blue-600 block">排定總工時</span><span class="text-lg sm:text-xl font-black text-blue-950 mt-0.5 block" id="total-shift-badge">0 小時</span></div>
-          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-emerald-600 block">出勤同工</span><span class="text-lg sm:text-xl font-black text-emerald-950 mt-0.5 block" id="total-workers-badge">0 人</span></div>
-          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-amber-600 block">預估薪資支出</span><span class="text-lg sm:text-xl font-black text-amber-950 mt-0.5 block" id="total-wage-badge">$0</span></div>
-        </div>
-
-        <div id="schedule-calendar-view" class="space-y-2.5">
-          <div class="flex justify-between items-center bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-200">
-            <div class="flex items-center space-x-2">
-              <button onclick="prevMonth()" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-slate-200"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-              <h3 class="text-xs sm:text-sm font-black text-slate-800 font-mono" id="calendar-month-title">2026 年 09 月</h3>
-              <button onclick="nextMonth()" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-slate-200"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-            </div>
-            <button onclick="goToCurrentMonth()" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold">本月</button>
-          </div>
-          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white">
-            <div class="grid grid-cols-7 text-center font-bold text-[11px] sm:text-xs py-2 bg-slate-50 border-b border-slate-200 text-slate-600">
-              <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
-            </div>
-            <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-100 text-xs"></div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">選擇每週固定星期 (可複選) *</label>
+          <div class="grid grid-cols-5 gap-2" id="batch-weekdays-box">
+            <label class="flex items-center space-x-1 p-2 bg-slate-50 border rounded-xl font-bold text-xs cursor-pointer"><input type="checkbox" value="1" checked onchange="previewBatchDates()"> <span>週一</span></label>
+            <label class="flex items-center space-x-1 p-2 bg-slate-50 border rounded-xl font-bold text-xs cursor-pointer"><input type="checkbox" value="2" checked onchange="previewBatchDates()"> <span>週二</span></label>
+            <label class="flex items-center space-x-1 p-2 bg-slate-50 border rounded-xl font-bold text-xs cursor-pointer"><input type="checkbox" value="3" checked onchange="previewBatchDates()"> <span>週三</span></label>
+            <label class="flex items-center space-x-1 p-2 bg-slate-50 border rounded-xl font-bold text-xs cursor-pointer"><input type="checkbox" value="4" checked onchange="previewBatchDates()"> <span>週四</span></label>
+            <label class="flex items-center space-x-1 p-2 bg-slate-50 border rounded-xl font-bold text-xs cursor-pointer"><input type="checkbox" value="5" checked onchange="previewBatchDates()"> <span>週五</span></label>
           </div>
         </div>
 
-        <div id="schedule-list-view" class="hidden overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
-              <tr><th class="py-3 px-3">排班日期</th><th class="py-3 px-3">同工編號</th><th class="py-3 px-3">同工姓名</th><th class="py-3 px-3">班別時段</th><th class="py-3 px-3">負責工作</th><th class="py-3 px-3">工時</th><th class="py-3 px-3 text-center">操作</th></tr>
-            </thead>
-            <tbody id="schedules-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="7" class="py-6 text-center text-slate-400">載入排班中...</td></tr></tbody>
-          </table>
+        <!-- 🌟 即時動態日期清單與自由剔除區 -->
+        <div class="bg-emerald-50/60 rounded-2xl p-3.5 border border-emerald-200 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-emerald-900 text-xs">🗓️ 篩選出的上課日期 (點擊 × 可移除不需要排班的日期)：</span>
+            <span id="batch-count-tag" class="bg-emerald-600 text-white font-mono text-[10px] font-black px-2 py-0.5 rounded-full">0 天</span>
+          </div>
+          <div id="batch-preview-chips" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto bg-white p-2.5 rounded-xl border border-emerald-100 custom-scroll">
+            <!-- 動態產出日期膠囊 -->
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="block font-bold text-slate-600 mb-1">開始時間</label><input type="time" id="batch-start-time" value="16:00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">結束時間</label><input type="time" id="batch-end-time" value="18:00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">負責工作描述</label>
+          <input type="text" id="batch-job" value="課輔陪伴" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-xs">
+        </div>
+
+        <div class="flex space-x-2 pt-3 border-t">
+          <button type="button" onclick="closeBatchScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="button" onclick="executeBatchSchedule()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black shadow-sm">確認批次建立排班</button>
         </div>
       </div>
     </div>
+  </div>
 
     <!-- 3. 課堂點名 -->
     <div id="tab-rollcall" class="hidden space-y-4">
@@ -1508,6 +1514,233 @@
       if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
       updateAuthUI(); switchTab('checkin');
     });
+    // =============================================================
+    // 🌟 恢復完美的「動態即時清單與自由移除日期」批次排班函式
+    // =============================================================
+    let activeBatchDates = []; // 暫存目前保留要排班的日期陣列
+
+    async function openBatchScheduleModal() {
+      if (staffList.length === 0) {
+        const { data: users } = await db.from('users').select('*');
+        if (users) {
+          staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
+        }
+      }
+      document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
+        staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
+      
+      document.getElementById('modal-batch-schedule').classList.remove('hidden');
+      previewBatchDates();
+    }
+
+    function closeBatchScheduleModal() {
+      document.getElementById('modal-batch-schedule').classList.add('hidden');
+    }
+
+    // 即時動態計算當月符合星期幾的日期，並渲染為可點擊移除的晶片
+    function previewBatchDates() {
+      const monthVal = document.getElementById('batch-month').value; // YYYY-MM
+      if (!monthVal) return;
+      const [y, m] = monthVal.split('-').map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+
+      const checkboxes = document.querySelectorAll('#batch-weekdays-box input[type="checkbox"]:checked');
+      const selectedWeekdays = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)); // 1(一)~5(五), 0(日), 6(六)
+
+      activeBatchDates = [];
+      const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(y, m - 1, d);
+        const wDay = dt.getDay();
+        if (selectedWeekdays.includes(wDay)) {
+          const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          activeBatchDates.push({ date: dateStr, label: `${m}/${d} (${weekdayNames[wDay]})` });
+        }
+      }
+      renderBatchChips();
+    }
+
+    // 渲染日期晶片，點擊可直接剔除
+    function renderBatchChips() {
+      const container = document.getElementById('batch-preview-chips');
+      const countTag = document.getElementById('batch-count-tag');
+      countTag.textContent = `${activeBatchDates.length} 天`;
+
+      if (activeBatchDates.length === 0) {
+        container.innerHTML = `<span class="text-xs text-rose-500 font-bold italic">目前沒有選取任何上課日</span>`;
+        return;
+      }
+
+      container.innerHTML = activeBatchDates.map((item, idx) => `
+        <span class="inline-flex items-center bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-xl shadow-2xs">
+          ${item.label}
+          <button type="button" onclick="removeBatchDate(${idx})" class="ml-1.5 text-rose-600 hover:text-rose-800 font-black text-sm">&times;</button>
+        </span>
+      `).join('');
+    }
+
+    function removeBatchDate(idx) {
+      activeBatchDates.splice(idx, 1);
+      renderBatchChips();
+    }
+
+    async function executeBatchSchedule() {
+      if (activeBatchDates.length === 0) {
+        alert("沒有可建立的排班日期！");
+        return;
+      }
+      const workerSel = document.getElementById('batch-worker-select');
+      const workerId = workerSel.value;
+      const workerName = workerSel.selectedOptions[0]?.getAttribute('data-name');
+      const startTime = document.getElementById('batch-start-time').value;
+      const endTime = document.getElementById('batch-end-time').value;
+      const jobDesc = document.getElementById('batch-job').value.trim();
+
+      if (!workerId) {
+        alert("請選擇負責服事的同工！");
+        return;
+      }
+
+      const [sH, sM] = startTime.split(':').map(Number);
+      const [eH, eM] = endTime.split(':').map(Number);
+      let diffMin = (eH * 60 + eM) - (sH * 60 + sM);
+      if (diffMin < 0) diffMin += 1440;
+      const hours = Math.round((diffMin / 60) * 10) / 10;
+
+      const payload = activeBatchDates.map(item => ({
+        date: item.date,
+        worker_id: workerId,
+        worker_name: workerName,
+        shift: `${startTime} - ${endTime}`,
+        hours: hours,
+        job_desc: jobDesc
+      }));
+
+      const { error } = await db.from('schedules').insert(payload);
+      if (error) {
+        alert("批次建立失敗：" + error.message);
+        return;
+      }
+
+      alert(`✅ 成功為【${workerName}】批次建立 ${activeBatchDates.length} 筆排班紀錄！`);
+      closeBatchScheduleModal();
+      loadSchedules();
+    }
+
+    // =============================================================
+    // (這裡接續原本的 1. 排班管理與互動行事曆 loadSchedules 等程式碼...)
+    // =============================================================
+    let activeBatchDates = []; // 暫存目前保留要排班的日期陣列
+
+    async function openBatchScheduleModal() {
+      if (staffList.length === 0) {
+        const { data: users } = await db.from('users').select('*');
+        if (users) {
+          staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
+        }
+      }
+      document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
+        staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
+      
+      document.getElementById('modal-batch-schedule').classList.remove('hidden');
+      previewBatchDates();
+    }
+
+    function closeBatchScheduleModal() {
+      document.getElementById('modal-batch-schedule').classList.add('hidden');
+    }
+
+    // 即時動態計算當月符合星期幾的日期，並渲染為可點擊移除的晶片
+    function previewBatchDates() {
+      const monthVal = document.getElementById('batch-month').value; // YYYY-MM
+      if (!monthVal) return;
+      const [y, m] = monthVal.split('-').map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+
+      const checkboxes = document.querySelectorAll('#batch-weekdays-box input[type="checkbox"]:checked');
+      const selectedWeekdays = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)); // 1(一)~5(五), 0(日), 6(六)
+
+      activeBatchDates = [];
+      const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(y, m - 1, d);
+        const wDay = dt.getDay();
+        if (selectedWeekdays.includes(wDay)) {
+          const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          activeBatchDates.push({ date: dateStr, label: `${m}/${d} (${weekdayNames[wDay]})` });
+        }
+      }
+      renderBatchChips();
+    }
+
+    // 渲染日期晶片，點擊可直接剔除
+    function renderBatchChips() {
+      const container = document.getElementById('batch-preview-chips');
+      const countTag = document.getElementById('batch-count-tag');
+      countTag.textContent = `${activeBatchDates.length} 天`;
+
+      if (activeBatchDates.length === 0) {
+        container.innerHTML = `<span class="text-xs text-rose-500 font-bold italic">目前沒有選取任何上課日</span>`;
+        return;
+      }
+
+      container.innerHTML = activeBatchDates.map((item, idx) => `
+        <span class="inline-flex items-center bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-xl shadow-2xs">
+          ${item.label}
+          <button type="button" onclick="removeBatchDate(${idx})" class="ml-1.5 text-rose-600 hover:text-rose-800 font-black text-sm">&times;</button>
+        </span>
+      `).join('');
+    }
+
+    function removeBatchDate(idx) {
+      activeBatchDates.splice(idx, 1);
+      renderBatchChips();
+    }
+
+    async function executeBatchSchedule() {
+      if (activeBatchDates.length === 0) {
+        alert("沒有可建立的排班日期！");
+        return;
+      }
+      const workerSel = document.getElementById('batch-worker-select');
+      const workerId = workerSel.value;
+      const workerName = workerSel.selectedOptions[0]?.getAttribute('data-name');
+      const startTime = document.getElementById('batch-start-time').value;
+      const endTime = document.getElementById('batch-end-time').value;
+      const jobDesc = document.getElementById('batch-job').value.trim();
+
+      if (!workerId) {
+        alert("請選擇負責服事的同工！");
+        return;
+      }
+
+      const [sH, sM] = startTime.split(':').map(Number);
+      const [eH, eM] = endTime.split(':').map(Number);
+      let diffMin = (eH * 60 + eM) - (sH * 60 + sM);
+      if (diffMin < 0) diffMin += 1440;
+      const hours = Math.round((diffMin / 60) * 10) / 10;
+
+      const payload = activeBatchDates.map(item => ({
+        date: item.date,
+        worker_id: workerId,
+        worker_name: workerName,
+        shift: `${startTime} - ${endTime}`,
+        hours: hours,
+        job_desc: jobDesc
+      }));
+
+      const { error } = await db.from('schedules').insert(payload);
+      if (error) {
+        alert("批次建立失敗：" + error.message);
+        return;
+      }
+
+      alert(`✅ 成功為【${workerName}】批次建立 ${activeBatchDates.length} 筆排班紀錄！`);
+      closeBatchScheduleModal();
+      loadSchedules();
+    }
   </script>
 </body>
 </html>
