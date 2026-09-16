@@ -52,7 +52,6 @@
       background-color: #f8fafc;
       color: #0f172a;
       -webkit-tap-highlight-color: transparent;
-      /* 關鍵：給予底部懸浮導航欄足夠的安全距離，不擋住下方內容 */
       padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
     }
     @media (min-width: 768px) {
@@ -126,12 +125,12 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- 頂部嚴謹抗擠壓導航列 (修復排版與文字斷行) -->
+  <!-- 頂部防擠壓導航列 -->
   <header class="glass-header text-white sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-3.5 sm:px-6">
       <div class="flex justify-between items-center h-14 sm:h-16">
         
-        <!-- 左側：琥珀金 Logo + 標題與時間 (兩層結構，絕不擠壓) -->
+        <!-- 左側：Logo + 標題與時間 -->
         <div class="flex items-center space-x-2.5 min-w-0">
           <div class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr from-amber-400 to-amber-200 text-slate-950 rounded-xl flex items-center justify-center font-black text-sm sm:text-base shadow-sm tracking-tighter shrink-0">
             M+
@@ -145,7 +144,7 @@
           </div>
         </div>
 
-        <!-- 右側：登入 / 身分膠囊 (緊湊不搶版面) -->
+        <!-- 右側：登入 / 身分膠囊 -->
         <div class="flex items-center space-x-1.5 shrink-0 ml-2">
           <div id="auth-unlogged">
             <button onclick="openLoginModal()" class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-xs flex items-center space-x-1 active:scale-95 transition">
@@ -165,7 +164,7 @@
         </div>
       </div>
 
-      <!-- 電腦版頂部選單 (平板以上寬度顯示，手機由底部欄承擔) -->
+      <!-- 電腦版頂部選單 (平板以上寬度顯示) -->
       <nav class="hidden md:flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
         <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap">
           <i class="fa-solid fa-qrcode text-xs"></i><span>打卡中心</span>
@@ -198,7 +197,7 @@
     <!-- 1. 智能打卡中心 -->
     <div id="tab-checkin" class="space-y-4">
       
-      <!-- 4項簡明數據卡片 (清晰乾淨中文) -->
+      <!-- 4項簡明數據看板 -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <div class="clean-card rounded-2xl p-3 sm:p-4 flex items-center justify-between">
           <div>
@@ -340,12 +339,10 @@
           <span class="text-[11px] text-slate-400 font-medium">即時連線更新</span>
         </div>
         
-        <!-- 手機卡片 (免左右滑動) -->
         <div class="block md:hidden space-y-2" id="logs-cards-mobile">
           <p class="text-center text-xs text-slate-400 py-6">載入今日動態中...</p>
         </div>
 
-        <!-- 電腦表格 -->
         <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left text-xs sm:text-sm">
             <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100">
@@ -399,7 +396,6 @@
           <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-amber-600 block">預估薪資支出</span><span class="text-lg sm:text-xl font-black text-amber-950 mt-0.5 block" id="total-wage-badge">$0</span></div>
         </div>
 
-        <!-- 月曆格 -->
         <div id="schedule-calendar-view" class="space-y-2.5">
           <div class="flex justify-between items-center bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-200">
             <div class="flex items-center space-x-2">
@@ -418,7 +414,6 @@
           </div>
         </div>
 
-        <!-- 清單格 -->
         <div id="schedule-list-view" class="hidden overflow-x-auto">
           <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
             <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
@@ -591,8 +586,8 @@
 
   </main>
 
-  <!-- 🌟 手機專屬底部黑色懸浮膠囊導航欄 (Mobile Floating Dock) -->
-  <nav id="mobile-bottom-dock" class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl flex justify-around items-center text-[10px] font-bold text-slate-400">
+  <!-- 🌟 手機專屬底部黑色懸浮膠囊導航欄 (未登入時隱藏，登入後自動浮現) -->
+  <nav id="mobile-bottom-dock" class="hidden md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl justify-around items-center text-[10px] font-bold text-slate-400">
     <button onclick="switchTab('checkin')" id="m-nav-checkin" class="flex flex-col items-center py-1 text-amber-400">
       <i class="fa-solid fa-qrcode text-base mb-0.5"></i><span>打卡</span>
     </button>
@@ -676,7 +671,6 @@
                 </button>
                 <span id="face-extract-tip" class="text-[11px] font-bold text-slate-400"></span>
               </div>
-              <!-- 手機現場拍照畫布 -->
               <div id="camera-snap-box" class="hidden p-3 bg-slate-950 rounded-2xl text-center space-y-2.5">
                 <video id="snap-video" autoplay playsinline muted class="w-full max-w-xs mx-auto rounded-xl aspect-square object-cover shadow-inner"></video>
                 <div class="flex justify-center space-x-2">
@@ -921,12 +915,10 @@
         const el = document.getElementById(`tab-${id}`);
         if (el) el.classList.add('hidden');
         
-        // 桌機選單樣式
         const nav = document.getElementById(`nav-${id}`);
         if (nav && id !== 'print') {
           nav.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap";
         }
-        // 手機底部 Dock 樣式
         const mNav = document.getElementById(`m-nav-${id}`);
         if (mNav) {
           mNav.className = "flex flex-col items-center py-1 hover:text-white text-slate-400";
@@ -1314,7 +1306,7 @@
         faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.58);
         if (faceStatus) {
           faceStatus.className = "text-emerald-300 font-bold";
-          faceStatus.textContent = `✅ 已載入 ${enrolledCount} 位特徵，請直視鏡頭`;
+          faceStatus.textContent = `✅ 已就緒 (已載入 ${enrolledCount} 位特徵)，請直視鏡頭`;
         }
       } else {
         faceMatcher = null;
@@ -1620,7 +1612,7 @@
     }
 
     // -------------------------------------------------------------
-    // 智慧打卡核心
+    // 智慧打卡核心 (含同工人臉自動登入；老師/工讀生人臉只打卡不登入)
     // -------------------------------------------------------------
     async function handleScan(e) {
       if (e) e.preventDefault();
@@ -1648,7 +1640,10 @@
           return;
         }
 
-        const isStaff = val.includes('T') || val.includes('M') || val.includes('P') || (user.role_type && user.role_type !== '學生');
+        const isManagerStaff = val.includes('M'); // 只有編號 M 的同工具備管理身分
+        const isTeacherOrIntern = val.includes('T') || val.includes('P') || (user.role_type && (user.role_type === '老師' || user.role_type === '工讀生'));
+        const isStaff = isManagerStaff || isTeacherOrIntern || (user.role_type && user.role_type !== '學生');
+        
         const nowObj = new Date();
         const nowIso = nowObj.toISOString();
         
@@ -1661,7 +1656,9 @@
           .gte('check_time', startOfTodayIso)
           .order('check_time', { ascending: true });
 
+        // =========================================================
         // 1. 學生規則：一天限一次
+        // =========================================================
         if (!isStaff) {
           if (todayLogs && todayLogs.length > 0) {
             const warnMsg = `⚠️【${user.name}】今日已完成簽到，一天限打卡一次！`;
@@ -1707,7 +1704,9 @@
           return;
         }
 
-        // 2. 同工 / 老師 / 工讀生：60 秒防連刷 + 第1次上班 第2次下班
+        // =========================================================
+        // 2. 教職員出勤：60 秒防連刷 + 第1次上班 第2次下班
+        // =========================================================
         if (todayLogs && todayLogs.length > 0) {
           const lastLog = todayLogs[todayLogs.length - 1];
           const lastLogTime = new Date(lastLog.check_time).getTime();
@@ -1753,6 +1752,15 @@
         if (faceStatus) {
           faceStatus.className = "text-emerald-400 font-bold";
           faceStatus.textContent = popupTitle;
+        }
+
+        // 🌟 核心權限劃分：
+        // 若辨識對象為同工(M)，自動切換登入身分並解鎖底部導航與所有功能！
+        // 若為老師(T)或工讀生(P)，只打卡不出借管理登入身分！
+        if (isManagerStaff) {
+          currentUser = user;
+          localStorage.setItem('mplus_current_user', JSON.stringify(user));
+          updateAuthUI();
         }
 
         if (window.confetti) {
@@ -3009,7 +3017,7 @@
     }
 
     // -------------------------------------------------------------
-    // 9. 同工登入邏輯
+    // 9. 同工登入邏輯 (手動登入)
     // -------------------------------------------------------------
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
@@ -3057,6 +3065,7 @@
 
     function updateAuthUI() {
       const printTabNav = document.getElementById('nav-print');
+      const mobileDock = document.getElementById('mobile-bottom-dock');
 
       if (currentUser) {
         document.getElementById('auth-unlogged').classList.add('hidden');
@@ -3064,16 +3073,29 @@
         document.getElementById('auth-logged').classList.add('flex');
         document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`;
 
+        // 同工(M)限定報表按鈕
         if (currentUser.id && currentUser.id.includes('M')) {
           printTabNav.classList.remove('hidden');
         } else {
           printTabNav.classList.add('hidden');
+        }
+
+        // 🌟 登入後：手機底部懸浮導航欄優雅浮現
+        if (mobileDock) {
+          mobileDock.classList.remove('hidden');
+          mobileDock.classList.add('flex');
         }
       } else {
         document.getElementById('auth-unlogged').classList.remove('hidden');
         document.getElementById('auth-logged').classList.add('hidden');
         document.getElementById('auth-logged').classList.remove('flex');
         printTabNav.classList.add('hidden');
+
+        // 🌟 未登入時：手機底部懸浮欄完全隱藏！
+        if (mobileDock) {
+          mobileDock.classList.add('hidden');
+          mobileDock.classList.remove('flex');
+        }
       }
     }
 
