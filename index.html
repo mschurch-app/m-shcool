@@ -1295,28 +1295,111 @@
       const r = new FileReader(); r.onload = (evt) => { document.getElementById('csv-raw-textarea').value = evt.target.result; parseCsvContent(); };
       r.readAsText(f, 'UTF-8');
     }
+    // 🌟 升級版：支援 21 個完整欄位的 CSV 解析與對應
     function parseCsvContent() {
-      const raw = document.getElementById('csv-raw-textarea').value.trim(); if (!raw) { alert("請先貼上內容！"); return; }
-      const lines = raw.split(/\r\n|\n/); const delim = lines[0].includes('\t') ? '\t' : ',';
+      const raw = document.getElementById('csv-raw-textarea').value.trim();
+      if (!raw) { alert("請先貼上內容！"); return; }
+
+      const lines = raw.split(/\r\n|\n/);
+      const delim = lines[0].includes('\t') ? '\t' : ',';
       parsedCsvHeaders = lines[0].split(delim).map(h => h.trim().replace(/^["']|["']$/g, ''));
+      
       parsedCsvRows = [];
-      for (let i = 1; i < lines.length; i++) { if (lines[i].trim()) parsedCsvRows.push(lines[i].split(delim).map(c => c.trim().replace(/^["']|["']$/g, ''))); }
-      document.getElementById('csv-mapping-section').classList.remove('hidden');
-      document.getElementById('csv-preview-count').textContent = `共解析出 ${parsedCsvRows.length} 筆資料`;
-      const targetFields = [{ key: 'id', label: '學號/編號 *' }, { key: 'name', label: '姓名 *' }, { key: 'school', label: '學校' }, { key: 'grade', label: '年級' }, { key: 'phone', label: '電話' }];
-      document.getElementById('mapping-dropdowns-grid').innerHTML = targetFields.map(tf => `
-        <div class="bg-white p-3 rounded-xl border space-y-1"><label class="block text-xs font-bold text-slate-700">${tf.label}</label>
-        <select data-target-key="${tf.key}" class="csv-mapping-select w-full px-3 py-1.5 bg-slate-50 border rounded-lg text-xs font-bold">
-        <option value="">-- 略過 --</option>${parsedCsvHeaders.map((h, hIdx) => `<option value="${hIdx}">${h}</option>`).join('')}</select></div>`).join('');
-    }
-    async function executeCsvImport() {
-      const selects = document.querySelectorAll('.csv-mapping-select'); const mapping = {};
-      selects.forEach(s => { if (s.value !== "") mapping[s.getAttribute('data-target-key')] = parseInt(s.value, 10); });
-      if (mapping.id === undefined || mapping.name === undefined) { alert("必須對應「學號」與「姓名」！"); return; }
-      for (const row of parsedCsvRows) {
-        await db.from('users').upsert([{ id: row[mapping.id]?.toUpperCase(), name: row[mapping.name], school: mapping.school!==undefined?row[mapping.school]:'', grade: mapping.grade!==undefined?row[mapping.grade]:'', status: '在班' }]);
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) {
+          // 處理可能包含逗號的引號字串
+          const rowRegex = /(?:,|\t)(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+          parsedCsvRows.push(lines[i].split(rowRegex).map(c => c.trim().replace(/^["']|["']$/g, '').replace(/^"+|"+$/g, '')));
+        }
       }
-      alert("✅ 批次匯入成功！"); loadUsers(); switchTab('students');
+
+      document.getElementById('csv-mapping-section').classList.remove('hidden');
+      document.getElementById('csv-preview-count').textContent = `共解析出 ${parsedCsvRows.length} 筆資料 (偵測到 ${parsedCsvHeaders.length} 個欄位)`;
+
+      // 🌟 完整 21 個欄位對應定義
+      const targetFields = [
+        { key: 'id', label: '學號 / 編號 *' },
+        { key: 'name', label: '姓名 *' },
+        { key: 'gender', label: '性別' },
+        { key: 'birth', label: '出生年月日' },
+        { key: 'school', label: '就讀學校' },
+        { key: 'grade', label: '年級班級' },
+        { key: 'phone', label: '本人電話 / 手機' },
+        { key: 'phone_pwd', label: '密碼' },
+        { key: 'guardian_name', label: '主要家長姓名' },
+        { key: 'points', label: '夢想點數' },
+        { key: 'welfare_status', label: '首要狀況 / 福利身分' },
+        { key: 'family_type', label: '家境狀況 / 家庭型態' },
+        { key: 'pickup_way', label: '放學接送方式' },
+        { key: 'authorized_person', label: '授權接送人' },
+        { key: 'medical_history', label: '特殊疾病 / 蠶豆症' },
+        { key: 'allergy', label: '飲食習慣 / 過敏原' },
+        { key: 'special_needs', label: '特質與綜合備註' },
+        { key: 'guardian_pwd', label: '家長密碼' },
+        { key: 'email', label: '綁定 Email' },
+        { key: 'status', label: '狀態 (在班/在職)' }
+      ];
+
+      document.getElementById('mapping-dropdowns-grid').innerHTML = targetFields.map(tf => {
+        // 智慧自動模糊比對
+        const matchIdx = parsedCsvHeaders.findIndex(h => h.includes(tf.key) || h.includes(tf.label.split(' ')[0]));
+        return `
+          <div class="bg-white p-3 rounded-xl border space-y-1">
+            <label class="block text-xs font-bold text-slate-700">${tf.label}</label>
+            <select data-target-key="${tf.key}" class="csv-mapping-select w-full px-3 py-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-slate-800">
+              <option value="">-- 略過此欄位 --</option>
+              ${parsedCsvHeaders.map((h, hIdx) => `<option value="${hIdx}" ${hIdx === matchIdx ? 'selected' : ''}>${h} (欄 ${hIdx+1})</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 🌟 執行 21 個欄位的完整批次匯入
+    async function executeCsvImport() {
+      const selects = document.querySelectorAll('.csv-mapping-select');
+      const mapping = {};
+      selects.forEach(s => {
+        const val = s.value;
+        if (val !== "") mapping[s.getAttribute('data-target-key')] = parseInt(val, 10);
+      });
+
+      if (mapping.id === undefined || mapping.name === undefined) {
+        alert("⚠️ 必須至少對應「學號」與「姓名」欄位才能執行匯入！");
+        return;
+      }
+
+      if (!confirm(`確定要將 ${parsedCsvRows.length} 筆學員完整個資與社福狀況匯入資料庫嗎？`)) return;
+
+      let successCount = 0;
+      for (const row of parsedCsvRows) {
+        const uid = mapping.id !== undefined ? row[mapping.id]?.trim().toUpperCase() : null;
+        if (!uid) continue;
+
+        const payload = {
+          id: uid,
+          name: mapping.name !== undefined ? row[mapping.name] : '未命名',
+          gender: mapping.gender !== undefined ? row[mapping.gender] : '男',
+          birth: mapping.birth !== undefined && row[mapping.birth] ? row[mapping.birth] : null,
+          school: mapping.school !== undefined ? row[mapping.school] : '',
+          grade: mapping.grade !== undefined ? row[mapping.grade] : '',
+          phone: mapping.phone !== undefined ? row[mapping.phone] : '',
+          guardian_name: mapping.guardian_name !== undefined ? row[mapping.guardian_name] : '',
+          points: mapping.points !== undefined && !isNaN(parseInt(row[mapping.points])) ? parseInt(row[mapping.points]) : 0,
+          welfare_status: mapping.welfare_status !== undefined ? row[mapping.welfare_status] : '',
+          medical_history: mapping.medical_history !== undefined ? row[mapping.medical_history] : '',
+          special_needs: mapping.special_needs !== undefined ? row[mapping.special_needs] : '',
+          status: '在班',
+          role_type: uid.includes('M') || uid.includes('T') ? '同工' : '學生'
+        };
+
+        const { error } = await db.from('users').upsert([payload]);
+        if (!error) successCount++;
+      }
+
+      alert(`✅ 成功匯入 ${successCount} 筆完整學員資料與社福身分！`);
+      loadUsers();
+      switchTab('students');
     }
 
     function onReportTypeChange() {
