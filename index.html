@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>M+ 大雅教會 課輔行政全功能系統</title>
+  <title>M+ 大雅教會 課輔行政系統</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -43,7 +43,7 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <!-- face-api.js -->
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
-  <!-- Canvas Confetti 特效 -->
+  <!-- Canvas Confetti 特效庫 -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
   <style>
@@ -52,13 +52,18 @@
       background-color: #f8fafc;
       color: #0f172a;
       -webkit-tap-highlight-color: transparent;
+      /* 關鍵：給予底部懸浮導航欄足夠的安全距離，不擋住下方內容 */
+      padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    }
+    @media (min-width: 768px) {
+      body { padding-bottom: 2rem; }
     }
 
-    /* 頂部極致抗擠壓毛玻璃 */
+    /* 頂部極致防擠壓毛玻璃 */
     .glass-header {
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     .tab-btn-active {
@@ -71,7 +76,7 @@
     .clean-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
     }
 
     /* 相機全息瞄準線 */
@@ -111,7 +116,7 @@
     @media print {
       @page { size: landscape; margin: 8mm; }
       body { background: #ffffff !important; padding: 0 !important; }
-      header, nav, #print-controls-bar, .no-print { display: none !important; }
+      header, nav, #print-controls-bar, #mobile-bottom-dock, .no-print { display: none !important; }
       main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
       #tab-print-center { display: block !important; }
       .print-page-box { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
@@ -121,47 +126,47 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- 頂部嚴謹抗擠壓導航列 (徹底解決手機斷字問題) -->
+  <!-- 頂部嚴謹抗擠壓導航列 (修復排版與文字斷行) -->
   <header class="glass-header text-white sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6">
       <div class="flex justify-between items-center h-14 sm:h-16">
         
-        <!-- 左側：品牌 Logo + 標題 (絕對不折行) -->
-        <div class="flex items-center space-x-2 shrink-0">
+        <!-- 左側：琥珀金 Logo + 標題與時間 (兩層結構，絕不擠壓) -->
+        <div class="flex items-center space-x-2.5 min-w-0">
           <div class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr from-amber-400 to-amber-200 text-slate-950 rounded-xl flex items-center justify-center font-black text-sm sm:text-base shadow-sm tracking-tighter shrink-0">
             M+
           </div>
-          <div class="leading-tight">
+          <div class="leading-tight min-w-0">
             <div class="flex items-center space-x-1.5">
-              <span class="text-sm sm:text-base font-black tracking-tight text-white whitespace-nowrap">M+ 大雅教會</span>
-              <span class="bg-amber-400/20 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-400/30 whitespace-nowrap">課輔系統</span>
+              <span class="text-sm sm:text-base font-black tracking-tight text-white truncate">M+ 大雅教會</span>
+              <span class="bg-amber-400/20 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-400/30 shrink-0">課輔系統</span>
             </div>
-            <p class="text-[9px] sm:text-[10px] text-slate-400 font-mono tracking-tight" id="clock-display">連線中...</p>
+            <p class="text-[9px] sm:text-[10px] text-slate-400 font-mono tracking-tight truncate mt-0.5" id="clock-display">連線中...</p>
           </div>
         </div>
 
-        <!-- 右側：登入 / 身分膠囊 (收斂精簡) -->
+        <!-- 右側：登入 / 身分膠囊 (緊湊不搶版面) -->
         <div class="flex items-center space-x-1.5 shrink-0 ml-2">
           <div id="auth-unlogged">
-            <button onclick="openLoginModal()" class="px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-xs flex items-center space-x-1 active:scale-95 transition">
-              <i class="fa-solid fa-user-shield text-[11px]"></i>
+            <button onclick="openLoginModal()" class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-xs flex items-center space-x-1 active:scale-95 transition">
+              <i class="fa-solid fa-user-shield text-[10px]"></i>
               <span>同工登入</span>
             </button>
           </div>
           <div id="auth-logged" class="hidden items-center space-x-1.5">
-            <div class="flex items-center space-x-1 bg-white/10 px-2 py-1 rounded-xl border border-white/15">
+            <div class="flex items-center space-x-1 bg-white/10 px-2 py-1 rounded-xl border border-white/10">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="logged-user-tag" class="text-xs font-bold text-white max-w-[85px] sm:max-w-none truncate"></span>
+              <span id="logged-user-tag" class="text-xs font-bold text-white max-w-[80px] sm:max-w-none truncate"></span>
             </div>
-            <button onclick="doLogout()" class="px-2 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition">
+            <button onclick="doLogout()" class="px-2 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition shadow-xs">
               登出
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 橫向平滑滑動選單 (完全還原可靠的頂部橫滑，移除突兀的底部黑條) -->
-      <nav class="flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
+      <!-- 電腦版頂部選單 (平板以上寬度顯示，手機由底部欄承擔) -->
+      <nav class="hidden md:flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
         <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap">
           <i class="fa-solid fa-qrcode text-xs"></i><span>打卡中心</span>
         </button>
@@ -181,19 +186,19 @@
           <i class="fa-solid fa-comments text-xs"></i><span>家長留言</span>
         </button>
         <button onclick="requireStaffPrintTab()" id="nav-print" class="hidden px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-amber-400/30">
-          <i class="fa-solid fa-print text-xs"></i><span>列印報表(同工M)</span>
+          <i class="fa-solid fa-print text-xs"></i><span>列印報表中心(同工M)</span>
         </button>
       </nav>
     </div>
   </header>
 
   <!-- 主內容容器 -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 py-4">
 
     <!-- 1. 智能打卡中心 -->
     <div id="tab-checkin" class="space-y-4">
       
-      <!-- 精實指標看板 (精簡排版，不佔用垂直空間) -->
+      <!-- 4項簡明數據卡片 (清晰乾淨中文) -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <div class="clean-card rounded-2xl p-3 sm:p-4 flex items-center justify-between">
           <div>
@@ -203,7 +208,7 @@
               <span class="text-xs text-slate-400">人</span>
             </div>
           </div>
-          <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base sm:text-lg shrink-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base shrink-0">
             <i class="fa-solid fa-user-graduate"></i>
           </div>
         </div>
@@ -216,7 +221,7 @@
               <span class="text-xs text-slate-400">人</span>
             </div>
           </div>
-          <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base sm:text-lg shrink-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base shrink-0">
             <i class="fa-solid fa-chalkboard-user"></i>
           </div>
         </div>
@@ -229,7 +234,7 @@
               <span class="text-xs text-slate-400">點</span>
             </div>
           </div>
-          <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base sm:text-lg shrink-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base shrink-0">
             <i class="fa-solid fa-coins"></i>
           </div>
         </div>
@@ -242,13 +247,13 @@
               <span class="text-xs text-slate-400">班</span>
             </div>
           </div>
-          <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base sm:text-lg shrink-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base shrink-0">
             <i class="fa-solid fa-calendar-day"></i>
           </div>
         </div>
       </div>
 
-      <!-- 核心打卡區 -->
+      <!-- 核心打卡操作區 -->
       <div class="clean-card rounded-3xl p-5 sm:p-7 max-w-xl mx-auto text-center">
         
         <div class="flex justify-center gap-2.5 mb-4">
@@ -325,7 +330,7 @@
         <div id="scan-tip" class="mt-3 text-xs font-bold hidden py-2 px-3 rounded-xl"></div>
       </div>
 
-      <!-- 即時出勤動態 (手機直列卡片 / 電腦表格) -->
+      <!-- 即時出勤動態流水 (手機直列卡片 / 電腦表格) -->
       <div class="clean-card rounded-3xl p-4 sm:p-6">
         <div class="flex justify-between items-center mb-3">
           <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center space-x-2">
@@ -335,7 +340,7 @@
           <span class="text-[11px] text-slate-400 font-medium">即時連線更新</span>
         </div>
         
-        <!-- 手機專屬卡片 (免滑動) -->
+        <!-- 手機卡片 (免左右滑動) -->
         <div class="block md:hidden space-y-2" id="logs-cards-mobile">
           <p class="text-center text-xs text-slate-400 py-6">載入今日動態中...</p>
         </div>
@@ -585,6 +590,25 @@
     </div>
 
   </main>
+
+  <!-- 🌟 手機專屬底部黑色懸浮膠囊導航欄 (Mobile Floating Dock) -->
+  <nav id="mobile-bottom-dock" class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl flex justify-around items-center text-[10px] font-bold text-slate-400">
+    <button onclick="switchTab('checkin')" id="m-nav-checkin" class="flex flex-col items-center py-1 text-amber-400">
+      <i class="fa-solid fa-qrcode text-base mb-0.5"></i><span>打卡</span>
+    </button>
+    <button onclick="requireTab('schedules')" id="m-nav-schedules" class="flex flex-col items-center py-1 hover:text-white">
+      <i class="fa-solid fa-calendar-days text-base mb-0.5"></i><span>排班</span>
+    </button>
+    <button onclick="requireTab('rollcall')" id="m-nav-rollcall" class="flex flex-col items-center py-1 hover:text-white">
+      <i class="fa-solid fa-clipboard-check text-base mb-0.5"></i><span>點名</span>
+    </button>
+    <button onclick="requireTab('students')" id="m-nav-students" class="flex flex-col items-center py-1 hover:text-white">
+      <i class="fa-solid fa-address-book text-base mb-0.5"></i><span>名冊</span>
+    </button>
+    <button onclick="requireTab('counseling')" id="m-nav-counseling" class="flex flex-col items-center py-1 hover:text-white">
+      <i class="fa-solid fa-hand-holding-heart text-base mb-0.5"></i><span>輔導</span>
+    </button>
+  </nav>
 
   <!-- ======================== 彈窗區域 ======================== -->
 
@@ -897,9 +921,15 @@
         const el = document.getElementById(`tab-${id}`);
         if (el) el.classList.add('hidden');
         
+        // 桌機選單樣式
         const nav = document.getElementById(`nav-${id}`);
         if (nav && id !== 'print') {
           nav.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap";
+        }
+        // 手機底部 Dock 樣式
+        const mNav = document.getElementById(`m-nav-${id}`);
+        if (mNav) {
+          mNav.className = "flex flex-col items-center py-1 hover:text-white text-slate-400";
         }
       });
 
@@ -907,6 +937,9 @@
 
       const activeNav = document.getElementById(tabId === 'print-center' ? 'nav-print' : `nav-${tabId}`);
       if (activeNav) activeNav.className = "tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap";
+
+      const activeMNav = document.getElementById(`m-nav-${tabId}`);
+      if (activeMNav) activeMNav.className = "flex flex-col items-center py-1 text-amber-400 font-black";
 
       if (tabId === 'checkin') { loadLogs(); setTimeout(() => document.getElementById('scan-code-input').focus(), 150); }
       if (tabId === 'schedules') loadSchedules();
@@ -1095,7 +1128,7 @@
           else if (s.worker_id && s.worker_id.includes('P')) badgeColor = "bg-emerald-100 text-emerald-900 border-emerald-200";
 
           return `
-            <div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded border ${badgeColor} truncate hover:opacity-80 transition flex items-center justify-between shadow-2xs">
+            <div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-lg border ${badgeColor} truncate hover:opacity-80 transition flex items-center justify-between shadow-2xs">
               <span class="truncate">${s.worker_name || s.worker_id}</span>
               <span class="opacity-70 font-mono ml-0.5">${s.hours || 0}h</span>
             </div>
@@ -1281,7 +1314,7 @@
         faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.58);
         if (faceStatus) {
           faceStatus.className = "text-emerald-300 font-bold";
-          faceStatus.textContent = `✅ 已就緒 (已載入 ${enrolledCount} 位特徵)，請直視鏡頭`;
+          faceStatus.textContent = `✅ 已載入 ${enrolledCount} 位特徵，請直視鏡頭`;
         }
       } else {
         faceMatcher = null;
@@ -2077,18 +2110,18 @@
             </div>
 
             <div class="bg-slate-50 rounded-xl p-2.5 text-xs text-slate-600 space-y-1">
-              <p><span class="font-bold text-slate-500">家長電話：</span><span class="font-mono">${gInfo}</span></p>
+              <p><span class="font-bold text-slate-500">主要聯絡：</span><span class="font-mono">${gInfo}</span></p>
               ${special ? `<p class="text-rose-700 font-medium"><span class="font-bold">特質註記：</span>${special}</p>` : ''}
             </div>
 
             <div class="flex items-center justify-between pt-1 border-t border-slate-100">
               <div class="space-x-1">
-                <button onclick="changePoints('${u.id}', 1)" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">+1點</button>
+                <button onclick="changePoints('${u.id}', 1)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">+1點</button>
                 <button onclick="quickSetStatus('${u.id}', '退班')" class="px-2 py-1 bg-slate-100 text-rose-600 rounded-lg text-xs font-bold">退班</button>
                 <button onclick="quickSetStatus('${u.id}', '畢業')" class="px-2 py-1 bg-slate-100 text-purple-600 rounded-lg text-xs font-bold">畢業</button>
               </div>
               <div class="space-x-1">
-                <button onclick="openUserModal('edit', '${u.id}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold"><i class="fa-solid fa-pen mr-0.5"></i>編輯</button>
+                <button onclick="openUserModal('edit', '${u.id}')" class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold"><i class="fa-solid fa-pen mr-0.5"></i>編輯</button>
                 <button onclick="deleteUser('${u.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold"><i class="fa-solid fa-trash-can"></i></button>
               </div>
             </div>
@@ -2430,7 +2463,7 @@
             <td class="py-3 px-3 text-xs font-bold text-indigo-700 whitespace-nowrap">${c.teacher_name}</td>
             <td class="py-3 px-3 text-xs font-bold text-slate-600 whitespace-nowrap">${c.duration_min || 30} 分鐘</td>
             <td class="py-3 px-3 text-xs text-slate-700 max-w-sm leading-relaxed">${c.content}</td>
-            <td class="py-3 px-3 text-xs text-rose-700 max-w-xs leading-relaxed font-medium">${c.follow_up || '<span class="text-slate-300 italic">無</span>'}</td>
+            <td class="py-3 px-3 text-rose-700 max-w-xs leading-relaxed font-medium">${c.follow_up || '<span class="text-slate-300 italic">無</span>'}</td>
             <td class="py-3 px-3 text-center whitespace-nowrap space-x-1">
               <button onclick="editCounseling(${c.id})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-pen mr-0.5"></i>編輯</button>
               <button onclick="deleteCounseling(${c.id})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-lg transition"><i class="fa-solid fa-trash-can mr-0.5"></i>刪除</button>
