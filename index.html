@@ -318,7 +318,7 @@
       </div>
     </div>
 
-    <!-- 5. 個別輔導 (🌟 完整恢復四大向度、複選標籤與後續處置勾選) -->
+    <!-- 5. 個別輔導 -->
     <div id="tab-counseling" class="hidden space-y-4">
       <div class="clean-card rounded-3xl p-4 sm:p-7">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
@@ -621,6 +621,74 @@
     </div>
   </div>
 
+  <!-- 🌟 新增/編輯個別輔導紀錄彈窗 (多向度複選 + 追蹤/轉介/向牧者報告) -->
+  <div id="modal-counseling-add" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
+      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 新增個別學童輔導與關懷紀錄</h3>
+        <button onclick="closeAddCounselingModal()" class="text-slate-400 font-bold text-xl">&times;</button>
+      </div>
+      <form onsubmit="handleCounselingSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+        <input type="hidden" id="counsel-edit-id" value="">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div><label class="block font-bold text-slate-600 mb-1">輔導對象學童 *</label><select id="counsel-student-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-bold text-xs"></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 / 同工 *</label><select id="counsel-teacher-select" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-bold text-xs"></select></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="block font-bold text-slate-600 mb-1">晤談日期 *</label><input type="date" id="counsel-date" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">陪伴時長 (分鐘) *</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
+        </div>
+
+        <!-- 🌟 4大向度多向度複選標籤 -->
+        <div class="bg-slate-50 p-4 rounded-2xl border space-y-2.5">
+          <div class="flex justify-between items-center">
+            <label class="block font-bold text-slate-700 text-xs">選擇輔導向度 (可複選，先點選者為主)：</label>
+            <input type="hidden" id="form-counsel-category" value="課業輔導">
+          </div>
+          <div class="bg-white p-2.5 rounded-xl border flex items-center gap-2">
+            <span class="text-[11px] font-bold text-slate-500 shrink-0">已選向度：</span>
+            <div id="selected-counsel-category-preview" class="flex flex-wrap gap-1.5"><span class="text-xs text-rose-600 font-bold">課業輔導</span></div>
+          </div>
+          <div id="counsel-category-container" class="flex flex-wrap gap-2">
+            <button type="button" onclick="toggleCounselCategory('課業輔導')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold">✓ 課業輔導 (優先)</button>
+            <button type="button" onclick="toggleCounselCategory('情緒行為')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 情緒行為</button>
+            <button type="button" onclick="toggleCounselCategory('家庭關懷')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 家庭關懷</button>
+            <button type="button" onclick="toggleCounselCategory('品格引導')" class="px-3 py-1.5 bg-white border rounded-xl text-xs font-bold">＋ 品格引導</button>
+          </div>
+        </div>
+
+        <!-- 動態快捷點選標籤 -->
+        <div class="bg-slate-50 border rounded-2xl p-3 space-y-1.5">
+          <label class="block font-bold text-slate-700 text-xs">💡 點選下方項目快速加入晤談要點：</label>
+          <div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">狀況描述與晤談要點 *</label>
+          <textarea id="counsel-content" rows="3" required placeholder="點選上方標籤或自行輸入晤談過程與觀察..." class="w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs"></textarea>
+        </div>
+
+        <!-- 🌟 後續處置、追蹤與牧者報告複選 -->
+        <div class="bg-slate-50 p-4 rounded-2xl border space-y-2.5">
+          <label class="block font-bold text-slate-700 text-xs">後續處置與回報勾選：</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold text-slate-700">
+            <label class="flex items-center space-x-1.5 bg-white p-2 rounded-xl border cursor-pointer"><input type="checkbox" value="持續追蹤" class="followup-checkbox" onchange="toggleFollowupAction()"> <span>持續追蹤</span></label>
+            <label class="flex items-center space-x-1.5 bg-white p-2 rounded-xl border cursor-pointer"><input type="checkbox" value="家長面談" class="followup-checkbox" onchange="toggleFollowupAction()"> <span>家長面談</span></label>
+            <label class="flex items-center space-x-1.5 bg-white p-2 rounded-xl border cursor-pointer"><input type="checkbox" value="轉介專業輔導" class="followup-checkbox" onchange="toggleFollowupAction()"> <span>轉介專業輔導</span></label>
+            <label class="flex items-center space-x-1.5 bg-white p-2 rounded-xl border cursor-pointer"><input type="checkbox" value="向牧者報告" class="followup-checkbox" onchange="toggleFollowupAction()"> <span>向牧者報告</span></label>
+          </div>
+          <input type="text" id="counsel-followup-extra" oninput="toggleFollowupAction()" placeholder="其他後續計畫或需牧者遮蓋事項補充說明..." class="w-full px-3.5 py-2 bg-white border rounded-xl text-xs mt-1">
+          <input type="hidden" id="counsel-followup" value="">
+        </div>
+
+        <div class="flex space-x-2.5 pt-3 border-t">
+          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-sm">確認儲存輔導紀錄</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- 登入彈窗 -->
   <div id="modal-login" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl border">
@@ -679,7 +747,7 @@
 
     let currentFamilyTags = [];
     let currentHealthTags = [];
-    let currentCounselingTags = []; // 🌟 個別輔導複選標籤
+    let currentCounselingTags = ["課業輔導"];
 
     const verses = [
       "「你當剛強壯膽！不要懼怕，也不要驚惶;因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
@@ -687,10 +755,9 @@
       "「你的話是我腳前的燈，是我路上的光。」（詩篇 119:105）",
       "「耶和華是我的牧者，我必不致缺乏。」（詩篇 23:1）",
       "「教養孩童，使他走當行的道，就是到老他也不偏離。」（箴言 22:6）",
-      "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰;他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
+      "「但那等候耶和華的必重新得力. 他們必如鷹展翅上騰;他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
     ];
 
-    // 🌟 四大向度與豐富的快捷複選標籤
     const counselTagsDict = {
       "課業輔導": ["專注度良好", "作業完成度高", "需要一對一指導", "數學觀念卡住", "國文閱讀需加強", "容易分心走神", "排斥寫作業", "字體潦草需重寫", "段考前複習狀態佳"],
       "情緒行為": ["情緒平穩", "起伏大容易暴怒", "與同儕發生衝突", "哭鬧難以安撫", "退縮不說話", "過度興奮坐不住", "願意道歉和好", "需要暫離冷靜空間"],
@@ -1052,7 +1119,7 @@
     }
 
     // =============================================================
-    // 智慧打卡核心 (防覆蓋管理員登入身分)
+    // 智慧打卡核心
     // =============================================================
     async function handleScan(e) { e.preventDefault(); const inp = document.getElementById('scan-code-input'); const val = inp.value.trim().toUpperCase(); if (!val) return; processScanCode(val); inp.value = ""; }
     async function processScanCode(val) {
@@ -1148,7 +1215,7 @@
     function batchSetAll(f, v) { activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
 
     // =============================================================
-    // 5. 人員名冊管理 (精準對齊 SQL 16 個欄位)
+    // 5. 人員名冊管理
     // =============================================================
     async function loadUsers() { 
       const { data } = await db.from('users').select('*').order('id'); 
@@ -1213,7 +1280,7 @@
       renderUsers(allUsers.filter(u => (!q || (u.name&&u.name.toLowerCase().includes(q)) || (u.id&&u.id.toLowerCase().includes(q)) || (u.family_status&&u.family_status.toLowerCase().includes(q))) && (st === '全部' || u.status === st)));
     }
 
-    // 🌟 點選式標籤控制：家庭狀況
+    // 點選式標籤控制：家庭狀況
     function toggleFamilyTag(tagName) {
       const idx = currentFamilyTags.indexOf(tagName);
       if (idx > -1) currentFamilyTags.splice(idx, 1); else currentFamilyTags.push(tagName);
@@ -1236,7 +1303,7 @@
       });
     }
 
-    // 🌟 點選式標籤控制：健康身心狀況
+    // 點選式標籤控制：健康身心狀況
     function toggleHealthTag(tagName) {
       if (tagName === '無') { currentHealthTags = ['無']; }
       else {
@@ -1356,6 +1423,8 @@
       const finalHealth = [...currentHealthTags];
       if (extra && !finalHealth.includes(extra)) finalHealth.push(extra);
 
+      const faceDescVal = document.getElementById('form-face-descriptor').value.trim();
+
       const payload = {
         id: document.getElementById('form-id').value.trim().toUpperCase(),
         name: document.getElementById('form-name').value.trim(),
@@ -1377,6 +1446,10 @@
         avatar_url: document.getElementById('form-avatar').value.trim() || null
       };
 
+      if (faceDescVal) {
+        payload.face_descriptor = faceDescVal;
+      }
+
       const { error } = await db.from('users').upsert([payload]); 
       if (error) { alert("儲存失敗：" + error.message); return; }
       alert("✅ 儲存成功！");
@@ -1393,7 +1466,7 @@
     }
 
     // =============================================================
-    // 6 & 7. 輔導與留言板 (🌟 支援多向度勾選與後續處置、轉介、牧者報告)
+    // 6 & 7. 輔導與留言板 (🌟 完整實現多向度複選與後續處置、牧者報告)
     // =============================================================
     async function loadCounseling() {
       if (allUsers.length === 0) {
@@ -1415,54 +1488,6 @@
       rawCounselingList = data || [];
       renderCounselingTable(rawCounselingList);
       updateCounselingStats(rawCounselingList);
-      switchCounselTags();
-    }
-
-    // 🌟 點選式向度控制（支援多向度複選）
-    function toggleCounselCategory(catName) {
-      const idx = currentCounselingTags.indexOf(catName);
-      if (idx > -1) currentCounselingTags.splice(idx, 1); else currentCounselingTags.push(catName);
-      updateCounselCategoryUI();
-      switchCounselTags();
-    }
-    function updateCounselCategoryUI() {
-      document.getElementById('form-counsel-category').value = currentCounselingTags.join('、');
-      const box = document.getElementById('selected-counsel-category-preview');
-      box.innerHTML = currentCounselingTags.length === 0 ? `<span class="text-xs text-slate-400 italic">請至少勾選一個輔導向度</span>` : currentCounselingTags.map((t, i) => `<span class="px-2 py-0.5 rounded text-[11px] font-black ${i===0?'bg-indigo-600 text-white':'bg-slate-200 text-slate-700'}">${i===0?'⭐主: ':''}${t}</span>`).join(' ');
-      document.querySelectorAll('#counsel-category-container button').forEach(btn => {
-        const txt = btn.textContent.replace('＋ ', '').replace('✓ ', '').replace(' (優先)', '').trim();
-        if (currentCounselingTags.includes(txt)) {
-          const isP = currentCounselingTags[0] === txt;
-          btn.className = `px-3 py-1.5 rounded-xl text-xs font-black transition ${isP ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700 border border-indigo-300'}`;
-          btn.innerHTML = `✓ ${txt}${isP ? ' (優先)' : ''}`;
-        } else {
-          btn.className = `px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold`;
-          btn.innerHTML = `＋ ${txt}`;
-        }
-      });
-    }
-
-    function switchCounselTags() {
-      // 根據第一個被勾選的向度列出快捷標籤，若無則預設課業輔導
-      const primaryCat = currentCounselingTags[0] || "課業輔導";
-      const tags = counselTagsDict[primaryCat] || counselTagsDict["課業輔導"];
-      const box = document.getElementById('counsel-quick-tags');
-      box.innerHTML = tags.map(t => `<button type="button" onclick="appendCounselTag('${t}')" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-rose-50 hover:border-rose-400 text-slate-700 rounded-lg text-xs font-bold transition">＋ ${t}</button>`).join('');
-    }
-
-    function appendCounselTag(t) {
-      const ta = document.getElementById('counsel-content');
-      ta.value = ta.value ? ta.value + "、" + t : t;
-    }
-
-    // 🌟 後續處置複選控制
-    function toggleFollowupAction(actionName) {
-      const checkboxes = document.querySelectorAll('.followup-checkbox:checked');
-      const actions = Array.from(checkboxes).map(cb => cb.value);
-      const extra = document.getElementById('counsel-followup-extra').value.trim();
-      const combined = [...actions];
-      if (extra && !combined.includes(extra)) combined.push(extra);
-      document.getElementById('counsel-followup').value = combined.join('、');
     }
 
     function renderCounselingTable(list) {
@@ -1490,7 +1515,7 @@
       document.getElementById('cs-stat-count').textContent = `${list.length} 次`;
       document.getElementById('cs-stat-mins').textContent = `${totalMins} 分鐘`;
       document.getElementById('cs-stat-students').textContent = `${stuSet.size} 位`;
-      document.getElementById('cs-stat-followup').textContent = `${list.filter(x => x.follow_up && x.follow_up.trim()).length} 案`;
+      document.getElementById('cs-stat-followup').textContent = `${list.filter(x => x.follow_up && x.follow_up.includes('向牧者報告')).length} 案`;
     }
 
     function filterCounselingList() {
@@ -1504,7 +1529,6 @@
       document.getElementById('counsel-edit-id').value = "";
       document.getElementById('counsel-date').value = new Date().toISOString().split('T')[0];
       document.getElementById('counsel-content').value = "";
-      document.getElementById('counsel-followup').value = "";
       document.getElementById('counsel-followup-extra').value = "";
       document.querySelectorAll('.followup-checkbox').forEach(cb => cb.checked = false);
       currentCounselingTags = ["課業輔導"];
@@ -1518,7 +1542,6 @@
       e.preventDefault();
       if (currentCounselingTags.length === 0) { alert("請至少勾選一個輔導向度！"); return; }
       
-      // 自動組合後續處置文字
       const checkboxes = document.querySelectorAll('.followup-checkbox:checked');
       const actions = Array.from(checkboxes).map(cb => cb.value);
       const extra = document.getElementById('counsel-followup-extra').value.trim();
@@ -1834,7 +1857,7 @@
         if (currentUser.id.includes('M')) { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
         if (dock) { dock.classList.remove('hidden'); dock.classList.add('flex'); }
       } else {
-        document.getElementById('auth-unlogged').classList.add('hidden');
+        document.getElementById('auth-unlogged').classList.remove('hidden');
         document.getElementById('auth-logged').classList.add('hidden'); document.getElementById('auth-logged').classList.remove('flex');
         printNav.classList.add('hidden'); importNav.classList.add('hidden');
         if (dock) { dock.classList.add('hidden'); dock.classList.remove('flex'); }
