@@ -101,7 +101,7 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- ==================== SECTION: 頂部導航列 ==================== -->
+  <!-- 頂部導航列 -->
   <header class="glass-header text-white sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-3.5 sm:px-6">
       <div class="flex justify-between items-center h-14 sm:h-16">
@@ -132,7 +132,6 @@
         </div>
       </div>
 
-      <!-- 電腦版選單 -->
       <nav class="hidden md:flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
         <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-qrcode text-xs"></i><span>打卡中心</span></button>
         <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-calendar-check text-xs"></i><span>排班行事曆</span></button>
@@ -145,7 +144,7 @@
     </div>
   </header>
 
-  <!-- ==================== SECTION: 主畫面容器 ==================== -->
+  <!-- 主內容容器 -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 py-4">
 
     <!-- 1. 打卡中心 -->
@@ -171,8 +170,8 @@
 
       <div class="clean-card rounded-3xl p-5 sm:p-7 max-w-xl mx-auto text-center">
         <div class="flex justify-center gap-2.5 mb-4">
-          <button type="button" onclick="toggleFaceRecognition()" id="btn-toggle-face" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center space-x-1.5"><i class="fa-solid fa-face-smile"></i><span id="btn-face-text">👤 開啟人臉相機</span></button>
-          <button type="button" onclick="toggleCameraScanner()" id="btn-toggle-cam" class="px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center space-x-1.5"><i class="fa-solid fa-qrcode"></i><span id="btn-cam-text">📷 QR 掃描</span></button>
+          <button type="button" onclick="toggleFaceRecognition()" id="btn-toggle-face" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold rounded-xl shadow-sm text-xs sm:text-sm flex items-center space-x-1.5 transition active:scale-95"><i class="fa-solid fa-face-smile text-base"></i><span id="btn-face-text">👤 開啟人臉相機</span></button>
+          <button type="button" onclick="toggleCameraScanner()" id="btn-toggle-cam" class="px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 text-white font-bold rounded-xl shadow-sm text-xs sm:text-sm flex items-center space-x-1.5 transition active:scale-95"><i class="fa-solid fa-qrcode text-base"></i><span id="btn-cam-text">📷 QR 掃描</span></button>
         </div>
 
         <div id="face-recognition-container" class="hidden mb-4 overflow-hidden rounded-2xl border-2 border-indigo-500 bg-slate-950 relative shadow-xl">
@@ -185,21 +184,21 @@
           </div>
           <div class="p-2.5 bg-slate-900 text-white text-xs flex justify-between items-center px-4">
             <span id="face-status-text" class="text-blue-300 font-bold truncate">請正面直視鏡頭</span>
-            <button onclick="toggleFaceRecognition()" class="text-rose-400 font-bold text-xs ml-2">關閉相機</button>
+            <button onclick="toggleFaceRecognition()" class="text-rose-400 hover:text-rose-300 font-bold text-xs ml-2">關閉相機</button>
           </div>
         </div>
 
         <div id="camera-scanner-container" class="hidden mb-4 overflow-hidden rounded-2xl border-2 border-emerald-500 bg-black relative shadow-lg">
           <div id="qr-reader" class="w-full"></div>
-          <div class="p-2.5 bg-slate-900 text-white text-xs flex justify-between items-center px-4"><span>鏡頭掃描中</span><button onclick="toggleCameraScanner()" class="text-rose-400 font-bold text-xs">關閉</button></div>
+          <div class="p-2.5 bg-slate-900 text-white text-xs flex justify-between items-center px-4"><span>鏡頭掃描中：對準學生條碼卡</span><button onclick="toggleCameraScanner()" class="text-rose-400 hover:text-rose-300 font-bold text-xs">關閉相機</button></div>
         </div>
 
         <h2 class="text-base sm:text-lg font-black text-slate-800 tracking-tight">條碼槍 / 學號手動簽到</h2>
         <p class="text-xs text-slate-400 mb-3">條碼槍自動刷入，或手動輸入學號按 Enter</p>
         
         <form onsubmit="handleScan(event)" class="space-y-2.5">
-          <input type="text" id="scan-code-input" placeholder="請刷條碼或輸入學號 (例: 2026S0001)" autofocus autocomplete="off" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-base sm:text-lg font-bold text-center uppercase tracking-wider font-mono">
-          <button type="submit" class="w-full py-3 bg-slate-900 text-white text-sm font-bold rounded-xl">確認打卡報到</button>
+          <input type="text" id="scan-code-input" placeholder="請刷條碼或輸入學號 (例: 2026S0001)" autofocus autocomplete="off" class="w-full bg-slate-50 hover:bg-white border-2 border-slate-200 hover:border-indigo-400 rounded-xl px-4 py-3 text-base sm:text-lg font-bold text-center uppercase tracking-wider focus:outline-none focus:border-indigo-600 font-mono transition">
+          <button type="submit" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl shadow-sm transition active:scale-98">確認打卡報到</button>
         </form>
         <div id="scan-tip" class="mt-3 text-xs font-bold hidden py-2 px-3 rounded-xl"></div>
       </div>
@@ -207,41 +206,248 @@
       <div class="clean-card rounded-3xl p-4 sm:p-6">
         <div class="flex justify-between items-center mb-3">
           <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center space-x-2"><span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span><span>今日即時出勤動態</span></h3>
+          <span class="text-[11px] text-slate-400 font-medium">即時連線更新</span>
         </div>
         <div class="block md:hidden space-y-2" id="logs-cards-mobile"><p class="text-center text-xs text-slate-400 py-6">載入今日動態中...</p></div>
         <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100">
-              <tr><th class="py-2.5 px-4">時間</th><th class="py-2.5 px-4">照片</th><th class="py-2.5 px-4">編號</th><th class="py-2.5 px-4">姓名</th><th class="py-2.5 px-4">身分</th><th class="py-2.5 px-4">打卡狀態</th></tr>
-            </thead>
+            <thead class="bg-slate-50 text-slate-400 font-bold border-b border-slate-100"><tr><th class="py-2.5 px-4">時間</th><th class="py-2.5 px-4">照片</th><th class="py-2.5 px-4">編號</th><th class="py-2.5 px-4">姓名</th><th class="py-2.5 px-4">身分</th><th class="py-2.5 px-4">打卡狀態</th></tr></thead>
             <tbody id="logs-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="6" class="py-6 text-center text-slate-400">載入今日動態中...</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- 2. 排班行事曆 (🌟 恢復批次週期排班功能) -->
-    <!-- 🌟 恢復完美的「動態即時清單與自由移除日期」批次排班彈窗 -->
+    <!-- 2. 排班行事曆 (🌟 含動態互動日期的批次排班) -->
+    <div id="tab-schedules" class="hidden space-y-4">
+      <div class="clean-card rounded-3xl p-4 sm:p-7">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-indigo-600"></i> 教職員排班行事曆</h2>
+            <p class="text-xs text-slate-400 mt-0.5">點擊月曆任意日期快速排班，或使用「每週週期批次排班」快速生成並自選剔除</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
+              <button onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 font-bold shadow-xs"><i class="fa-solid fa-calendar mr-1"></i>月曆</button>
+              <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
+            </div>
+            <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
+            <button onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-calendar-plus"></i><span>每週週期批次排班</span></button>
+            <button onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-plus"></i><span>單日排班</span></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-indigo-600 block">本月總班次</span><span class="text-lg sm:text-xl font-black text-indigo-950 mt-0.5 block" id="total-count-badge">0 班</span></div>
+          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-blue-600 block">排定總工時</span><span class="text-lg sm:text-xl font-black text-blue-950 mt-0.5 block" id="total-shift-badge">0 小時</span></div>
+          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-emerald-600 block">出勤同工</span><span class="text-lg sm:text-xl font-black text-emerald-950 mt-0.5 block" id="total-workers-badge">0 人</span></div>
+          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-3"><span class="text-[11px] font-bold text-amber-600 block">預估薪資支出</span><span class="text-lg sm:text-xl font-black text-amber-950 mt-0.5 block" id="total-wage-badge">$0</span></div>
+        </div>
+
+        <div id="schedule-calendar-view" class="space-y-2.5">
+          <div class="flex justify-between items-center bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-200">
+            <div class="flex items-center space-x-2">
+              <button onclick="prevMonth()" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100 transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+              <h3 class="text-xs sm:text-sm font-black text-slate-800 font-mono" id="calendar-month-title">2026 年 09 月</h3>
+              <button onclick="nextMonth()" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-100 transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+            </div>
+            <button onclick="goToCurrentMonth()" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100 transition">本月</button>
+          </div>
+          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white">
+            <div class="grid grid-cols-7 text-center font-bold text-[11px] sm:text-xs py-2 bg-slate-50 border-b border-slate-200 text-slate-600">
+              <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-100 text-xs"></div>
+          </div>
+        </div>
+
+        <div id="schedule-list-view" class="hidden overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+              <tr><th class="py-3 px-3">排班日期</th><th class="py-3 px-3">同工編號</th><th class="py-3 px-3">同工姓名</th><th class="py-3 px-3">班別時段</th><th class="py-3 px-3">負責工作</th><th class="py-3 px-3">工時</th><th class="py-3 px-3 text-center">操作</th></tr>
+            </thead>
+            <tbody id="schedules-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="7" class="py-6 text-center text-slate-400">載入排班中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 課堂點名 -->
+    <div id="tab-rollcall" class="hidden space-y-4">
+      <div class="clean-card rounded-3xl p-4 sm:p-7">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-indigo-600"></i> 課堂點名與聯絡簿核章</h2>
+            <p class="text-xs text-slate-400 mt-0.5">手機直向自動卡片化，免左右滑動即可批次勾選</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono">
+            <button onclick="batchSetAll('attendance', '出席')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席</button>
+            <button onclick="batchSetAll('homework', '已完成')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-book mr-1 text-blue-600"></i>作業完成</button>
+            <button onclick="batchSetAll('signed', '是')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體核章</button>
+            <button onclick="saveRollCallSheet()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1 ml-auto sm:ml-0 transition active:scale-95"><i class="fa-solid fa-floppy-disk"></i><span>儲存紀錄</span></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3"><span class="text-[11px] text-indigo-600 font-bold block">應到學員</span><span class="text-lg sm:text-xl font-black text-indigo-900 mt-0.5 block" id="rc-stat-total">0 人</span></div>
+          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3"><span class="text-[11px] text-emerald-600 font-bold block">實到出席</span><span class="text-lg sm:text-xl font-black text-emerald-900 mt-0.5 block" id="rc-stat-attend">0 人</span></div>
+          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3"><span class="text-[11px] text-blue-600 font-bold block">作業完成率</span><span class="text-lg sm:text-xl font-black text-blue-900 mt-0.5 block" id="rc-stat-hw">0%</span></div>
+          <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-3"><span class="text-[11px] text-purple-600 font-bold block">聯絡簿核章</span><span class="text-lg sm:text-xl font-black text-purple-900 mt-0.5 block" id="rc-stat-signed">0 人</span></div>
+        </div>
+
+        <div class="block md:hidden space-y-2.5" id="rollcall-cards-mobile"><p class="text-center text-xs text-slate-400 py-6">載入點名名冊中...</p></div>
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+              <tr><th class="py-3 px-3">學號</th><th class="py-3 px-3">姓名</th><th class="py-3 px-3">學校/年級</th><th class="py-3 px-3">出席狀態</th><th class="py-3 px-3">作業完成進度</th><th class="py-3 px-3">聯絡簿核章</th><th class="py-3 px-3">請假 / 叮嚀備註</th></tr>
+            </thead>
+            <tbody id="rollcall-table-body" class="divide-y divide-slate-100 font-medium"><tr><td colspan="7" class="py-6 text-center text-slate-400">載入點名名冊中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 人員名冊 -->
+    <div id="tab-students" class="hidden space-y-4">
+      <div class="clean-card rounded-3xl p-4 sm:p-7">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-address-book text-indigo-600"></i> 學員與人員名冊</h2>
+            <p class="text-xs text-slate-400 mt-0.5">手機直向自動卡片化排列，完整瀏覽個資與快捷修改</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+              <option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班學員</option><option value="畢業">畢業學員</option><option value="在職">在職教職</option><option value="離職">離職同工</option>
+            </select>
+            <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/特質..." class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            <button onclick="openUserModal('add')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-user-plus"></i><span>新增建檔</span></button>
+          </div>
+        </div>
+
+        <div class="block md:hidden space-y-2.5" id="students-cards-mobile"><p class="text-center text-xs text-slate-400 py-6">載入名冊中...</p></div>
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100">
+              <tr><th class="py-3 px-3">照片</th><th class="py-3 px-3">學號/編號</th><th class="py-3 px-3">姓名</th><th class="py-3 px-3">身分/狀態</th><th class="py-3 px-3">學校/班級</th><th class="py-3 px-3">主要聯絡電話</th><th class="py-3 px-3">福利/特教狀況</th><th class="py-3 px-3">點數</th><th class="py-3 px-3 text-center">操作管理</th></tr>
+            </thead>
+            <tbody id="students-table" class="divide-y divide-slate-100 font-medium"><tr><td colspan="9" class="py-6 text-center text-slate-400">載入名冊中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 個別輔導 -->
+    <div id="tab-counseling" class="hidden space-y-4">
+      <div class="clean-card rounded-3xl p-4 sm:p-7">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童輔導紀錄</h2>
+            <p class="text-xs text-slate-400 mt-0.5">詳實記錄晤談重點、情緒陪伴、弱科補救與後續追蹤</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <select id="counsel-filter-student" onchange="filterCounselingList()" class="flex-1 sm:flex-none px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"><option value="">全部學童</option></select>
+            <select id="counsel-filter-category" onchange="filterCounselingList()" class="flex-1 sm:flex-none px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+              <option value="">全部向度</option><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option>
+            </select>
+            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition active:scale-95"><i class="fa-solid fa-pen-nib"></i><span>新增輔導</span></button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+          <div class="bg-rose-50/50 border border-rose-100 rounded-2xl p-3"><span class="text-[11px] text-rose-600 font-bold block">累計輔導</span><span class="text-lg sm:text-xl font-black text-rose-900 mt-0.5 block" id="cs-stat-count">0 次</span></div>
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3"><span class="text-[11px] text-indigo-600 font-bold block">陪伴時長</span><span class="text-lg sm:text-xl font-black text-indigo-900 mt-0.5 block" id="cs-stat-mins">0 分鐘</span></div>
+          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3"><span class="text-[11px] text-blue-600 font-bold block">受輔學童</span><span class="text-lg sm:text-xl font-black text-blue-900 mt-0.5 block" id="cs-stat-students">0 位</span></div>
+          <div class="bg-amber-50/50 border border-amber-100 rounded-2xl p-3"><span class="text-[11px] text-amber-600 font-bold block">待追蹤個案</span><span class="text-lg sm:text-xl font-black text-amber-900 mt-0.5 block" id="cs-stat-followup">0 案</span></div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap sm:whitespace-normal">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+              <tr><th class="py-3 px-3">晤談時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">向度</th><th class="py-3 px-3">輔導老師</th><th class="py-3 px-3">時長</th><th class="py-3 px-3">狀況描述與晤談要點</th><th class="py-3 px-3">後續處置與追蹤</th><th class="py-3 px-3 text-center">操作</th></tr>
+            </thead>
+            <tbody id="counseling-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="8" class="py-6 text-center text-slate-400">載入輔導紀錄中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. 家長留言板 -->
+    <div id="tab-messages" class="hidden space-y-4">
+      <div class="clean-card rounded-3xl p-4 sm:p-7">
+        <h2 class="text-lg sm:text-2xl font-black text-slate-800 mb-1 flex items-center gap-2"><i class="fa-solid fa-comments text-indigo-600"></i> 家長留言板與親師回覆</h2>
+        <p class="text-xs text-slate-400 mb-4">掌握家長叮嚀、請假備註並即時給予溫暖回饋</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap sm:whitespace-normal">
+            <thead class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+              <tr><th class="py-3 px-3">留言時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">家長叮嚀囑咐</th><th class="py-3 px-3">老師回覆內容</th><th class="py-3 px-3 text-center">操作</th></tr>
+            </thead>
+            <tbody id="messages-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="5" class="py-6 text-center text-slate-400">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. 列印報表中心 (同工M限定) -->
+    <div id="tab-print-center" class="hidden space-y-4">
+      <div id="print-controls-bar" class="clean-card rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white">同工(M)限定</span>
+            <h2 class="text-lg sm:text-xl font-black text-slate-800">報表與條碼列印中心</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">支援國小班/國中班獨立分開核銷點名總表、QR Code 裁切卡、工時明細與名冊</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <select id="print-report-type" onchange="onReportTypeChange()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <option value="month_rollcall" selected>📋 當月學生出席點名總表 (專案核銷)</option>
+            <option value="qrcode">🏷️ 學生識別 QR Code 裁切卡</option>
+            <option value="rollcall">📋 現場單日點名與聯絡簿核章紙本表</option>
+            <option value="workhours">⏱️ 教職與工讀每月工時明細表</option>
+            <option value="roster">📑 課輔班完整學生與家長名冊</option>
+          </select>
+
+          <select id="print-class-filter" onchange="renderSelectedReport()" class="px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-black text-amber-900">
+            <option value="elementary" selected>🎒 國小班點名表</option>
+            <option value="junior">🎓 國中班點名表</option>
+            <option value="both">📑 國小＋國中班 (自動分頁)</option>
+          </select>
+
+          <input type="month" id="print-month-filter" value="2026-09" onchange="renderSelectedReport()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black font-mono">
+          <button onclick="window.print()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-black shadow-sm flex items-center space-x-1.5 transition active:scale-95">
+            <i class="fa-solid fa-print"></i><span>列印 A4</span>
+          </button>
+        </div>
+      </div>
+      <div id="print-paper-content" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md print-page-box min-h-[600px]"></div>
+    </div>
+
+  </main>
+
+  <!-- 🌟 手機專屬底部黑色懸浮導航欄 (未登入隱藏，同工M登入後自動浮現) -->
+  <nav id="mobile-bottom-dock" class="hidden md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl justify-around items-center text-[10px] font-bold text-slate-400">
+    <button onclick="switchTab('checkin')" id="m-nav-checkin" class="flex flex-col items-center py-1 text-amber-400 font-black"><i class="fa-solid fa-qrcode text-base mb-0.5"></i><span>打卡</span></button>
+    <button onclick="requireTab('schedules')" id="m-nav-schedules" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-calendar-days text-base mb-0.5"></i><span>排班</span></button>
+    <button onclick="requireTab('rollcall')" id="m-nav-rollcall" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-clipboard-check text-base mb-0.5"></i><span>點名</span></button>
+    <button onclick="requireTab('students')" id="m-nav-students" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-address-book text-base mb-0.5"></i><span>名冊</span></button>
+    <button onclick="requireTab('counseling')" id="m-nav-counseling" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-hand-holding-heart text-base mb-0.5"></i><span>輔導</span></button>
+  </nav>
+
+  <!-- ======================== 彈窗區域 ======================== -->
+
+  <!-- 🌟 每週週期批次排班產生器彈窗 (含動態日期剔除) -->
   <div id="modal-batch-schedule" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll border border-slate-100">
       <div class="flex justify-between items-center mb-3.5 border-b pb-3">
-        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-calendar-plus text-emerald-600"></i> 每週週期批次排班產生器
-        </h3>
+        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-plus text-emerald-600"></i> 每週週期批次排班產生器</h3>
         <button onclick="closeBatchScheduleModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
       <div class="space-y-3.5 text-xs sm:text-sm">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block font-bold text-slate-600 mb-1">選擇目標月份 *</label>
-            <input type="month" id="batch-month" value="2026-09" onchange="previewBatchDates()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono text-xs">
-          </div>
-          <div>
-            <label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label>
-            <select id="batch-worker-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs"></select>
-          </div>
+          <div><label class="block font-bold text-slate-600 mb-1">選擇目標月份 *</label><input type="month" id="batch-month" value="2026-09" onchange="previewBatchDates()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono text-xs"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label><select id="batch-worker-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs"></select></div>
         </div>
-
         <div>
           <label class="block font-bold text-slate-600 mb-1">選擇每週固定星期 (可複選) *</label>
           <div class="grid grid-cols-5 gap-2" id="batch-weekdays-box">
@@ -253,197 +459,19 @@
           </div>
         </div>
 
-        <!-- 🌟 即時動態日期清單與自由剔除區 -->
         <div class="bg-emerald-50/60 rounded-2xl p-3.5 border border-emerald-200 space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-emerald-900 text-xs">🗓️ 篩選出的上課日期 (點擊 × 可移除不需要排班的日期)：</span>
-            <span id="batch-count-tag" class="bg-emerald-600 text-white font-mono text-[10px] font-black px-2 py-0.5 rounded-full">0 天</span>
-          </div>
-          <div id="batch-preview-chips" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto bg-white p-2.5 rounded-xl border border-emerald-100 custom-scroll">
-            <!-- 動態產出日期膠囊 -->
-          </div>
+          <div class="flex justify-between items-center"><span class="font-bold text-emerald-900 text-xs">🗓️ 篩選出的上課日期 (點擊 × 可移除不需要排班的日期)：</span><span id="batch-count-tag" class="bg-emerald-600 text-white font-mono text-[10px] font-black px-2 py-0.5 rounded-full">0 天</span></div>
+          <div id="batch-preview-chips" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto bg-white p-2.5 rounded-xl border border-emerald-100 custom-scroll"></div>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <div><label class="block font-bold text-slate-600 mb-1">開始時間</label><input type="time" id="batch-start-time" value="16:00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
           <div><label class="block font-bold text-slate-600 mb-1">結束時間</label><input type="time" id="batch-end-time" value="18:00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono text-xs"></div>
         </div>
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">負責工作描述</label>
-          <input type="text" id="batch-job" value="課輔陪伴" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-xs">
-        </div>
-
+        <div><label class="block font-bold text-slate-600 mb-1">負責工作描述</label><input type="text" id="batch-job" value="課輔陪伴" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-xs"></div>
         <div class="flex space-x-2 pt-3 border-t">
           <button type="button" onclick="closeBatchScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
           <button type="button" onclick="executeBatchSchedule()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black shadow-sm">確認批次建立排班</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-    <!-- 3. 課堂點名 -->
-    <div id="tab-rollcall" class="hidden space-y-4">
-      <div class="clean-card rounded-3xl p-4 sm:p-7">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
-          <div><h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-indigo-600"></i> 課堂點名與聯絡簿核章</h2></div>
-          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono">
-            <button onclick="batchSetAll('attendance', '出席')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">全體出席</button>
-            <button onclick="batchSetAll('homework', '已完成')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">作業完成</button>
-            <button onclick="batchSetAll('signed', '是')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">全體核章</button>
-            <button onclick="saveRollCallSheet()" class="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">儲存紀錄</button>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3"><span class="text-[11px] text-indigo-600 font-bold block">應到學員</span><span class="text-lg sm:text-xl font-black text-indigo-900 mt-0.5 block" id="rc-stat-total">0 人</span></div>
-          <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3"><span class="text-[11px] text-emerald-600 font-bold block">實到出席</span><span class="text-lg sm:text-xl font-black text-emerald-900 mt-0.5 block" id="rc-stat-attend">0 人</span></div>
-          <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-3"><span class="text-[11px] text-blue-600 font-bold block">作業完成率</span><span class="text-lg sm:text-xl font-black text-blue-900 mt-0.5 block" id="rc-stat-hw">0%</span></div>
-          <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-3"><span class="text-[11px] text-purple-600 font-bold block">聯絡簿核章</span><span class="text-lg sm:text-xl font-black text-purple-900 mt-0.5 block" id="rc-stat-signed">0 人</span></div>
-        </div>
-        <div class="block md:hidden space-y-2.5" id="rollcall-cards-mobile"><p class="text-center text-xs text-slate-400 py-6">載入點名中...</p></div>
-        <div class="hidden md:block overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50 text-slate-500 border-b font-bold"><tr><th class="py-3 px-3">學號</th><th class="py-3 px-3">姓名</th><th class="py-3 px-3">學校/年級</th><th class="py-3 px-3">出席狀態</th><th class="py-3 px-3">作業完成進度</th><th class="py-3 px-3">聯絡簿核章</th><th class="py-3 px-3">請假 / 叮嚀備註</th></tr></thead>
-            <tbody id="rollcall-table-body" class="divide-y divide-slate-100 font-medium"><tr><td colspan="7" class="py-6 text-center text-slate-400">載入中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. 人員名冊 -->
-    <div id="tab-students" class="hidden space-y-4">
-      <div class="clean-card rounded-3xl p-4 sm:p-7">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
-          <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-address-book text-indigo-600"></i> 學員與人員名冊</h2>
-          <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"><option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班</option><option value="畢業">畢業</option></select>
-            <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號..." class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-            <button onclick="openUserModal('add')" class="px-3.5 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-sm"><i class="fa-solid fa-user-plus"></i><span>新增建檔</span></button>
-          </div>
-        </div>
-        <div class="block md:hidden space-y-2.5" id="students-cards-mobile"><p class="text-center text-xs text-slate-400 py-6">載入名冊中...</p></div>
-        <div class="hidden md:block overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-            <thead class="bg-slate-50 text-slate-500 border-b"><tr><th class="py-3 px-3">照片</th><th class="py-3 px-3">學號/編號</th><th class="py-3 px-3">姓名</th><th class="py-3 px-3">身分/狀態</th><th class="py-3 px-3">學校/班級</th><th class="py-3 px-3">主要聯絡電話</th><th class="py-3 px-3">福利/特教狀況</th><th class="py-3 px-3">點數</th><th class="py-3 px-3 text-center">操作管理</th></tr></thead>
-            <tbody id="students-table" class="divide-y divide-slate-100 font-medium"><tr><td colspan="9" class="py-6 text-center text-slate-400">載入中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. 個別輔導 -->
-    <div id="tab-counseling" class="hidden space-y-4">
-      <div class="clean-card rounded-3xl p-4 sm:p-7">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
-          <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-rose-600"></i> 個別學童輔導紀錄</h2>
-          <button onclick="openAddCounselingModal()" class="px-3.5 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold shadow-sm"><i class="fa-solid fa-pen-nib"></i><span>新增輔導</span></button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50 text-slate-500 border-b"><tr><th class="py-3 px-3">晤談時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">向度</th><th class="py-3 px-3">輔導老師</th><th class="py-3 px-3">時長</th><th class="py-3 px-3">狀況描述</th><th class="py-3 px-3">後續追蹤</th><th class="py-3 px-3 text-center">操作</th></tr></thead>
-            <tbody id="counseling-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="8" class="py-6 text-center text-slate-400">載入中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 6. 家長留言板 -->
-    <div id="tab-messages" class="hidden space-y-4">
-      <div class="clean-card rounded-3xl p-4 sm:p-7">
-        <h2 class="text-lg sm:text-2xl font-black text-slate-800 mb-1 flex items-center gap-2"><i class="fa-solid fa-comments text-indigo-600"></i> 家長留言板</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50 text-slate-500 border-b"><tr><th class="py-3 px-3">留言時間</th><th class="py-3 px-3">學號/姓名</th><th class="py-3 px-3">家長叮嚀囑咐</th><th class="py-3 px-3">老師回覆</th><th class="py-3 px-3 text-center">操作</th></tr></thead>
-            <tbody id="messages-list" class="divide-y divide-slate-100 font-medium"><tr><td colspan="5" class="py-6 text-center text-slate-400">載入中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7. 列印報表中心 -->
-    <div id="tab-print-center" class="hidden space-y-4">
-      <div id="print-controls-bar" class="clean-card rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500 text-white">同工(M)限定</span>
-          <h2 class="text-lg sm:text-xl font-black text-slate-800 mt-1">報表與條碼列印中心</h2>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <select id="print-report-type" onchange="onReportTypeChange()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
-            <option value="month_rollcall" selected>📋 當月學生出席點名總表 (專案核銷)</option>
-            <option value="qrcode">🏷️ 學生識別 QR Code 裁切卡</option>
-            <option value="rollcall">📋 現場單日點名表</option>
-            <option value="workhours">⏱️ 教職工時明細表</option>
-            <option value="roster">📑 完整學生名冊</option>
-          </select>
-          <select id="print-class-filter" onchange="renderSelectedReport()" class="px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-black text-amber-900">
-            <option value="elementary" selected>🎒 國小班點名表</option>
-            <option value="junior">🎓 國中班點名表</option>
-            <option value="both">📑 國小＋國中班 (自動分頁)</option>
-          </select>
-          <input type="month" id="print-month-filter" value="2026-09" onchange="renderSelectedReport()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-black font-mono">
-          <button onclick="window.print()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-black shadow-sm"><i class="fa-solid fa-print"></i><span>列印 A4</span></button>
-        </div>
-      </div>
-      <div id="print-paper-content" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md print-page-box min-h-[600px]"></div>
-    </div>
-
-  </main>
-
-  <!-- 🌟 手機專屬底部黑色懸浮導航欄 -->
-  <nav id="mobile-bottom-dock" class="hidden md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl justify-around items-center text-[10px] font-bold text-slate-400">
-    <button onclick="switchTab('checkin')" id="m-nav-checkin" class="flex flex-col items-center py-1 text-amber-400 font-black"><i class="fa-solid fa-qrcode text-base mb-0.5"></i><span>打卡</span></button>
-    <button onclick="requireTab('schedules')" id="m-nav-schedules" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-calendar-days text-base mb-0.5"></i><span>排班</span></button>
-    <button onclick="requireTab('rollcall')" id="m-nav-rollcall" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-clipboard-check text-base mb-0.5"></i><span>點名</span></button>
-    <button onclick="requireTab('students')" id="m-nav-students" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-address-book text-base mb-0.5"></i><span>名冊</span></button>
-    <button onclick="requireTab('counseling')" id="m-nav-counseling" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-hand-holding-heart text-base mb-0.5"></i><span>輔導</span></button>
-  </nav>
-
-  <!-- ==================== SECTION: 彈窗區域 ==================== -->
-
-  <!-- 🌟 新增：每週週期批次排班彈窗 -->
-  <div id="modal-batch-schedule" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll border border-slate-100">
-      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
-        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-plus text-emerald-600"></i> 每週週期批次排班產生器</h3>
-        <button onclick="closeBatchScheduleModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
-      </div>
-      <div class="space-y-3.5 text-xs sm:text-sm">
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">選擇目標月份 *</label>
-          <input type="month" id="batch-month" value="2026-09" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
-        </div>
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">服事同工 / 老師 *</label>
-          <select id="batch-worker-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"></select>
-        </div>
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">選擇每週固定星期 (可複選) *</label>
-          <div class="grid grid-cols-5 gap-2" id="batch-weekdays-box">
-            <label class="flex items-center space-x-1.5 p-2 bg-slate-50 border rounded-xl font-bold text-xs"><input type="checkbox" value="1" checked> <span>週一</span></label>
-            <label class="flex items-center space-x-1.5 p-2 bg-slate-50 border rounded-xl font-bold text-xs"><input type="checkbox" value="2" checked> <span>週二</span></label>
-            <label class="flex items-center space-x-1.5 p-2 bg-slate-50 border rounded-xl font-bold text-xs"><input type="checkbox" value="3" checked> <span>週三</span></label>
-            <label class="flex items-center space-x-1.5 p-2 bg-slate-50 border rounded-xl font-bold text-xs"><input type="checkbox" value="4" checked> <span>週四</span></label>
-            <label class="flex items-center space-x-1.5 p-2 bg-slate-50 border rounded-xl font-bold text-xs"><input type="checkbox" value="5" checked> <span>週五</span></label>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2.5">
-          <div><label class="block font-bold text-slate-600 mb-1">開始時間</label><input type="time" id="batch-start-time" value="16:00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">結束時間</label><input type="time" id="batch-end-time" value="18:00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
-        </div>
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">負責工作描述</label>
-          <input type="text" id="batch-job" value="課輔陪伴" class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl">
-        </div>
-        
-        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
-          <p class="font-bold text-emerald-900 mb-1">💡 系統自動篩選出的上課日期預覽：</p>
-          <div id="batch-preview-dates" class="text-xs font-mono text-emerald-800 max-h-24 overflow-y-auto bg-white p-2 rounded-xl border">點擊下方按鈕預覽</div>
-          <button type="button" onclick="previewBatchDates()" class="mt-2 px-3 py-1 bg-emerald-600 text-white font-bold rounded-lg text-xs">🔄 預覽並計算日期</button>
-        </div>
-
-        <div class="flex space-x-2 pt-3 border-t">
-          <button type="button" onclick="closeBatchScheduleModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="button" onclick="executeBatchSchedule()" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-black shadow-sm">確認批次建立排班</button>
         </div>
       </div>
     </div>
@@ -461,8 +489,8 @@
         <div><label class="block font-bold text-slate-600 mb-1">排班日期 *</label><input type="date" id="sch-date" required class="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
         <div><label class="block font-bold text-slate-600 mb-1">服事同工 *</label><select id="sch-worker-select" onchange="onWorkerSelectChange()" required class="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
         <div class="grid grid-cols-2 gap-2.5">
-          <div><label class="block font-bold text-slate-600 mb-1">開始時間 *</label><input type="time" id="sch-start-time" value="16:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">結束時間 *</label><input type="time" id="sch-end-time" value="18:00" onchange="autoCalcHours()" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">開始時間 *</label><input type="time" id="sch-start-time" value="16:00" onchange="autoCalcHours()" required class="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">結束時間 *</label><input type="time" id="sch-end-time" value="18:00" onchange="autoCalcHours()" required class="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-bold font-mono"></div>
         </div>
         <div class="p-3 bg-indigo-50 rounded-2xl border flex justify-between items-center"><span class="text-xs font-bold text-indigo-800">核算工時：</span><span class="text-base font-black text-indigo-950 font-mono" id="sch-hours-display">2.0 小時</span><input type="hidden" id="sch-hours-val" value="2"></div>
         <div><label class="block font-bold text-slate-600 mb-1">負責工作</label><input type="text" id="sch-job" class="w-full px-3.5 py-2 bg-slate-50 border rounded-xl"></div>
@@ -474,7 +502,7 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 (🌟 內含點選式複選標籤系統) -->
+  <!-- 人員建檔 / 編輯 彈窗 (含複選點選式標籤系統) -->
   <div id="modal-user" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -545,7 +573,7 @@
           </div>
         </div>
 
-        <!-- 🌟 4. 家庭結構與福利身分 (點選式複選標籤) -->
+        <!-- 4. 家庭結構與福利身分 (複選點選式) -->
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
           <h4 class="font-bold text-slate-700"><i class="fa-solid fa-people-roof text-rose-600"></i> 4. 家庭結構與福利身分 (可複選，先點選者為優先狀況)</h4>
           <input type="hidden" id="form-welfare" value="">
@@ -663,6 +691,8 @@
     let labeledFaceDescriptors = [], faceMatcher = null, lastFaceMatchTime = {};
     let html5QrScanner = null, isCameraScanning = false, lastScanTime = 0;
     let snapStream = null;
+    let currentSelectedTags = [];
+    let activeBatchDates = [];
 
     const verses = [
       "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
@@ -670,7 +700,7 @@
       "「你的話是我腳前的燈，是我路上的光。」（詩篇 119:105）",
       "「耶和華是我的牧者，我必不致缺乏。」（詩篇 23:1）",
       "「教養孩童，使他走當行的道，就是到老他也不偏離。」（箴言 22:6）",
-      "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
+      "「但那等候耶和華的必重新得力. 他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
     ];
 
     const counselTagsDict = {
@@ -723,134 +753,90 @@
     }
 
     // =============================================================
-    // 🌟 每週週期批次排班產生器函式
+    // 1. 排班管理與動態互動排班
     // =============================================================
     async function openBatchScheduleModal() {
       if (staffList.length === 0) {
-        const { data: users } = await db.from('users').select('*');
-        if (users) {
-          staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-        }
+        const { data } = await db.from('users').select('*');
+        if (data) staffList = data.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
       }
       document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
         staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-      
       document.getElementById('modal-batch-schedule').classList.remove('hidden');
       previewBatchDates();
     }
-
-    function closeBatchScheduleModal() {
-      document.getElementById('modal-batch-schedule').classList.add('hidden');
-    }
+    function closeBatchScheduleModal() { document.getElementById('modal-batch-schedule').classList.add('hidden'); }
 
     function previewBatchDates() {
-      const monthVal = document.getElementById('batch-month').value; // YYYY-MM
+      const monthVal = document.getElementById('batch-month').value;
       if (!monthVal) return;
       const [y, m] = monthVal.split('-').map(Number);
-      const daysInMonth = new Date(y, m, 0).getDate();
-
+      const daysNum = new Date(y, m, 0).getDate();
       const checkboxes = document.querySelectorAll('#batch-weekdays-box input[type="checkbox"]:checked');
-      const selectedWeekdays = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)); // 0(日)~6(六)
+      const selectedWds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
 
-      const matchedDates = [];
-      for (let d = 1; d <= daysInMonth; d++) {
+      activeBatchDates = [];
+      const wNames = ['日', '一', '二', '三', '四', '五', '六'];
+      for (let d = 1; d <= daysNum; d++) {
         const dt = new Date(y, m - 1, d);
-        if (selectedWeekdays.includes(dt.getDay())) {
-          const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          matchedDates.push(dateStr);
+        if (selectedWds.includes(dt.getDay())) {
+          activeBatchDates.push({ date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`, label: `${m}/${d} (${wNames[dt.getDay()]})` });
         }
       }
-
-      const box = document.getElementById('batch-preview-dates');
-      if (matchedDates.length === 0) {
-        box.innerHTML = `<span class="text-rose-600 font-bold">沒有選取任何星期或該月無此星期</span>`;
-      } else {
-        box.innerHTML = matchedDates.join(', ') + `<br><b>總計：${matchedDates.length} 個班次日期</b>`;
-      }
-      window.tempBatchDates = matchedDates;
+      renderBatchChips();
     }
+
+    function renderBatchChips() {
+      const box = document.getElementById('batch-preview-chips');
+      document.getElementById('batch-count-tag').textContent = `${activeBatchDates.length} 天`;
+      if (activeBatchDates.length === 0) { box.innerHTML = `<span class="text-xs text-rose-500 font-bold italic">目前無符合日期</span>`; return; }
+      box.innerHTML = activeBatchDates.map((item, idx) => `
+        <span class="inline-flex items-center bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-xl">
+          ${item.label}<button type="button" onclick="removeBatchDate(${idx})" class="ml-1.5 text-rose-600 hover:text-rose-800 font-black text-sm">&times;</button>
+        </span>`).join('');
+    }
+    function removeBatchDate(idx) { activeBatchDates.splice(idx, 1); renderBatchChips(); }
 
     async function executeBatchSchedule() {
-      const dates = window.tempBatchDates || [];
-      const workerSel = document.getElementById('batch-worker-select');
-      const workerId = workerSel.value;
-      const workerName = workerSel.selectedOptions[0]?.getAttribute('data-name');
-      const startTime = document.getElementById('batch-start-time').value;
-      const endTime = document.getElementById('batch-end-time').value;
-      const jobDesc = document.getElementById('batch-job').value.trim();
-
-      if (!workerId || dates.length === 0) {
-        alert("請選擇同工並確保已預覽產生日期！");
-        return;
-      }
-
-      const [sH, sM] = startTime.split(':').map(Number);
-      const [eH, eM] = endTime.split(':').map(Number);
-      let diffMin = (eH * 60 + eM) - (sH * 60 + sM);
-      if (diffMin < 0) diffMin += 24 * 60;
-      const hours = Math.round((diffMin / 60) * 10) / 10;
-
-      const payload = dates.map(dt => ({
-        date: dt,
-        worker_id: workerId,
-        worker_name: workerName,
-        shift: `${startTime} - ${endTime}`,
-        hours: hours,
-        job_desc: jobDesc
-      }));
-
-      const { error } = await db.from('schedules').insert(payload);
-      if (error) {
-        alert("批次建立失敗：" + error.message);
-        return;
-      }
-
-      alert(`✅ 成功為【${workerName}】批次建立 ${dates.length} 筆排班紀錄！`);
-      closeBatchScheduleModal();
-      loadSchedules();
+      if (activeBatchDates.length === 0) { alert("沒有日期可建立！"); return; }
+      const sel = document.getElementById('batch-worker-select');
+      const workerId = sel.value; const workerName = sel.selectedOptions[0]?.getAttribute('data-name');
+      if (!workerId) { alert("請選擇同工！"); return; }
+      const start = document.getElementById('batch-start-time').value;
+      const end = document.getElementById('batch-end-time').value;
+      const [sH, sM] = start.split(':').map(Number); const [eH, eM] = end.split(':').map(Number);
+      let diff = (eH * 60 + eM) - (sH * 60 + sM); if (diff < 0) diff += 1440;
+      const hours = Math.round((diff / 60) * 10) / 10;
+      const payload = activeBatchDates.map(i => ({ date: i.date, worker_id: workerId, worker_name: workerName, shift: `${start} - ${end}`, hours: hours, job_desc: document.getElementById('batch-job').value.trim() }));
+      await db.from('schedules').insert(payload);
+      alert(`✅ 成功批次建立 ${activeBatchDates.length} 筆排班！`);
+      closeBatchScheduleModal(); loadSchedules();
     }
 
-    // =============================================================
-    // 1. 排班管理與互動行事曆
-    // =============================================================
     async function loadSchedules() {
       renderActiveScheduleView();
       if (staffList.length === 0) {
-        try {
-          const { data: users } = await db.from('users').select('*');
-          if (users && users.length > 0) {
-            allUsers = users;
-            staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-            const filterEl = document.getElementById('schedule-worker-filter');
-            const selectEl = document.getElementById('sch-worker-select');
-            if (filterEl) filterEl.innerHTML = `<option value="">全部同工 (${staffList.length})</option>` + staffList.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
-            if (selectEl) selectEl.innerHTML = `<option value="">請選擇同工...</option>` + staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-          }
-        } catch (e) {}
+        const { data } = await db.from('users').select('*');
+        if (data) {
+          staffList = data.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
+          document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工</option>` + staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+          document.getElementById('sch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` + staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`).join('');
+        }
       }
-      try {
-        const { data } = await db.from('schedules').select('*').order('date', { ascending: false });
-        rawSchedules = data || [];
-      } catch (e) { rawSchedules = []; }
+      const { data } = await db.from('schedules').select('*').order('date', { ascending: false });
+      rawSchedules = data || [];
       renderActiveScheduleView();
     }
 
     function autoCalcHours() {
-      const start = document.getElementById('sch-start-time').value;
-      const end = document.getElementById('sch-end-time').value;
-      if (!start || !end) return;
-      const [sH, sM] = start.split(':').map(Number);
-      const [eH, eM] = end.split(':').map(Number);
-      let diff = (eH * 60 + eM) - (sH * 60 + sM);
-      if (diff < 0) diff += 1440;
+      const s = document.getElementById('sch-start-time').value, e = document.getElementById('sch-end-time').value;
+      if (!s || !e) return;
+      const [sH, sM] = s.split(':').map(Number), [eH, eM] = e.split(':').map(Number);
+      let diff = (eH * 60 + eM) - (sH * 60 + sM); if (diff < 0) diff += 1440;
       const hrs = Math.round((diff / 60) * 10) / 10;
-      document.getElementById('sch-hours-val').value = hrs;
-      document.getElementById('sch-hours-display').textContent = `${hrs} 小時`;
+      document.getElementById('sch-hours-val').value = hrs; document.getElementById('sch-hours-display').textContent = `${hrs} 小時`;
     }
-
-    function onWorkerSelectChange() {
-      autoCalcHours();
-    }
+    function onWorkerSelectChange() { autoCalcHours(); }
 
     function setScheduleView(viewType) {
       activeScheduleView = viewType;
@@ -865,130 +851,55 @@
       const filterWorker = document.getElementById('schedule-worker-filter')?.value || "";
       const monthStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}`;
       const filtered = (rawSchedules || []).filter(s => (!filterWorker || s.worker_id === filterWorker) && s.date && s.date.startsWith(monthStr));
-
       let sumHrs = 0, workersSet = new Set();
       filtered.forEach(s => { sumHrs += Number(s.hours || 0); workersSet.add(s.worker_id); });
-
       document.getElementById('total-count-badge').textContent = `${filtered.length} 班`;
       document.getElementById('total-shift-badge').textContent = `${sumHrs} 小時`;
       document.getElementById('total-workers-badge').textContent = `${workersSet.size} 人`;
       document.getElementById('total-wage-badge').textContent = `$${(sumHrs * 190).toLocaleString()}`;
-
-      if (activeScheduleView === 'calendar') renderCalendarGrid(filtered);
-      else renderSchedulesListTable(filtered);
+      if (activeScheduleView === 'calendar') renderCalendarGrid(filtered); else renderSchedulesListTable(filtered);
     }
 
     function renderCalendarGrid(monthSchedules = []) {
       document.getElementById('calendar-month-title').textContent = `${currentCalYear} 年 ${String(currentCalMonth).padStart(2, '0')} 月`;
-      const grid = document.getElementById('calendar-grid');
-      grid.innerHTML = "";
+      const grid = document.getElementById('calendar-grid'); grid.innerHTML = "";
       const firstDay = new Date(currentCalYear, currentCalMonth - 1, 1).getDay();
       const daysNum = new Date(currentCalYear, currentCalMonth, 0).getDate();
-
-      const byDay = {};
-      monthSchedules.forEach(s => {
-        const dNum = parseInt(s.date.split('-')[2], 10);
-        if (!byDay[dNum]) byDay[dNum] = [];
-        byDay[dNum].push(s);
-      });
-
-      for (let i = 0; i < firstDay; i++) {
-        grid.appendChild(Object.assign(document.createElement('div'), { className: "cal-day-cell bg-slate-50/40 p-1.5 opacity-40" }));
-      }
-
+      const byDay = {}; monthSchedules.forEach(s => { const d = parseInt(s.date.split('-')[2], 10); if (!byDay[d]) byDay[d] = []; byDay[d].push(s); });
+      for (let i = 0; i < firstDay; i++) grid.appendChild(Object.assign(document.createElement('div'), { className: "cal-day-cell bg-slate-50/40 p-1.5 opacity-40" }));
       const todayStr = new Date().toISOString().split('T')[0];
       for (let d = 1; d <= daysNum; d++) {
         const dStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isToday = dStr === todayStr;
         const cell = document.createElement('div');
         cell.className = `cal-day-cell p-1 sm:p-2 flex flex-col justify-between cursor-pointer ${isToday ? 'bg-amber-50/70 ring-2 ring-inset ring-amber-400' : 'bg-white'}`;
-        
-        const shiftsHtml = (byDay[d] || []).map(s => `
-          <div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" class="text-[9px] font-bold px-1 py-0.5 rounded border bg-amber-100 text-amber-900 truncate">
-            ${s.worker_name || s.worker_id} (${s.hours}h)
-          </div>
-        `).join('');
-
-        cell.innerHTML = `
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <span class="font-black font-mono text-[10px] sm:text-xs ${isToday ? 'bg-amber-500 text-white px-1 rounded' : 'text-slate-700'}">${d}</span>
-              <button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dStr}')" class="w-4 h-4 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center text-[9px]"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div class="space-y-1 overflow-y-auto max-h-[55px] custom-scroll">${shiftsHtml}</div>
-          </div>
-        `;
+        const shiftsHtml = (byDay[d] || []).map(s => `<div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" class="text-[9px] font-bold px-1 py-0.5 rounded border bg-amber-100 text-amber-900 truncate">${s.worker_name} (${s.hours}h)</div>`).join('');
+        cell.innerHTML = `<div><div class="flex justify-between items-center mb-1"><span class="font-black font-mono text-[10px] ${isToday?'bg-amber-500 text-white px-1 rounded':''}">${d}</span><button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dStr}')" class="w-4 h-4 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center text-[9px]"><i class="fa-solid fa-plus"></i></button></div><div class="space-y-1 overflow-y-auto max-h-[55px] custom-scroll">${shiftsHtml}</div></div>`;
         cell.onclick = () => quickAddScheduleOnDate(dStr);
         grid.appendChild(cell);
       }
     }
-
-    function quickAddScheduleOnDate(dt) {
-      document.getElementById('sch-edit-id').value = "";
-      document.getElementById('modal-sch-title').innerHTML = `新增排班 (${dt})`;
-      document.getElementById('sch-date').value = dt;
-      document.getElementById('modal-schedule').classList.remove('hidden');
-    }
-
+    function quickAddScheduleOnDate(dt) { document.getElementById('sch-edit-id').value = ""; document.getElementById('modal-sch-title').textContent = `新增排班 (${dt})`; document.getElementById('sch-date').value = dt; document.getElementById('modal-schedule').classList.remove('hidden'); }
     function prevMonth() { currentCalMonth--; if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; } renderActiveScheduleView(); }
     function nextMonth() { currentCalMonth++; if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } renderActiveScheduleView(); }
     function goToCurrentMonth() { const n = new Date(); currentCalYear = n.getFullYear(); currentCalMonth = n.getMonth() + 1; renderActiveScheduleView(); }
-
     function renderSchedulesListTable(list) {
-      const tbody = document.getElementById('schedules-list');
-      if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">無紀錄</td></tr>`; return; }
-      tbody.innerHTML = list.map(s => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="py-3 px-3 font-mono font-bold">${s.date}</td>
-          <td class="py-3 px-3 font-mono font-bold">${s.worker_id}</td>
-          <td class="py-3 px-3 font-bold">${s.worker_name}</td>
-          <td class="py-3 px-3">${s.shift}</td>
-          <td class="py-3 px-3 text-xs text-slate-500">${s.job_desc || ''}</td>
-          <td class="py-3 px-3 font-bold text-indigo-700">${s.hours}h</td>
-          <td class="py-3 px-3 text-center space-x-1">
-            <button onclick="openScheduleModal('edit', ${s.id})" class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">編輯</button>
-            <button onclick="deleteSchedule(${s.id})" class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs font-bold">刪除</button>
-          </td>
-        </tr>
-      `).join('');
+      document.getElementById('schedules-list').innerHTML = list.length === 0 ? `<tr><td colspan="7" class="py-6 text-center text-slate-400">無紀錄</td></tr>` : list.map(s => `<tr class="hover:bg-slate-50"><td class="py-3 px-3 font-mono font-bold">${s.date}</td><td class="py-3 px-3 font-mono">${s.worker_id}</td><td class="py-3 px-3 font-bold">${s.worker_name}</td><td class="py-3 px-3">${s.shift}</td><td class="py-3 px-3 text-xs text-slate-500">${s.job_desc||''}</td><td class="py-3 px-3 font-bold text-indigo-700">${s.hours}h</td><td class="py-3 px-3 text-center"><button onclick="deleteSchedule(${s.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
     }
-
     function openScheduleModal(mode, id = null) {
       document.getElementById('sch-edit-id').value = id || "";
-      if (mode === 'edit') {
-        const item = rawSchedules.find(x => x.id === id);
-        if (!item) return;
-        document.getElementById('sch-date').value = item.date;
-        document.getElementById('sch-worker-select').value = item.worker_id;
-        document.getElementById('sch-job').value = item.job_desc || "";
-      }
-      autoCalcHours();
-      document.getElementById('modal-schedule').classList.remove('hidden');
+      if (mode === 'edit') { const item = rawSchedules.find(x => x.id === id); if (!item) return; document.getElementById('sch-date').value = item.date; document.getElementById('sch-worker-select').value = item.worker_id; }
+      autoCalcHours(); document.getElementById('modal-schedule').classList.remove('hidden');
     }
     function closeScheduleModal() { document.getElementById('modal-schedule').classList.add('hidden'); }
-
     async function handleScheduleSubmit(e) {
       e.preventDefault();
       const editId = document.getElementById('sch-edit-id').value;
-      const payload = {
-        date: document.getElementById('sch-date').value,
-        worker_id: document.getElementById('sch-worker-select').value,
-        worker_name: document.getElementById('sch-worker-select').selectedOptions[0].getAttribute('data-name'),
-        shift: `${document.getElementById('sch-start-time').value} - ${document.getElementById('sch-end-time').value}`,
-        hours: parseFloat(document.getElementById('sch-hours-val').value) || 0,
-        job_desc: document.getElementById('sch-job').value.trim()
-      };
-      if (editId) await db.from('schedules').update(payload).eq('id', editId);
-      else await db.from('schedules').insert([payload]);
-      closeScheduleModal();
-      loadSchedules();
+      const payload = { date: document.getElementById('sch-date').value, worker_id: document.getElementById('sch-worker-select').value, worker_name: document.getElementById('sch-worker-select').selectedOptions[0].getAttribute('data-name'), shift: `${document.getElementById('sch-start-time').value} - ${document.getElementById('sch-end-time').value}`, hours: parseFloat(document.getElementById('sch-hours-val').value) || 0, job_desc: document.getElementById('sch-job').value.trim() };
+      if (editId) await db.from('schedules').update(payload).eq('id', editId); else await db.from('schedules').insert([payload]);
+      closeScheduleModal(); loadSchedules();
     }
-
-    async function deleteSchedule(id) {
-      if (!confirm("確定刪除？")) return;
-      await db.from('schedules').delete().eq('id', id);
-      loadSchedules();
-    }
+    async function deleteSchedule(id) { if (!confirm("確定刪除？")) return; await db.from('schedules').delete().eq('id', id); loadSchedules(); }
 
     // =============================================================
     // 2. AI 臉部辨識核心模組
@@ -997,62 +908,37 @@
       if (isFaceModelsLoaded) return true;
       try {
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]);
-        isFaceModelsLoaded = true;
-        document.getElementById('face-loading-msg')?.classList.add('hidden');
-        return true;
+        await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+        isFaceModelsLoaded = true; document.getElementById('face-loading-msg')?.classList.add('hidden'); return true;
       } catch (e) { return false; }
     }
-
     async function buildFaceMatcher() {
       try { const { data } = await db.from('users').select('*'); if (data) allUsers = data; } catch (e) {}
-      labeledFaceDescriptors = [];
-      let cnt = 0;
+      labeledFaceDescriptors = []; let cnt = 0;
       allUsers.forEach(u => {
-        let desc = u.face_descriptor;
-        if (typeof desc === 'string') { try { desc = JSON.parse(desc); } catch(e){} }
-        if (Array.isArray(desc) && desc.length === 128) {
-          labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(desc)]));
-          cnt++;
-        }
+        let desc = u.face_descriptor; if (typeof desc === 'string') { try { desc = JSON.parse(desc); } catch(e){} }
+        if (Array.isArray(desc) && desc.length === 128) { labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(desc)])); cnt++; }
       });
       faceMatcher = cnt > 0 ? new faceapi.FaceMatcher(labeledFaceDescriptors, 0.58) : null;
-      const st = document.getElementById('face-status-text');
-      if (st) st.textContent = cnt > 0 ? `✅ 已載入 ${cnt} 位特徵` : `⚠️ 尚無人臉特徵`;
+      const st = document.getElementById('face-status-text'); if (st) st.textContent = cnt > 0 ? `✅ 已載入 ${cnt} 位特徵` : `⚠️ 尚無特徵`;
     }
-
-    async function toggleFaceRecognition() {
-      if (isFaceDetecting) stopFaceRecognition();
-      else startFaceRecognition();
-    }
-
+    async function toggleFaceRecognition() { if (isFaceDetecting) stopFaceRecognition(); else startFaceRecognition(); }
     async function startFaceRecognition() {
       if (isCameraScanning) stopCameraScanner();
       document.getElementById('face-recognition-container').classList.remove('hidden');
       document.getElementById('btn-face-text').textContent = "關閉相機";
-      faceVideoEl = document.getElementById('face-video');
-      faceCanvasEl = document.getElementById('face-canvas');
+      faceVideoEl = document.getElementById('face-video'); faceCanvasEl = document.getElementById('face-canvas');
       if (await loadFaceApiModels()) await buildFaceMatcher();
       try {
         faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 }, audio: false });
-        faceVideoEl.srcObject = faceStream;
-        isFaceDetecting = true;
+        faceVideoEl.srcObject = faceStream; isFaceDetecting = true;
         faceVideoEl.onloadedmetadata = () => { faceVideoEl.play(); startFaceDetectionLoop(); };
       } catch (e) { stopFaceRecognition(); }
     }
-
     function stopFaceRecognition() {
-      isFaceDetecting = false;
-      if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
-      if (faceVideoEl) faceVideoEl.srcObject = null;
-      document.getElementById('face-recognition-container').classList.add('hidden');
-      document.getElementById('btn-face-text').textContent = "👤 開啟人臉相機";
+      isFaceDetecting = false; if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
+      if (faceVideoEl) faceVideoEl.srcObject = null; document.getElementById('face-recognition-container').classList.add('hidden'); document.getElementById('btn-face-text').textContent = "👤 開啟人臉相機";
     }
-
     async function startFaceDetectionLoop() {
       if (!isFaceDetecting || !faceVideoEl) return;
       const size = { width: faceVideoEl.videoWidth, height: faceVideoEl.videoHeight };
@@ -1062,23 +948,14 @@
         try {
           const dets = await faceapi.detectAllFaces(faceVideoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks(true).withFaceDescriptors();
           const resized = faceapi.resizeResults(dets, size);
-          const ctx = faceCanvasEl.getContext('2d');
-          ctx.clearRect(0, 0, faceCanvasEl.width, faceCanvasEl.height);
+          const ctx = faceCanvasEl.getContext('2d'); ctx.clearRect(0, 0, faceCanvasEl.width, faceCanvasEl.height);
           resized.forEach(d => {
-            const box = d.detection.box;
-            let name = "比對中...";
-            let color = "#38bdf8";
+            const box = d.detection.box; let name = "比對中..."; let color = "#38bdf8";
             if (faceMatcher) {
               const m = faceMatcher.findBestMatch(d.descriptor);
               if (m.label !== 'unknown') {
-                const u = allUsers.find(x => x.id === m.label);
-                name = u ? u.name : m.label;
-                color = "#10b981";
-                const now = Date.now();
-                if (!lastFaceMatchTime[m.label] || now - lastFaceMatchTime[m.label] > 8000) {
-                  lastFaceMatchTime[m.label] = now;
-                  processScanCode(m.label);
-                }
+                const u = allUsers.find(x => x.id === m.label); name = u ? u.name : m.label; color = "#10b981";
+                const now = Date.now(); if (!lastFaceMatchTime[m.label] || now - lastFaceMatchTime[m.label] > 8000) { lastFaceMatchTime[m.label] = now; processScanCode(m.label); }
               }
             }
             ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(box.x, box.y, box.width, box.height);
@@ -1089,76 +966,52 @@
     }
 
     // =============================================================
-    // 3. 現場拍照上傳 Supabase Storage
+    // 3. 現場拍照與 QR 掃描
     // =============================================================
     async function startCameraSnapForFace() {
-      await loadFaceApiModels();
-      document.getElementById('camera-snap-box').classList.remove('hidden');
-      try {
-        snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 480, height: 480 } });
-        document.getElementById('snap-video').srcObject = snapStream;
-      } catch (e) { stopCameraSnap(); }
+      await loadFaceApiModels(); document.getElementById('camera-snap-box').classList.remove('hidden');
+      try { snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 480, height: 480 } }); document.getElementById('snap-video').srcObject = snapStream; } catch (e) { stopCameraSnap(); }
     }
-    function stopCameraSnap() {
-      if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
-      document.getElementById('camera-snap-box').classList.add('hidden');
-    }
+    function stopCameraSnap() { if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; } document.getElementById('camera-snap-box').classList.add('hidden'); }
     async function captureAndExtractFace() {
-      const v = document.getElementById('snap-video');
-      const tip = document.getElementById('face-extract-tip');
+      const v = document.getElementById('snap-video'), tip = document.getElementById('face-extract-tip');
       const uid = document.getElementById('form-id').value.trim().toUpperCase() || 'TEMP_' + Date.now();
       tip.textContent = "AI 分析並上傳中...";
       const canvas = document.createElement('canvas'); canvas.width = v.videoWidth; canvas.height = v.videoHeight;
       canvas.getContext('2d').drawImage(v, 0, 0);
       const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })).withFaceLandmarks(true).withFaceDescriptor();
       if (!det) { alert("未偵測到人臉！"); tip.textContent = "失敗"; return; }
-      const descArr = Array.from(det.descriptor);
-      document.getElementById('form-face-descriptor').value = JSON.stringify(descArr);
+      document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor));
       document.getElementById('face-enrolled-badge').classList.remove('hidden');
       canvas.toBlob(async (blob) => {
         const path = `students/${uid}_${Date.now()}.jpg`;
         const { error } = await db.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
         if (!error) {
           const { data } = db.storage.from('avatars').getPublicUrl(path);
-          document.getElementById('preview-avatar').src = data.publicUrl;
-          document.getElementById('form-avatar').value = data.publicUrl;
-          tip.textContent = "✅ 上傳且特徵建檔成功！";
+          document.getElementById('preview-avatar').src = data.publicUrl; document.getElementById('form-avatar').value = data.publicUrl;
+          tip.textContent = "✅ 建檔成功！";
         }
         stopCameraSnap();
       }, 'image/jpeg', 0.85);
     }
-
     async function autoExtractFaceFromUrl() {
-      const url = document.getElementById('form-avatar').value.trim();
-      if (!url) return;
-      document.getElementById('preview-avatar').src = url;
-      await loadFaceApiModels();
+      const url = document.getElementById('form-avatar').value.trim(); if (!url) return;
+      document.getElementById('preview-avatar').src = url; await loadFaceApiModels();
       try {
         const img = await faceapi.fetchImage(url);
         const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceDescriptor();
-        if (det) {
-          document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor));
-          document.getElementById('face-enrolled-badge').classList.remove('hidden');
-        }
+        if (det) { document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor)); document.getElementById('face-enrolled-badge').classList.remove('hidden'); }
       } catch (e) {}
     }
 
-    // =============================================================
-    // QR Code 掃描器
-    // =============================================================
-    function toggleCameraScanner() {
-      if (isCameraScanning) stopCameraScanner();
-      else startCameraScanner();
-    }
+    function toggleCameraScanner() { if (isCameraScanning) stopCameraScanner(); else startCameraScanner(); }
     function startCameraScanner() {
       if (isFaceDetecting) stopFaceRecognition();
       document.getElementById('camera-scanner-container').classList.remove('hidden');
-      document.getElementById('btn-cam-text').textContent = "關閉相機";
+      document.getElementById('btn-cam-text').textContent = "關閉";
       html5QrScanner = new Html5Qrcode("qr-reader");
       html5QrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: 220 }, (txt) => {
-        if (Date.now() - lastScanTime < 3000) return;
-        lastScanTime = Date.now();
-        processScanCode(txt.trim());
+        if (Date.now() - lastScanTime < 3000) return; lastScanTime = Date.now(); processScanCode(txt.trim());
       }, () => {}).then(() => { isCameraScanning = true; }).catch(() => { stopCameraScanner(); });
     }
     function stopCameraScanner() {
@@ -1171,17 +1024,14 @@
     // 智慧打卡核心
     // =============================================================
     async function handleScan(e) { e.preventDefault(); const inp = document.getElementById('scan-code-input'); const val = inp.value.trim().toUpperCase(); if (!val) return; processScanCode(val); inp.value = ""; }
-
     async function processScanCode(val) {
       try {
         const { data: user } = await db.from('users').select('*').eq('id', val).maybeSingle();
         if (!user) return;
         const isManagerStaff = val.includes('M');
         const isStaff = isManagerStaff || val.includes('T') || val.includes('P') || (user.role_type && user.role_type !== '學生');
-        const nowObj = new Date();
-        const nowIso = nowObj.toISOString();
+        const nowObj = new Date(); const nowIso = nowObj.toISOString();
         const startOfTodayIso = new Date(`${nowObj.toLocaleDateString('en-CA')}T00:00:00+08:00`).toISOString();
-
         const { data: todayLogs } = await db.from('check_in_logs').select('*').eq('target_id', user.id).gte('check_time', startOfTodayIso);
 
         if (!isStaff) {
@@ -1191,75 +1041,56 @@
           await db.from('points_logs').insert([{ change_time: nowIso, target_id: user.id, target_name: user.name, points_delta: 1, reason: "準時簽到" }]);
           await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: '學生', action_text: "+1 點 (到班)" }]);
           if (window.confetti) confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-          showPunchSuccessModal(`🎉 ${user.name} 簽到成功！`, `點數 +1！累積：${newPts} 點`);
-          loadLogs();
-          return;
+          showPunchSuccessModal(`🎉 ${user.name} 簽到成功！`, `點數 +1！`); loadLogs(); return;
         }
 
         if (todayLogs && todayLogs.length > 0) {
-          const lastM = new Date(todayLogs[todayLogs.length - 1].check_time).getTime();
-          if (Date.now() - lastM < 60000) { showQuickNotice(`⚠️ 剛打過卡，請稍候！`); return; }
+          if (Date.now() - new Date(todayLogs[todayLogs.length - 1].check_time).getTime() < 60000) { showQuickNotice(`⚠️ 剛打過卡！`); return; }
         }
-
         const cnt = todayLogs ? todayLogs.length : 0;
         const action = cnt === 0 ? "上班簽到" : "下班簽退";
         await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: user.role_type || '教職員', action_text: action }]);
-
         if (isManagerStaff) { currentUser = user; localStorage.setItem('mplus_current_user', JSON.stringify(user)); updateAuthUI(); }
         if (window.confetti) confetti({ particleCount: 50, spread: 50, origin: { y: 0.65 } });
-        showPunchSuccessModal(cnt === 0 ? `💼 ${user.name} 上班簽到成功！` : `🌙 ${user.name} 下班簽退成功！`, `出勤已登記`);
-        loadLogs();
+        showPunchSuccessModal(cnt === 0 ? `💼 ${user.name} 上班簽到成功！` : `🌙 ${user.name} 下班簽退成功！`, `出勤已登記`); loadLogs();
       } catch (e) {}
     }
-
     function showPunchSuccessModal(title, sub) {
-      document.getElementById('verse-title').textContent = title;
-      document.getElementById('verse-sub').textContent = sub;
+      document.getElementById('verse-title').textContent = title; document.getElementById('verse-sub').textContent = sub;
       document.getElementById('verse-quote').textContent = verses[Math.floor(Math.random() * verses.length)];
       document.getElementById('modal-verse-box').classList.remove('hidden');
-      if (verseAutoCloseTimer) clearTimeout(verseAutoCloseTimer);
-      verseAutoCloseTimer = setTimeout(closeVerseModal, 2200);
+      if (verseAutoCloseTimer) clearTimeout(verseAutoCloseTimer); verseAutoCloseTimer = setTimeout(closeVerseModal, 2200);
     }
     function showQuickNotice(msg) {
-      const tip = document.getElementById('scan-tip');
-      tip.className = "mt-3 text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 block shadow-xs";
-      tip.textContent = msg;
-      setTimeout(() => tip.classList.add('hidden'), 3500);
+      const tip = document.getElementById('scan-tip'); tip.className = "mt-3 text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 block";
+      tip.textContent = msg; setTimeout(() => tip.classList.add('hidden'), 3500);
     }
     function closeVerseModal() {
       if (verseAutoCloseTimer) { clearTimeout(verseAutoCloseTimer); verseAutoCloseTimer = null; }
-      document.getElementById('modal-verse-box').classList.add('hidden');
-      document.getElementById('scan-code-input').focus();
+      document.getElementById('modal-verse-box').classList.add('hidden'); document.getElementById('scan-code-input').focus();
     }
 
     async function loadLogs() {
-      const tbody = document.getElementById('logs-list');
-      const mobileCards = document.getElementById('logs-cards-mobile');
+      const tbody = document.getElementById('logs-list'), mobileCards = document.getElementById('logs-cards-mobile');
       const { data } = await db.from('check_in_logs').select('*').order('check_time', { ascending: false }).limit(10);
       if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">尚無動態</td></tr>`; mobileCards.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">尚無動態</p>`; return; }
-      
       let stuC = 0, staffC = 0;
       mobileCards.innerHTML = data.map(r => {
         const role = r.role || (r.target_id.includes('S') ? '學生' : '教職員');
-        return `<div class="p-3 bg-white border rounded-xl flex items-center justify-between shadow-2xs"><div><span class="font-bold text-sm">${r.target_name}</span> <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${role==='學生'?'bg-indigo-50 text-indigo-700':'bg-amber-50 text-amber-800'}">${role}</span><p class="text-[11px] font-mono text-slate-400">${r.target_id}</p></div><div class="text-right"><span class="text-xs font-mono font-bold">${new Date(r.check_time).toLocaleTimeString('zh-TW', {hour12:false})}</span><span class="text-[11px] text-emerald-600 font-bold block">${r.action_text}</span></div></div>`;
+        return `<div class="p-3 bg-white border rounded-xl flex items-center justify-between"><div><span class="font-bold text-sm">${r.target_name}</span> <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${role==='學生'?'bg-indigo-50 text-indigo-700':'bg-amber-50 text-amber-800'}">${role}</span><p class="text-[11px] font-mono text-slate-400">${r.target_id}</p></div><div class="text-right"><span class="text-xs font-mono font-bold">${new Date(r.check_time).toLocaleTimeString('zh-TW', {hour12:false})}</span><span class="text-[11px] text-emerald-600 font-bold block">${r.action_text}</span></div></div>`;
       }).join('');
-
       tbody.innerHTML = data.map(r => {
         const role = r.role || (r.target_id.includes('S') ? '學生' : '教職員');
         if (role === '學生') stuC++; else staffC++;
         return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono">${new Date(r.check_time).toLocaleTimeString('zh-TW', {hour12:false})}</td><td class="py-2.5 px-4 font-mono font-bold">${r.target_id}</td><td class="py-2.5 px-4 font-bold">${r.target_name}</td><td class="py-2.5 px-4">${role}</td><td class="py-2.5 px-4 text-emerald-600 font-bold">${r.action_text}</td></tr>`;
       }).join('');
-      document.getElementById('stat-stu-count').textContent = stuC;
-      document.getElementById('stat-staff-count').textContent = staffC;
+      document.getElementById('stat-stu-count').textContent = stuC; document.getElementById('stat-staff-count').textContent = staffC;
     }
 
-    // -------------------------------------------------------------
-    // 4. 點名與聯絡簿核章
-    // -------------------------------------------------------------
-    async function initRollCallTab() {
-      document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0];
-      loadRollCallsForDate();
-    }
+    // =============================================================
+    // 4. 點名簿
+    // =============================================================
+    async function initRollCallTab() { document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0]; loadRollCallsForDate(); }
     async function loadRollCallsForDate() {
       const dt = document.getElementById('rollcall-date-picker').value;
       if (allUsers.length === 0) { const { data } = await db.from('users').select('*'); if (data) allUsers = data; }
@@ -1273,61 +1104,33 @@
       renderRollCallRows(); updateRollCallStats();
     }
     function renderRollCallRows() {
-      document.getElementById('rollcall-cards-mobile').innerHTML = activeRollCallList.map((r, i) => `
-        <div class="bg-white border rounded-2xl p-4 space-y-2">
-          <div class="flex justify-between"><b>${r.student_name} (${r.student_id})</b>
-            <select onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs font-bold"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select>
-          </div>
-        </div>`).join('');
-      document.getElementById('rollcall-table-body').innerHTML = activeRollCallList.map((r, i) => `
-        <tr><td class="py-3 px-3 font-mono font-bold">${r.student_id}</td><td class="py-3 px-3 font-bold">${r.student_name}</td><td class="py-3 px-3 text-xs">${r.school} ${r.grade}</td>
-        <td class="py-3 px-3"><select onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></td>
-        <td class="py-3 px-3"><select onchange="activeRollCallList[${i}].homework=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="已完成" ${r.homework==='已完成'?'selected':''}>已完成</option><option value="未完成" ${r.homework==='未完成'?'selected':''}>未完成</option></select></td>
-        <td class="py-3 px-3"><select onchange="activeRollCallList[${i}].signed=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="是" ${r.signed==='是'?'selected':''}>已核章</option><option value="未簽">未簽</option></select></td>
-        <td class="py-3 px-3"><input type="text" value="${r.note}" onchange="activeRollCallList[${i}].note=this.value" class="border rounded px-2 py-1 text-xs w-full"></td></tr>`).join('');
+      document.getElementById('rollcall-cards-mobile').innerHTML = activeRollCallList.map((r, i) => `<div class="bg-white border rounded-2xl p-4 space-y-2"><div class="flex justify-between"><b>${r.student_name} (${r.student_id})</b><select onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs font-bold"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></div></div>`).join('');
+      document.getElementById('rollcall-table-body').innerHTML = activeRollCallList.map((r, i) => `<tr><td class="py-3 px-3 font-mono font-bold">${r.student_id}</td><td class="py-3 px-3 font-bold">${r.student_name}</td><td class="py-3 px-3 text-xs">${r.school} ${r.grade}</td><td class="py-3 px-3"><select onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></td><td class="py-3 px-3"><select onchange="activeRollCallList[${i}].homework=this.value" class="border rounded px-2 py-1 text-xs"><option value="已完成" ${r.homework==='已完成'?'selected':''}>已完成</option><option value="未完成">未完成</option></select></td><td class="py-3 px-3"><select onchange="activeRollCallList[${i}].signed=this.value" class="border rounded px-2 py-1 text-xs"><option value="是" ${r.signed==='是'?'selected':''}>已核章</option><option value="未簽">未簽</option></select></td><td class="py-3 px-3"><input type="text" value="${r.note}" onchange="activeRollCallList[${i}].note=this.value" class="border rounded px-2 py-1 text-xs w-full"></td></tr>`).join('');
     }
-    function updateRollCallStats() {
-      document.getElementById('rc-stat-total').textContent = `${activeRollCallList.length} 人`;
-      document.getElementById('rc-stat-attend').textContent = `${activeRollCallList.filter(x=>x.attendance==='出席').length} 人`;
-    }
+    function updateRollCallStats() { document.getElementById('rc-stat-total').textContent = `${activeRollCallList.length} 人`; document.getElementById('rc-stat-attend').textContent = `${activeRollCallList.filter(x=>x.attendance==='出席').length} 人`; }
     async function saveRollCallSheet() {
       const dt = document.getElementById('rollcall-date-picker').value;
       const payload = activeRollCallList.map(r => ({ created_at: `${dt}T16:00:00.000Z`, course_name: "課後輔導", student_id: r.student_id, student_name: r.student_name, attendance_status: r.attendance, homework_status: r.homework, contact_book_signed: r.signed, note: r.note }));
-      await db.from('roll_calls').insert(payload);
-      alert("✅ 點名紀錄儲存成功！");
+      await db.from('roll_calls').insert(payload); alert("✅ 點名儲存成功！");
     }
     function batchSetAll(f, v) { activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
 
     // =============================================================
-    // 5. 人員名冊管理 (含複選標籤系統)
+    // 5. 人員名冊管理 (含複選點選式標籤系統)
     // =============================================================
-    async function loadUsers() {
-      const { data } = await db.from('users').select('*').order('id');
-      allUsers = data || [];
-      filterUsersList();
-    }
+    async function loadUsers() { const { data } = await db.from('users').select('*').order('id'); allUsers = data || []; filterUsersList(); }
     function renderUsers(list) {
-      document.getElementById('students-cards-mobile').innerHTML = list.map(u => `
-        <div class="bg-white border rounded-2xl p-4 space-y-2">
-          <div class="flex justify-between"><b>${u.name} (${u.id})</b><span class="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold">🪙 ${u.points||0}</span></div>
-          <p class="text-xs text-slate-500">${u.school||''} ${u.grade||''} ｜ 標籤：${u.welfare_status||'一般'}</p>
-          <div class="flex justify-end space-x-1 pt-2 border-t"><button onclick="openUserModal('edit', '${u.id}')" class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">編輯</button><button onclick="deleteUser('${u.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs font-bold">刪除</button></div>
-        </div>`).join('');
-      document.getElementById('students-table').innerHTML = list.map(u => `
-        <tr class="hover:bg-slate-50"><td class="py-2 px-3 font-mono font-bold">${u.id}</td><td class="py-2 px-3 font-bold">${u.name}</td><td class="py-2 px-3 text-xs">${u.school||''} ${u.grade||''}</td><td class="py-2 px-3 text-xs text-rose-700 font-medium">${u.welfare_status||'-'}</td><td class="py-2 px-3 font-bold text-amber-600">🪙 ${u.points||0}</td>
-        <td class="py-2 px-3 text-center space-x-1"><button onclick="openUserModal('edit', '${u.id}')" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded text-xs">編輯</button><button onclick="deleteUser('${u.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs">刪除</button></td></tr>`).join('');
+      document.getElementById('students-cards-mobile').innerHTML = list.map(u => `<div class="bg-white border rounded-2xl p-4 space-y-2"><div class="flex justify-between"><b>${u.name} (${u.id})</b><span class="text-xs bg-amber-50 text-amber-700 px-2 rounded">🪙 ${u.points||0}</span></div><p class="text-xs text-slate-500">${u.school||''} ｜ 標籤：${u.welfare_status||'一般'}</p><div class="flex justify-end space-x-1 pt-2 border-t"><button onclick="openUserModal('edit', '${u.id}')" class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">編輯</button><button onclick="deleteUser('${u.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs">刪除</button></div></div>`).join('');
+      document.getElementById('students-table').innerHTML = list.map(u => `<tr class="hover:bg-slate-50"><td class="py-2 px-3 font-mono font-bold">${u.id}</td><td class="py-2 px-3 font-bold">${u.name}</td><td class="py-2 px-3 text-xs">${u.school||''}</td><td class="py-2 px-3 text-xs text-rose-700">${u.welfare_status||'-'}</td><td class="py-2 px-3 font-bold text-amber-600">🪙 ${u.points||0}</td><td class="py-2 px-3 text-center space-x-1"><button onclick="openUserModal('edit', '${u.id}')" class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs">編輯</button><button onclick="deleteUser('${u.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 rounded text-xs">刪除</button></td></tr>`).join('');
     }
     function filterUsersList() {
-      const q = document.getElementById('user-filter').value.toLowerCase();
-      const st = document.getElementById('user-status-filter').value;
+      const q = document.getElementById('user-filter').value.toLowerCase(), st = document.getElementById('user-status-filter').value;
       renderUsers(allUsers.filter(u => (!q || u.name.toLowerCase().includes(q) || u.id.toLowerCase().includes(q)) && (st === '全部' || u.status === st)));
     }
 
-    let currentSelectedTags = [];
     function toggleStudentTag(tagName) {
       const idx = currentSelectedTags.indexOf(tagName);
-      if (idx > -1) currentSelectedTags.splice(idx, 1);
-      else currentSelectedTags.push(tagName);
+      if (idx > -1) currentSelectedTags.splice(idx, 1); else currentSelectedTags.push(tagName);
       updateTagsUI();
     }
     function updateTagsUI() {
@@ -1353,20 +1156,15 @@
         document.getElementById('modal-user-title').textContent = "新增學員";
         document.getElementById('form-id').disabled = false; document.getElementById('form-id').value = "";
         document.getElementById('form-name').value = ""; document.getElementById('form-school').value = "";
-        document.getElementById('form-grade').value = ""; document.getElementById('form-avatar').value = "";
       } else {
         document.getElementById('modal-user-title').textContent = "編輯學員";
-        const u = allUsers.find(x => x.id === uid);
-        if (!u) return;
+        const u = allUsers.find(x => x.id === uid); if (!u) return;
         document.getElementById('form-id').disabled = true; document.getElementById('form-id').value = u.id;
         document.getElementById('form-name').value = u.name || "";
         document.getElementById('form-school').value = u.school || "";
-        document.getElementById('form-grade').value = u.grade || "";
-        document.getElementById('form-avatar').value = u.avatar_url || "";
         if (u.welfare_status) currentSelectedTags = u.welfare_status.split(',').map(s=>s.trim()).filter(Boolean);
       }
-      updateTagsUI();
-      document.getElementById('modal-user').classList.remove('hidden');
+      updateTagsUI(); document.getElementById('modal-user').classList.remove('hidden');
     }
     function closeUserModal() { document.getElementById('modal-user').classList.add('hidden'); }
     async function handleUserSubmit(e) {
@@ -1382,15 +1180,10 @@
         welfare_status: document.getElementById('form-welfare').value,
         avatar_url: document.getElementById('form-avatar').value.trim() || null
       };
-      await db.from('users').upsert([payload]);
-      alert("✅ 儲存成功！");
+      await db.from('users').upsert([payload]); alert("✅ 儲存成功！");
       closeUserModal(); loadUsers(); buildFaceMatcher();
     }
-    async function deleteUser(uid) {
-      if (!confirm("確定刪除此人員？")) return;
-      await db.from('users').delete().eq('id', uid);
-      loadUsers(); buildFaceMatcher();
-    }
+    async function deleteUser(uid) { if (!confirm("確定刪除？")) return; await db.from('users').delete().eq('id', uid); loadUsers(); buildFaceMatcher(); }
 
     // =============================================================
     // 6 & 7. 輔導、留言與報表中心
@@ -1398,56 +1191,41 @@
     async function loadCounseling() {
       const { data } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
       rawCounselingList = data || [];
-      document.getElementById('counseling-list').innerHTML = rawCounselingList.map(c => `
-        <tr class="hover:bg-slate-50"><td class="py-2.5 px-3 font-mono text-xs">${new Date(c.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${c.student_name}</td><td class="py-2.5 px-3">${c.category||'課業'}</td><td class="py-2.5 px-3">${c.teacher_name}</td><td class="py-2.5 px-3">${c.content}</td><td class="py-2.5 px-3 text-center"><button onclick="deleteCounseling(${c.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
+      document.getElementById('counseling-list').innerHTML = rawCounselingList.map(c => `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 font-mono text-xs">${new Date(c.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${c.student_name}</td><td class="py-2.5 px-3">${c.category||'課業'}</td><td class="py-2.5 px-3">${c.teacher_name}</td><td class="py-2.5 px-3">${c.content}</td><td class="py-2.5 px-3 text-center"><button onclick="deleteCounseling(${c.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
     }
     function openAddCounselingModal() { document.getElementById('modal-counseling-add').classList.remove('hidden'); }
     function closeAddCounselingModal() { document.getElementById('modal-counseling-add').classList.add('hidden'); }
-    async function handleCounselingSubmit(e) {
-      e.preventDefault();
-      alert("已儲存輔導紀錄"); closeAddCounselingModal(); loadCounseling();
-    }
+    async function handleCounselingSubmit(e) { e.preventDefault(); alert("已儲存"); closeAddCounselingModal(); loadCounseling(); }
     async function deleteCounseling(id) { await db.from('counseling_logs').delete().eq('id', id); loadCounseling(); }
 
     async function loadMessages() {
       const { data } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
-      document.getElementById('messages-list').innerHTML = (data||[]).map(m => `
-        <tr class="hover:bg-slate-50"><td class="py-2.5 px-3 text-xs">${new Date(m.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${m.student_name}</td><td class="py-2.5 px-3 text-xs">${m.parent_message}</td><td class="py-2.5 px-3 text-xs">${m.reply_content||'未回覆'}</td><td class="py-2.5 px-3 text-center"><button onclick="replyParentMsg(${m.id})" class="text-indigo-600 font-bold text-xs">回覆</button></td></tr>`).join('');
+      document.getElementById('messages-list').innerHTML = (data||[]).map(m => `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 text-xs">${new Date(m.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${m.student_name}</td><td class="py-2.5 px-3 text-xs">${m.parent_message}</td><td class="py-2.5 px-3 text-xs">${m.reply_content||'未回覆'}</td><td class="py-2.5 px-3 text-center"><button onclick="replyParentMsg(${m.id})" class="text-indigo-600 font-bold text-xs">回覆</button></td></tr>`).join('');
     }
-    async function replyParentMsg(id) {
-      const txt = prompt("回覆內容："); if (!txt) return;
-      await db.from('parent_messages').update({ reply_content: txt }).eq('id', id); loadMessages();
-    }
+    async function replyParentMsg(id) { const txt = prompt("回覆："); if (!txt) return; await db.from('parent_messages').update({ reply_content: txt }).eq('id', id); loadMessages(); }
 
     function onReportTypeChange() {
       const t = document.getElementById('print-report-type').value;
       document.getElementById('print-class-filter').classList.toggle('hidden', t !== 'month_rollcall');
       renderSelectedReport();
     }
-
     function isJuniorHighStudent(stu) {
-      const g = (stu.grade || '').trim();
-      const s = (stu.school || '').trim();
+      const g = (stu.grade || '').trim(), s = (stu.school || '').trim();
       return g.includes('七') || g.includes('八') || g.includes('九') || g.includes('7') || g.includes('8') || g.includes('9') || g.includes('國一') || s.includes('國中');
     }
 
     async function renderSelectedReport() {
       const type = document.getElementById('print-report-type').value;
       const targetMonth = document.getElementById('print-month-filter').value;
-      const classOpt = document.getElementById('print-class-filter').value;
+      const classOption = document.getElementById('print-class-filter').value;
       const container = document.getElementById('print-paper-content');
       if (allUsers.length === 0) { const { data } = await db.from('users').select('*'); if (data) allUsers = data; }
       const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班');
 
       if (type === 'month_rollcall') {
-        const [y, m] = targetMonth.split('-').map(Number);
-        const rocY = y - 1911;
-        const daysInM = new Date(y, m, 0).getDate();
-        const schoolDays = [];
-        for (let d = 1; d <= daysInM; d++) {
-          const dt = new Date(y, m - 1, d);
-          if (dt.getDay() >= 1 && dt.getDay() <= 5) schoolDays.push({ day: d, dateStr: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` });
-        }
+        const [y, m] = targetMonth.split('-').map(Number); const rocY = y - 1911;
+        const daysInM = new Date(y, m, 0).getDate(); const schoolDays = [];
+        for (let d = 1; d <= daysInM; d++) { const dt = new Date(y, m - 1, d); if (dt.getDay() >= 1 && dt.getDay() <= 5) schoolDays.push({ day: d, dateStr: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` }); }
         const { data: mLogs } = await db.from('check_in_logs').select('*').gte('check_time', `${targetMonth}-01T00:00:00.000Z`).lte('check_time', `${targetMonth}-${daysInM}T23:59:59.999Z`);
         const map = {}; (mLogs||[]).forEach(l => { if (!map[l.target_id]) map[l.target_id]={}; map[l.target_id][new Date(l.check_time).toLocaleDateString('en-CA')] = true; });
 
@@ -1472,7 +1250,7 @@
           </div>`;
         container.innerHTML = classOption === 'elementary' ? renderTbl("國小", elem) : classOption === 'junior' ? renderTbl("國中", jun) : renderTbl("國小", elem) + `<div class="print-page-break pt-8"></div>` + renderTbl("國中", jun);
       } else {
-        container.innerHTML = `<div class="text-center py-12 text-slate-400 font-bold">請點選專案核銷點名總表或使用上方功能</div>`;
+        container.innerHTML = `<div class="text-center py-12 text-slate-400 font-bold">請點選專案核銷點名總表</div>`;
       }
     }
 
@@ -1484,17 +1262,14 @@
     async function handleLoginSubmit(e) {
       e.preventDefault();
       const r = document.getElementById('login-uid').value.trim();
-      const pwd = document.getElementById('login-pwd').value.trim().replace(/\D/g, '');
       const { data } = await db.from('users').select('*').or(`id.ilike.${r},name.eq.${r}`).limit(1);
       if (!data || data.length === 0) { document.getElementById('login-err').textContent = "查無此人"; document.getElementById('login-err').classList.remove('hidden'); return; }
-      currentUser = data[0];
-      localStorage.setItem('mplus_current_user', JSON.stringify(currentUser));
+      currentUser = data[0]; localStorage.setItem('mplus_current_user', JSON.stringify(currentUser));
       updateAuthUI(); closeLoginModal(); switchTab('schedules');
     }
     function doLogout() { currentUser = null; localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); }
     function updateAuthUI() {
-      const printNav = document.getElementById('nav-print');
-      const dock = document.getElementById('mobile-bottom-dock');
+      const printNav = document.getElementById('nav-print'), dock = document.getElementById('mobile-bottom-dock');
       if (currentUser) {
         document.getElementById('auth-unlogged').classList.add('hidden');
         document.getElementById('auth-logged').classList.remove('hidden'); document.getElementById('auth-logged').classList.add('flex');
@@ -1514,233 +1289,6 @@
       if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
       updateAuthUI(); switchTab('checkin');
     });
-    // =============================================================
-    // 🌟 恢復完美的「動態即時清單與自由移除日期」批次排班函式
-    // =============================================================
-    let activeBatchDates = []; // 暫存目前保留要排班的日期陣列
-
-    async function openBatchScheduleModal() {
-      if (staffList.length === 0) {
-        const { data: users } = await db.from('users').select('*');
-        if (users) {
-          staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-        }
-      }
-      document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
-        staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-      
-      document.getElementById('modal-batch-schedule').classList.remove('hidden');
-      previewBatchDates();
-    }
-
-    function closeBatchScheduleModal() {
-      document.getElementById('modal-batch-schedule').classList.add('hidden');
-    }
-
-    // 即時動態計算當月符合星期幾的日期，並渲染為可點擊移除的晶片
-    function previewBatchDates() {
-      const monthVal = document.getElementById('batch-month').value; // YYYY-MM
-      if (!monthVal) return;
-      const [y, m] = monthVal.split('-').map(Number);
-      const daysInMonth = new Date(y, m, 0).getDate();
-
-      const checkboxes = document.querySelectorAll('#batch-weekdays-box input[type="checkbox"]:checked');
-      const selectedWeekdays = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)); // 1(一)~5(五), 0(日), 6(六)
-
-      activeBatchDates = [];
-      const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dt = new Date(y, m - 1, d);
-        const wDay = dt.getDay();
-        if (selectedWeekdays.includes(wDay)) {
-          const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          activeBatchDates.push({ date: dateStr, label: `${m}/${d} (${weekdayNames[wDay]})` });
-        }
-      }
-      renderBatchChips();
-    }
-
-    // 渲染日期晶片，點擊可直接剔除
-    function renderBatchChips() {
-      const container = document.getElementById('batch-preview-chips');
-      const countTag = document.getElementById('batch-count-tag');
-      countTag.textContent = `${activeBatchDates.length} 天`;
-
-      if (activeBatchDates.length === 0) {
-        container.innerHTML = `<span class="text-xs text-rose-500 font-bold italic">目前沒有選取任何上課日</span>`;
-        return;
-      }
-
-      container.innerHTML = activeBatchDates.map((item, idx) => `
-        <span class="inline-flex items-center bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-xl shadow-2xs">
-          ${item.label}
-          <button type="button" onclick="removeBatchDate(${idx})" class="ml-1.5 text-rose-600 hover:text-rose-800 font-black text-sm">&times;</button>
-        </span>
-      `).join('');
-    }
-
-    function removeBatchDate(idx) {
-      activeBatchDates.splice(idx, 1);
-      renderBatchChips();
-    }
-
-    async function executeBatchSchedule() {
-      if (activeBatchDates.length === 0) {
-        alert("沒有可建立的排班日期！");
-        return;
-      }
-      const workerSel = document.getElementById('batch-worker-select');
-      const workerId = workerSel.value;
-      const workerName = workerSel.selectedOptions[0]?.getAttribute('data-name');
-      const startTime = document.getElementById('batch-start-time').value;
-      const endTime = document.getElementById('batch-end-time').value;
-      const jobDesc = document.getElementById('batch-job').value.trim();
-
-      if (!workerId) {
-        alert("請選擇負責服事的同工！");
-        return;
-      }
-
-      const [sH, sM] = startTime.split(':').map(Number);
-      const [eH, eM] = endTime.split(':').map(Number);
-      let diffMin = (eH * 60 + eM) - (sH * 60 + sM);
-      if (diffMin < 0) diffMin += 1440;
-      const hours = Math.round((diffMin / 60) * 10) / 10;
-
-      const payload = activeBatchDates.map(item => ({
-        date: item.date,
-        worker_id: workerId,
-        worker_name: workerName,
-        shift: `${startTime} - ${endTime}`,
-        hours: hours,
-        job_desc: jobDesc
-      }));
-
-      const { error } = await db.from('schedules').insert(payload);
-      if (error) {
-        alert("批次建立失敗：" + error.message);
-        return;
-      }
-
-      alert(`✅ 成功為【${workerName}】批次建立 ${activeBatchDates.length} 筆排班紀錄！`);
-      closeBatchScheduleModal();
-      loadSchedules();
-    }
-
-    // =============================================================
-    // (這裡接續原本的 1. 排班管理與互動行事曆 loadSchedules 等程式碼...)
-    // =============================================================
-    let activeBatchDates = []; // 暫存目前保留要排班的日期陣列
-
-    async function openBatchScheduleModal() {
-      if (staffList.length === 0) {
-        const { data: users } = await db.from('users').select('*');
-        if (users) {
-          staffList = users.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-        }
-      }
-      document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
-        staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-      
-      document.getElementById('modal-batch-schedule').classList.remove('hidden');
-      previewBatchDates();
-    }
-
-    function closeBatchScheduleModal() {
-      document.getElementById('modal-batch-schedule').classList.add('hidden');
-    }
-
-    // 即時動態計算當月符合星期幾的日期，並渲染為可點擊移除的晶片
-    function previewBatchDates() {
-      const monthVal = document.getElementById('batch-month').value; // YYYY-MM
-      if (!monthVal) return;
-      const [y, m] = monthVal.split('-').map(Number);
-      const daysInMonth = new Date(y, m, 0).getDate();
-
-      const checkboxes = document.querySelectorAll('#batch-weekdays-box input[type="checkbox"]:checked');
-      const selectedWeekdays = Array.from(checkboxes).map(cb => parseInt(cb.value, 10)); // 1(一)~5(五), 0(日), 6(六)
-
-      activeBatchDates = [];
-      const weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dt = new Date(y, m - 1, d);
-        const wDay = dt.getDay();
-        if (selectedWeekdays.includes(wDay)) {
-          const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          activeBatchDates.push({ date: dateStr, label: `${m}/${d} (${weekdayNames[wDay]})` });
-        }
-      }
-      renderBatchChips();
-    }
-
-    // 渲染日期晶片，點擊可直接剔除
-    function renderBatchChips() {
-      const container = document.getElementById('batch-preview-chips');
-      const countTag = document.getElementById('batch-count-tag');
-      countTag.textContent = `${activeBatchDates.length} 天`;
-
-      if (activeBatchDates.length === 0) {
-        container.innerHTML = `<span class="text-xs text-rose-500 font-bold italic">目前沒有選取任何上課日</span>`;
-        return;
-      }
-
-      container.innerHTML = activeBatchDates.map((item, idx) => `
-        <span class="inline-flex items-center bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-xl shadow-2xs">
-          ${item.label}
-          <button type="button" onclick="removeBatchDate(${idx})" class="ml-1.5 text-rose-600 hover:text-rose-800 font-black text-sm">&times;</button>
-        </span>
-      `).join('');
-    }
-
-    function removeBatchDate(idx) {
-      activeBatchDates.splice(idx, 1);
-      renderBatchChips();
-    }
-
-    async function executeBatchSchedule() {
-      if (activeBatchDates.length === 0) {
-        alert("沒有可建立的排班日期！");
-        return;
-      }
-      const workerSel = document.getElementById('batch-worker-select');
-      const workerId = workerSel.value;
-      const workerName = workerSel.selectedOptions[0]?.getAttribute('data-name');
-      const startTime = document.getElementById('batch-start-time').value;
-      const endTime = document.getElementById('batch-end-time').value;
-      const jobDesc = document.getElementById('batch-job').value.trim();
-
-      if (!workerId) {
-        alert("請選擇負責服事的同工！");
-        return;
-      }
-
-      const [sH, sM] = startTime.split(':').map(Number);
-      const [eH, eM] = endTime.split(':').map(Number);
-      let diffMin = (eH * 60 + eM) - (sH * 60 + sM);
-      if (diffMin < 0) diffMin += 1440;
-      const hours = Math.round((diffMin / 60) * 10) / 10;
-
-      const payload = activeBatchDates.map(item => ({
-        date: item.date,
-        worker_id: workerId,
-        worker_name: workerName,
-        shift: `${startTime} - ${endTime}`,
-        hours: hours,
-        job_desc: jobDesc
-      }));
-
-      const { error } = await db.from('schedules').insert(payload);
-      if (error) {
-        alert("批次建立失敗：" + error.message);
-        return;
-      }
-
-      alert(`✅ 成功為【${workerName}】批次建立 ${activeBatchDates.length} 筆排班紀錄！`);
-      closeBatchScheduleModal();
-      loadSchedules();
-    }
   </script>
 </body>
 </html>
