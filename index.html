@@ -140,7 +140,9 @@
         <button onclick="requireTab('counseling')" id="nav-counseling" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-hand-holding-heart text-xs"></i><span>個別輔導</span></button>
         <button onclick="requireTab('messages')" id="nav-messages" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-comments text-xs"></i><span>家長留言</span></button>
         <button onclick="requireStaffPrintTab()" id="nav-print" class="hidden px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-amber-400/30"><i class="fa-solid fa-print text-xs"></i><span>列印報表中心(同工M)</span></button>
-        <button onclick="requireStaffPrintTab()" id="nav-import" class="hidden px-3 py-1.5 rounded-lg bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-emerald-400/30"><i class="fa-solid fa-file-csv text-xs"></i><span>舊資料匯入精靈</span></button>
+
+<!-- 🌟 獨立的匯入精靈按鈕 -->
+<button onclick="requireImportTab()" id="nav-import" class="hidden px-3 py-1.5 rounded-lg bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-emerald-400/30"><i class="fa-solid fa-file-csv text-xs"></i><span>舊資料匯入精靈</span></button>
       </nav>
     </div>
   </header>
@@ -1402,6 +1404,18 @@
       if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
       updateAuthUI(); switchTab('checkin');
     });
+    function requireImportTab() {
+      if (!currentUser) {
+        alert("請先登入同工帳號！");
+        openLoginModal();
+        return;
+      }
+      if (!currentUser.id.includes('M')) {
+        alert("⛔ 權限不足：此匯入工具僅限同工 (M) 操作！");
+        return;
+      }
+      switchTab('import');
+    }
   </script>
 </body>
 </html>
