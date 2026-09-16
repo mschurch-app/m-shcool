@@ -505,7 +505,7 @@
     </div>
   </div>
 
-  <!-- 人員建檔 / 編輯 彈窗 -->
+  <!-- 人員建檔 / 編輯 彈窗 (🌟 已完整包含家長、身分證、地址與所有欄位) -->
   <div id="modal-user" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -518,26 +518,6 @@
         
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
           <h4 class="font-bold text-slate-700">1. 基本身分與 AI 人臉建檔</h4>
-          <div class="flex flex-col sm:flex-row items-center gap-4">
-            <div class="relative shrink-0">
-              <img id="preview-avatar" src="https://ui-avatars.com/api/?name=User&background=cbd5e1" class="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow-md">
-              <span id="face-enrolled-badge" class="hidden absolute -bottom-1.5 -right-1.5 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">AI已建檔</span>
-            </div>
-            <div class="flex-1 w-full space-y-2">
-              <div><label class="block font-bold text-slate-600 mb-1">大頭照網址</label><input type="url" id="form-avatar" onchange="autoExtractFaceFromUrl()" placeholder="https://..." class="w-full px-3.5 py-2 bg-white border rounded-xl text-xs"></div>
-              <div class="flex items-center space-x-2">
-                <button type="button" onclick="startCameraSnapForFace()" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i><span>用手機現場拍照建檔</span></button>
-                <span id="face-extract-tip" class="text-[11px] font-bold text-slate-400"></span>
-              </div>
-              <div id="camera-snap-box" class="hidden p-3 bg-slate-950 rounded-2xl text-center space-y-2">
-                <video id="snap-video" autoplay playsinline muted class="w-full max-w-xs mx-auto rounded-xl aspect-square object-cover"></video>
-                <div class="flex justify-center space-x-2">
-                  <button type="button" onclick="captureAndExtractFace()" class="px-4 py-1 bg-emerald-500 text-white font-bold rounded-lg text-xs">📸 按此拍攝並儲存</button>
-                  <button type="button" onclick="stopCameraSnap()" class="px-3 py-1 bg-slate-700 text-white rounded-lg text-xs">取消</button>
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">學號/編號 *</label><input type="text" id="form-id" required class="w-full uppercase font-mono font-bold px-3 py-2 bg-white border rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">姓名 *</label><input type="text" id="form-name" required class="w-full font-bold px-3 py-2 bg-white border rounded-xl"></div>
@@ -562,19 +542,35 @@
         </div>
 
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3">
-          <h4 class="font-bold text-slate-700">3. 聯絡方式與雙家長接送</h4>
+          <h4 class="font-bold text-slate-700">3. 聯絡方式與家長資訊</h4>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div><label class="block font-bold text-slate-600 mb-1">本人手機(密碼)</label><input type="text" id="form-phone" class="w-full font-mono px-3 py-2 bg-white border rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">住家市話</label><input type="text" id="form-home-phone" class="w-full font-mono px-3 py-2 bg-white border rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">本人手機</label><input type="text" id="form-phone" class="w-full font-mono px-3 py-2 bg-white border rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">夢想點數</label><input type="number" id="form-points" value="0" class="w-full font-bold px-3 py-2 bg-white border rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">家長電話</label><input type="text" id="form-parent-phone" class="w-full font-mono px-3 py-2 bg-white border rounded-xl"></div>
           </div>
           <div><label class="block font-bold text-slate-600 mb-1">通訊住址</label><input type="text" id="form-address" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t">
-            <div><label class="block font-bold text-slate-600 mb-1">主要家長姓名</label><input type="text" id="form-guardian-name" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">稱謂關係</label><input type="text" id="form-guardian-rel" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">家長電話</label><input type="text" id="form-guardian-phone" class="w-full font-mono px-3 py-2 bg-white border rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">主要家長姓名</label><input type="text" id="form-parent-name" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">稱謂關係</label><input type="text" id="form-parent-relation" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
           </div>
         </div>
+
+        <!-- 4. 家庭狀況與健康備註 -->
+        <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
+          <h4 class="font-bold text-slate-700"><i class="fa-solid fa-people-roof text-rose-600"></i> 4. 家庭狀況與健康備註</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div><label class="block font-bold text-slate-600 mb-1">家庭狀況 (例: 單親、低收入戶)</label><input type="text" id="form-family-status" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
+            <div><label class="block font-bold text-slate-600 mb-1">健康備註 (例: 有ADHD、蠶豆症)</label><input type="text" id="form-health-notes" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
+          </div>
+        </div>
+
+        <div class="flex space-x-3 pt-3 border-t">
+          <button type="button" onclick="closeUserModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
         <!-- 4. 家庭狀況與健康備註 (對應資料庫欄位) -->
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
@@ -1155,37 +1151,70 @@
     function openUserModal(mode, uid = null) {
       if (mode === 'add') {
         document.getElementById('modal-user-title').textContent = "新增學員";
-        document.getElementById('form-id').disabled = false; document.getElementById('form-id').value = "";
-        document.getElementById('form-name').value = ""; document.getElementById('form-school').value = "";
-        document.getElementById('form-grade').value = ""; document.getElementById('form-family-status').value = "";
+        document.getElementById('form-id').disabled = false; 
+        document.getElementById('form-id').value = "";
+        document.getElementById('form-name').value = ""; 
+        document.getElementById('form-gender').value = "男";
+        document.getElementById('form-birth').value = "";
+        document.getElementById('form-id-card').value = "";
+        document.getElementById('form-school').value = ""; 
+        document.getElementById('form-grade').value = "";
+        document.getElementById('form-phone').value = "";
+        document.getElementById('form-points').value = "0";
+        document.getElementById('form-parent-phone').value = "";
+        document.getElementById('form-address').value = "";
+        document.getElementById('form-parent-name').value = "";
+        document.getElementById('form-parent-relation').value = "";
+        document.getElementById('form-family-status').value = "";
         document.getElementById('form-health-notes').value = "";
       } else {
         document.getElementById('modal-user-title').textContent = "編輯學員";
         const u = allUsers.find(x => x.id === uid); if (!u) return;
-        document.getElementById('form-id').disabled = true; document.getElementById('form-id').value = u.id;
+        document.getElementById('form-id').disabled = true; 
+        document.getElementById('form-id').value = u.id;
         document.getElementById('form-name').value = u.name || "";
+        document.getElementById('form-gender').value = u.gender || "男";
+        document.getElementById('form-birth').value = u.birth || "";
+        document.getElementById('form-id-card').value = u.id_card || "";
         document.getElementById('form-school').value = u.school || "";
         document.getElementById('form-grade').value = u.grade || "";
+        document.getElementById('form-phone').value = u.phone || "";
+        document.getElementById('form-points').value = u.points || 0;
+        document.getElementById('form-parent-phone').value = u.parent_phone || "";
+        document.getElementById('form-address').value = u.address || "";
+        document.getElementById('form-parent-name').value = u.parent_name || "";
+        document.getElementById('form-parent-relation').value = u.parent_relation || "";
         document.getElementById('form-family-status').value = u.family_status || "";
         document.getElementById('form-health-notes').value = u.health_notes || "";
       }
       document.getElementById('modal-user').classList.remove('hidden');
     }
-    function closeUserModal() { document.getElementById('modal-user').classList.add('hidden'); }
+
     async function handleUserSubmit(e) {
       e.preventDefault();
       const payload = {
         id: document.getElementById('form-id').value.trim().toUpperCase(),
         name: document.getElementById('form-name').value.trim(),
         gender: document.getElementById('form-gender').value,
+        birth: document.getElementById('form-birth').value || null,
+        id_card: document.getElementById('form-id-card').value.trim(),
+        role_type: document.getElementById('form-role').value,
         status: document.getElementById('form-status').value,
         school: document.getElementById('form-school').value.trim(),
         grade: document.getElementById('form-grade').value.trim(),
+        phone: document.getElementById('form-phone').value.trim(),
+        points: parseInt(document.getElementById('form-points').value) || 0,
+        parent_phone: document.getElementById('form-parent-phone').value.trim(),
+        address: document.getElementById('form-address').value.trim(),
+        parent_name: document.getElementById('form-parent-name').value.trim(),
+        parent_relation: document.getElementById('form-parent-relation').value.trim(),
         family_status: document.getElementById('form-family-status').value.trim(),
         health_notes: document.getElementById('form-health-notes').value.trim()
       };
-      await db.from('users').upsert([payload]); alert("✅ 儲存成功！");
-      closeUserModal(); loadUsers(); buildFaceMatcher();
+      await db.from('users').upsert([payload]); 
+      alert("✅ 儲存成功！");
+      closeUserModal(); 
+      loadUsers(); 
     }
     async function deleteUser(uid) { if (!confirm("確定刪除？")) return; await db.from('users').delete().eq('id', uid); loadUsers(); buildFaceMatcher(); }
 
