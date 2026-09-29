@@ -71,7 +71,7 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- 頂部導航列 (🌟 手機版自動隱藏文字頁籤，僅保留頂部標題與登入狀態) -->
+  <!-- 頂部導航列 -->
   <header class="glass-header text-white sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-3.5 sm:px-6">
       <div class="flex justify-between items-center h-14 sm:h-16">
@@ -102,7 +102,7 @@
         </div>
       </div>
 
-      <!-- 🌟 電腦版顯示的上方導航頁籤 (手機版隱藏 md:flex hidden) -->
+      <!-- 電腦版上方導航列 -->
       <nav class="hidden md:flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
         <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-qrcode text-xs"></i><span>打卡中心</span></button>
         <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-calendar-check text-xs"></i><span>排班行事曆</span></button>
@@ -376,12 +376,12 @@
       </div>
     </div>
 
-    <!-- 7. 列印報表中心 (同工M限定) -->
+    <!-- 7. 列印報表中心 (老師/同工以上等級限定) -->
     <div id="tab-print-center" class="hidden space-y-4">
       <div id="print-controls-bar" class="clean-card rounded-3xl p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div class="flex items-center space-x-2">
-            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white">同工(M)限定</span>
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-white">同工/老師專屬</span>
             <h2 class="text-lg sm:text-xl font-black text-slate-800">報表與條碼列印中心</h2>
           </div>
           <p class="text-xs text-slate-400 mt-1">完整支援專案核銷點名總表、學生 QR 裁切卡、紙本點名簿、每月工時明細、全校總名冊</p>
@@ -421,7 +421,7 @@
         <div class="space-y-2">
           <label class="block font-bold text-xs text-slate-700">1. 上傳 CSV 檔案 或 直接貼上：</label>
           <input type="file" id="csv-file-input" accept=".csv" onchange="handleCsvFileUpload(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700">
-          <textarea id="csv-raw-textarea" rows="5" placeholder="或在此貼上舊 Excel 內容..." class="w-full p-3 font-mono text-xs bg-slate-50 border rounded-2xl"></textarea>
+          <textarea id="csv-raw-textarea" rows="5" placeholder="或在這裏貼上舊 Excel 內容..." class="w-full p-3 font-mono text-xs bg-slate-50 border rounded-2xl"></textarea>
           <button type="button" onclick="parseCsvContent()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">🔍 解析 CSV 欄位並進行對應</button>
         </div>
         <div id="csv-mapping-section" class="hidden space-y-4 pt-4 border-t border-slate-200">
@@ -437,8 +437,8 @@
 
   </main>
 
-  <!-- 🌟 手機專屬底部黑色懸浮導航欄 (手機版核心操作列) -->
-  <nav id="mobile-bottom-dock" class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl flex justify-around items-center text-[10px] font-bold text-slate-400">
+  <!-- 🌟 手機專屬底部黑色懸浮導航欄 (修復登入後顯示正常) -->
+  <nav id="mobile-bottom-dock" class="hidden md:hidden fixed bottom-3 inset-x-3 z-40 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl px-2 py-2 shadow-2xl justify-around items-center text-[10px] font-bold text-slate-400">
     <button onclick="switchTab('checkin')" id="m-nav-checkin" class="flex flex-col items-center py-1 text-amber-400 font-black"><i class="fa-solid fa-qrcode text-base mb-0.5"></i><span>打卡</span></button>
     <button onclick="requireTab('schedules')" id="m-nav-schedules" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-calendar-days text-base mb-0.5"></i><span>排班</span></button>
     <button onclick="requireTab('rollcall')" id="m-nav-rollcall" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-clipboard-check text-base mb-0.5"></i><span>點名</span></button>
@@ -781,12 +781,15 @@
     function requireTab(tabId) { if (!currentUser) { openLoginModal(); return; } switchTab(tabId); }
     function requireStaffPrintTab() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
+      // 🌟 放寬權限：只要編號包含 M 或 T，或身分非學生，即視為老師/同工以上等級
+      const isStaffOrTeacher = currentUser.id.includes('M') || currentUser.id.includes('T') || currentUser.role_type !== '學生';
+      if (!isStaffOrTeacher) { alert("⛔ 權限不足：此報表列印中心僅限同工與老師查閱！"); return; }
       switchTab('print-center');
     }
     function requireImportTab() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此匯入工具僅限同工 (M) 查閱！"); return; }
+      const isStaffOrTeacher = currentUser.id.includes('M') || currentUser.id.includes('T') || currentUser.role_type !== '學生';
+      if (!isStaffOrTeacher) { alert("⛔ 權限不足：此匯入工具僅限同工與老師查閱！"); return; }
       switchTab('import');
     }
 
@@ -1219,7 +1222,7 @@
     function batchSetAll(f, v) { activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
 
     // =============================================================
-    // 5. 人員名冊管理
+    // 5. 人員名冊管理 (精準過濾角色)
     // =============================================================
     async function loadUsers() { 
       const { data } = await db.from('users').select('*').order('id'); 
@@ -1491,7 +1494,7 @@
     }
 
     // =============================================================
-    // 6 & 7. 輔導與留言板 (🌟 完整實現多向度複選與後續處置、牧者報告)
+    // 6 & 7. 輔導與留言板
     // =============================================================
     async function loadCounseling() {
       if (allUsers.length === 0) {
@@ -1515,7 +1518,6 @@
       updateCounselingStats(rawCounselingList);
     }
 
-    // 🌟 多向度複選控制
     function toggleCounselCategory(catName) {
       const idx = currentCounselingTags.indexOf(catName);
       if (idx > -1) currentCounselingTags.splice(idx, 1); else currentCounselingTags.push(catName);
@@ -1551,9 +1553,7 @@
       ta.value = ta.value ? ta.value + "、" + t : t;
     }
 
-    function toggleFollowupAction() {
-      // 觸發時動態更新預覽或文字
-    }
+    function toggleFollowupAction() {}
 
     function renderCounselingTable(list) {
       document.getElementById('counseling-list').innerHTML = list.length === 0 ? `<tr><td colspan="8" class="py-6 text-center text-slate-400">目前無個別輔導紀錄</td></tr>` :
@@ -1809,8 +1809,7 @@
                     <tr>
                       <td class="border p-1">${i + 1}</td>
                       <td class="border p-1 font-mono">${s.id}</td>
-                      <td class="border p-1 font-bold">${s.name}</td>
-                      ${days}
+                      <td class="border p-1 font-bold">${s.name}</td>${days}
                       <td class="border p-1 font-bold">${rate}%</td>
                       <td class="border p-1"></td>
                     </tr>`;
@@ -1892,7 +1891,7 @@
             <table class="w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
               <thead><tr class="bg-slate-100 font-bold border-b-2 border-slate-900"><th class="border p-1">學號</th><th class="border p-1">姓名</th><th class="border p-1">學校/年級</th><th class="border p-1">家長</th><th class="border p-1">關係</th><th class="border p-1">電話</th><th class="border p-1">地址</th></tr></thead>
               <tbody>
-                ${activeStudents.map(s => `<tr><td class="border p-1 font-mono">${s.id}</td><td class="border p-1 font-bold">${s.name}</td><td class="border p-1">${s.school||''} ${s.grade||''}</td><td class="border p-1">${s.parent_name||'-'}</td><td class="border p-1">${s.parent_relation||'-'}</td><td class="border p-1 font-mono">${s.parent_phone||s.phone||'-'}</td><td class="border p-1 text-left">${s.address||'-'}</td></tr>`).join('')}
+                ${activeStudents.map(s => `<tr><td class="border p-1 font-mono">${s.id}</td><td class="border p-1 font-bold">${s.name}</td><td class="border p-1">${s.school\vert{}\vert{}''}${s.grade||''}</td><td class="border p-1">${s.parent_name||'-'}</td><td class="border p-1">${s.parent_relation||'-'}</td><td class="border p-1 font-mono">${s.parent_phone||s.phone||'-'}</td><td class="border p-1 text-left">${s.address||'-'}</td></tr>`).join('')}
               </tbody>
             </table>
           </div>`;
@@ -1900,7 +1899,7 @@
     }
 
     // =============================================================
-    // 9. 同工登入
+    // 9. 同工登入與權限管理
     // =============================================================
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
@@ -1913,19 +1912,40 @@
       updateAuthUI(); closeLoginModal(); switchTab('schedules');
     }
     function doLogout() { currentUser = null; localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); }
+    
     function updateAuthUI() {
       const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock');
       if (currentUser) {
         document.getElementById('auth-unlogged').classList.add('hidden');
-        document.getElementById('auth-logged').classList.remove('hidden'); document.getElementById('auth-logged').classList.add('flex');
+        document.getElementById('auth-logged').classList.remove('hidden'); 
+        document.getElementById('auth-logged').classList.add('flex');
         document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`;
-        if (currentUser.id.includes('M')) { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
-        if (dock) { dock.classList.remove('hidden'); dock.classList.add('flex'); }
+        
+        // 🌟 放寬權限判定：只要編號包含 M 或 T，或角色非學生，即開放報表與匯入功能
+        const isStaffOrTeacher = currentUser.id.includes('M') || currentUser.id.includes('T') || currentUser.role_type !== '學生';
+        if (isStaffOrTeacher) { 
+          printNav.classList.remove('hidden'); 
+          importNav.classList.remove('hidden'); 
+        } else { 
+          printNav.classList.add('hidden'); 
+          importNav.classList.add('hidden'); 
+        }
+        
+        // 🌟 修正手機版浮動選單顯示正常
+        if (dock) { 
+          dock.classList.remove('hidden'); 
+          dock.classList.add('flex'); 
+        }
       } else {
-        document.getElementById('auth-unlogged').classList.add('hidden');
-        document.getElementById('auth-logged').classList.add('hidden'); document.getElementById('auth-logged').classList.remove('flex');
-        printNav.classList.add('hidden'); importNav.classList.add('hidden');
-        if (dock) { dock.classList.add('hidden'); dock.classList.remove('flex'); }
+        document.getElementById('auth-unlogged').classList.remove('hidden');
+        document.getElementById('auth-logged').classList.add('hidden'); 
+        document.getElementById('auth-logged').classList.remove('flex');
+        printNav.classList.add('hidden'); 
+        importNav.classList.add('hidden');
+        if (dock) { 
+          dock.classList.add('hidden'); 
+          dock.classList.remove('flex'); 
+        }
       }
     }
 
