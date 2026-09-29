@@ -29,6 +29,7 @@ The Supabase dashboard was inspected without opening any restore action or chang
 - The scheduled backup page showed seven daily physical backup entries dated Sep 22–28, 2026 (UTC). The newest displayed entry was `2026-09-28 17:23:57 +0000`; the oldest was `2026-09-22 17:23:59 +0000`. This is a point-in-time dashboard snapshot, not a guarantee that future backups will succeed or remain available.
 - The Point in Time page showed an “Enable the add-on” prompt. PITR was therefore not enabled at inspection time. Do not enable it until the owner reviews cost and retention needs.
 - Supabase database backups do **not** include Storage object bytes. The `avatars` bucket needs an independently verified export/backup and restore method.
+- The project has no Supabase development branches. No isolated database was available, and no branch or project was created for rehearsal.
 
 Supabase documents that Pro daily backups retain the last seven days, that a project restore makes the project inaccessible during the restore, and that Storage objects are excluded. See [Database Backups](https://supabase.com/docs/guides/platform/backups). Production restore has not been tested and must not be used as a rehearsal.
 
