@@ -156,14 +156,22 @@ test('counseling teachers can create/update, while only M can delete', async () 
   vm.runInContext("currentUser = { id: 'T-QA-001', name: 'Synthetic Teacher', role_type: '老師' }", context);
   await vm.runInContext('loadCounseling()', context);
 
+  assert.match(elements.get('counsel-student-select').innerHTML, /Synthetic Student/u);
+  assert.equal(elements.get('counsel-teacher-select').value, 'T-QA-001');
+  assert.equal(elements.get('counsel-teacher-select').disabled, true);
+  vm.runInContext('openAddCounselingModal()', context);
+  vm.runInContext('switchCounselTags()', context);
+  assert.match(elements.get('counsel-quick-tags').innerHTML, /type="checkbox"/u);
+
   const field = (id, value) => { context.document.getElementById(id).value = value; };
   field('counsel-student-select', 'S-QA-001');
-  field('counsel-teacher-select', 'T-QA-001');
+  field('counsel-teacher-select', 'M-QA-OTHER');
   field('counsel-date', '2026-09-30');
   field('counsel-duration', '40');
   field('counsel-content', '新增合成紀錄');
   field('counsel-category', '情緒行為');
   field('counsel-followup', '確認情緒狀況');
+  vm.runInContext('toggleCounselTag(0); toggleCounselFollowupTag(0)', context);
   await vm.runInContext('handleCounselingSubmit({ preventDefault() {} })', context);
 
   const inserted = writes.find((write) => write.table === 'counseling_logs' && write.method === 'insert');
@@ -171,6 +179,11 @@ test('counseling teachers can create/update, while only M can delete', async () 
   assert.equal(inserted.payload.student_id, 'S-QA-001');
   assert.equal(inserted.payload.created_at, '2026-09-30T16:00:00.000Z');
   assert.equal(inserted.payload.duration_min, 40);
+  assert.equal(inserted.payload.teacher_name, 'Synthetic Teacher');
+  assert.match(inserted.payload.content, /觀察與協助：情緒平穩/u);
+  assert.equal(inserted.payload.selected_tags, '情緒平穩');
+  assert.match(inserted.payload.follow_up, /處理方式：下次課輔持續觀察/u);
+  assert.match(inserted.payload.follow_up, /補充：確認情緒狀況/u);
   assert.equal(counselingRows.length, 2);
 
   await vm.runInContext('editCounseling(11)', context);
@@ -185,6 +198,22 @@ test('counseling teachers can create/update, while only M can delete', async () 
   vm.runInContext("currentUser = { id: 'M-QA-001', name: 'Synthetic Manager', role_type: '同工' }", context);
   await vm.runInContext('deleteCounseling(11)', context);
   assert.equal(counselingRows.some((record) => record.id === 11), false);
+});
+
+test('counseling student selection includes noncanonical student roles and excludes inactive students', async () => {
+  const { context, elements } = createHarness({
+    user: { id: 'M-QA-001', name: 'Synthetic Manager', role_type: '同工' },
+    users: [
+      { id: 'S-QA-001', name: 'Synthetic Student', role_type: '學員', status: '在班' },
+      { id: 'S-QA-002', name: 'Former Student', role_type: '學生', status: '畢業' },
+      { id: 'T-QA-001', name: 'Synthetic Teacher', role_type: '老師', status: '在職' },
+    ],
+  });
+  vm.runInContext("currentUser = { id: 'M-QA-001', name: 'Synthetic Manager', role_type: '同工' }", context);
+  await vm.runInContext('loadCounseling()', context);
+  assert.match(elements.get('counsel-student-select').innerHTML, /Synthetic Student/u);
+  assert.doesNotMatch(elements.get('counsel-student-select').innerHTML, /Former Student/u);
+  assert.doesNotMatch(elements.get('counsel-student-select').innerHTML, /Synthetic Teacher/u);
 });
 
 test('counseling form keeps unsaved input on database failure and reports read errors', async () => {

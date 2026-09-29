@@ -646,16 +646,17 @@
         <input type="hidden" id="counsel-edit-id" value="">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div><label class="block font-bold text-slate-600 mb-1">輔導對象 *</label><select id="counsel-student-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
-          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
+          <div><label id="counsel-teacher-label" class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <div><label class="block font-bold text-slate-600 mb-1">日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
           <div><label class="block font-bold text-slate-600 mb-1">向度</label><select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2 py-2 bg-slate-50 border rounded-xl font-bold text-xs"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
           <div><label class="block font-bold text-slate-600 mb-1">時長(分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs"></div>
         </div>
-        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">快捷狀態點選：</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
-        <div><label class="block font-bold text-slate-600 mb-1">晤談描述 *</label><textarea id="counsel-content" rows="3" required class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
-        <div><label class="block font-bold text-slate-600 mb-1">後續追蹤</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
+        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">本次觀察與協助（可複選）</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">後續處理與追蹤（可複選）</label><div id="counsel-followup-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div><label class="block font-bold text-slate-600 mb-1">補充描述（選填）</label><textarea id="counsel-content" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl" placeholder="可補充勾選項目未涵蓋的內容"></textarea></div>
+        <div><label class="block font-bold text-slate-600 mb-1">其他追蹤說明（選填）</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
         <div class="flex space-x-2.5 pt-3 border-t">
           <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
           <button id="counsel-submit-button" type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
@@ -707,6 +708,7 @@
     let rawCounselingList = [];
     let counselingPeople = [];
     let currentCounselingTags = [];
+    let currentCounselingFollowupTags = [];
     let currentUser = null;
 
     let currentCalYear = 2026;
@@ -741,6 +743,7 @@
       "家庭關懷": ["家長晚接", "未吃晚餐", "家中有突發變故", "孩子表達想念家人", "衣服單薄需關心", "提供物資協助", "已主動聯繫家長了解"],
       "品格引導": ["主動協助同儕", "樂意分享", "說粗話需糾正", "說謊行為", "不服從老師規範", "物歸原主", "懂得感恩", "態度敷衍需教導"]
     };
+    const counselFollowupOptions = ["下次課輔持續觀察", "安排一對一協助", "提供教材或練習", "與導師／同工溝通", "聯繫家長了解", "轉介同工關懷", "已完成，暫無後續追蹤"];
 
     function updateClock() {
       const now = new Date();
@@ -1489,12 +1492,19 @@
     }
     function populateCounselingPeople() {
       const activePeople = counselingPeople.filter(person => person.status !== '離職');
-      const students = activePeople.filter(person => (!person.role_type || person.role_type === '學生') && person.status !== '退班' && person.status !== '畢業');
-      const teachers = activePeople.filter(person => ['同工', '老師', '工讀生'].includes(person.role_type));
+      const staffRoles = ['同工', '老師', '工讀生'];
+      const students = activePeople.filter(person => !staffRoles.includes(person.role_type) && person.status !== '退班' && person.status !== '畢業');
+      const teachersById = new Map(activePeople.filter(person => staffRoles.includes(person.role_type)).map(person => [String(person.id), person]));
+      if (currentUser && ['M', 'T'].includes(counselingAccessRole())) teachersById.set(String(currentUser.id), currentUser);
+      const teachers = [...teachersById.values()];
       const studentOptions = `<option value="">請選擇學童</option>${students.map(person => `<option value="${escapeCounselingHtml(person.id)}">${escapeCounselingHtml(person.name)} (${escapeCounselingHtml(person.id)})</option>`).join('')}`;
       const teacherOptions = `<option value="">請選擇老師</option>${teachers.map(person => `<option value="${escapeCounselingHtml(person.id)}">${escapeCounselingHtml(person.name)} (${escapeCounselingHtml(person.id)})</option>`).join('')}`;
       document.getElementById('counsel-student-select').innerHTML = studentOptions;
       document.getElementById('counsel-teacher-select').innerHTML = teacherOptions;
+      const isTeacher = counselingAccessRole() === 'T';
+      document.getElementById('counsel-teacher-label').textContent = isTeacher ? '輔導老師（登入者）*' : '輔導老師 *';
+      document.getElementById('counsel-teacher-select').disabled = isTeacher;
+      if (isTeacher) document.getElementById('counsel-teacher-select').value = String(currentUser.id);
       const filter = document.getElementById('counsel-filter-student');
       const selected = filter.value;
       const filterStudents = new Map(students.map(person => [String(person.id), person.name]));
@@ -1530,7 +1540,8 @@
     function switchCounselTags() {
       const category = document.getElementById('counsel-category').value;
       const tags = counselTagsDict[category] || [];
-      document.getElementById('counsel-quick-tags').innerHTML = tags.map((tag, index) => `<button type="button" onclick="toggleCounselTag(${index})" class="rounded-full border px-2 py-1 text-[10px] ${currentCounselingTags.includes(tag) ? 'border-rose-500 bg-rose-100 text-rose-700' : 'border-slate-200 bg-white text-slate-600'}">${escapeCounselingHtml(tag)}</button>`).join('');
+      document.getElementById('counsel-quick-tags').innerHTML = tags.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingTags.includes(tag) ? 'border-rose-500 bg-rose-100 text-rose-700' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselTag(${index})" class="accent-rose-600">${escapeCounselingHtml(tag)}</label>`).join('');
+      document.getElementById('counsel-followup-tags').innerHTML = counselFollowupOptions.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingFollowupTags.includes(tag) ? 'border-indigo-500 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingFollowupTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselFollowupTag(${index})" class="accent-indigo-600">${escapeCounselingHtml(tag)}</label>`).join('');
     }
     function toggleCounselTag(index) {
       const tag = (counselTagsDict[document.getElementById('counsel-category').value] || [])[index];
@@ -1538,16 +1549,24 @@
       currentCounselingTags = currentCounselingTags.includes(tag) ? currentCounselingTags.filter(item => item !== tag) : [...currentCounselingTags, tag];
       switchCounselTags();
     }
+    function toggleCounselFollowupTag(index) {
+      const tag = counselFollowupOptions[index];
+      if (!tag) return;
+      currentCounselingFollowupTags = currentCounselingFollowupTags.includes(tag) ? currentCounselingFollowupTags.filter(item => item !== tag) : [...currentCounselingFollowupTags, tag];
+      switchCounselTags();
+    }
     function resetCounselingForm() {
       document.getElementById('counsel-edit-id').value = '';
       document.getElementById('counsel-student-select').value = '';
       document.getElementById('counsel-teacher-select').value = currentUser && counselingAccessRole() === 'T' ? String(currentUser.id) : '';
+      document.getElementById('counsel-teacher-select').disabled = counselingAccessRole() === 'T';
       document.getElementById('counsel-date').value = counselingDateInputValue(new Date());
       document.getElementById('counsel-category').value = '課業輔導';
       document.getElementById('counsel-duration').value = '30';
       document.getElementById('counsel-content').value = '';
       document.getElementById('counsel-followup').value = '';
       currentCounselingTags = [];
+      currentCounselingFollowupTags = [];
       document.getElementById('counsel-modal-title').textContent = '新增個別學童輔導紀錄';
       document.getElementById('counsel-submit-button').textContent = '確認儲存';
       switchCounselTags();
@@ -1575,7 +1594,10 @@
       document.getElementById('counsel-category').value = record.category || '課業輔導';
       document.getElementById('counsel-duration').value = Number(record.duration_min) || 30;
       document.getElementById('counsel-content').value = record.content || '';
-      document.getElementById('counsel-followup').value = record.follow_up || '';
+      const followupLines = String(record.follow_up || '').split('\n');
+      const actionLine = followupLines[0]?.startsWith('處理方式：') ? followupLines.shift().slice('處理方式：'.length) : '';
+      currentCounselingFollowupTags = actionLine ? actionLine.split(/[、,]/).map(tag => tag.trim()).filter(tag => counselFollowupOptions.includes(tag)) : [];
+      document.getElementById('counsel-followup').value = followupLines.join('\n').replace(/^補充：/, '');
       currentCounselingTags = String(record.selected_tags || '').split(/[,、]/).map(tag => tag.trim()).filter(Boolean);
       document.getElementById('counsel-modal-title').textContent = '修改個別學童輔導紀錄';
       document.getElementById('counsel-submit-button').textContent = '儲存修改';
@@ -1586,13 +1608,16 @@
       e.preventDefault();
       if (!canManageCounseling()) { alert('目前帳號沒有新增或修改輔導紀錄的權限。'); return; }
       const studentId = document.getElementById('counsel-student-select').value;
-      const teacherId = document.getElementById('counsel-teacher-select').value;
+      const teacherId = counselingAccessRole() === 'T' ? String(currentUser?.id || '') : document.getElementById('counsel-teacher-select').value;
       const meetingDate = document.getElementById('counsel-date').value;
       const duration = Number(document.getElementById('counsel-duration').value);
-      const content = document.getElementById('counsel-content').value.trim();
+      const note = document.getElementById('counsel-content').value.trim();
       const student = counselingPeople.find(person => String(person.id) === studentId);
-      const teacher = counselingPeople.find(person => String(person.id) === teacherId);
-      if (!student || !teacher || !meetingDate || !Number.isFinite(duration) || duration <= 0 || !content) { alert('請完整填寫學童、輔導老師、日期、有效時長與晤談描述。'); return; }
+      const teacher = counselingAccessRole() === 'T' ? currentUser : counselingPeople.find(person => String(person.id) === teacherId);
+      const content = [currentCounselingTags.length ? `觀察與協助：${currentCounselingTags.join('、')}` : '', note].filter(Boolean).join('\n補充：');
+      const followupNote = document.getElementById('counsel-followup').value.trim();
+      const followUp = [currentCounselingFollowupTags.length ? `處理方式：${currentCounselingFollowupTags.join('、')}` : '', followupNote ? `補充：${followupNote}` : ''].filter(Boolean).join('\n');
+      if (!student || !teacher || !meetingDate || !Number.isFinite(duration) || duration <= 0 || !content) { alert('請選擇學童、輔導老師、日期與有效時長，並勾選至少一項觀察或填寫補充描述。'); return; }
       const payload = {
         student_id: String(student.id),
         student_name: student.name,
@@ -1601,7 +1626,7 @@
         duration_min: Math.round(duration),
         content,
         category: document.getElementById('counsel-category').value || '課業輔導',
-        follow_up: document.getElementById('counsel-followup').value.trim() || null,
+        follow_up: followUp || null,
         selected_tags: currentCounselingTags.join('、') || null
       };
       const editId = document.getElementById('counsel-edit-id').value;
