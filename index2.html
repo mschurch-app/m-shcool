@@ -644,6 +644,8 @@
       </div>
       <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
         <input type="hidden" id="counsel-edit-id" value="">
+        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-3"><label class="block font-bold text-rose-800 mb-2">心理層面（可複選）</label><div id="counsel-psychology-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3"><label class="block font-bold text-amber-800 mb-2">家庭層面（可複選）</label><div id="counsel-family-tags" class="flex flex-wrap gap-1.5"></div></div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div><label class="block font-bold text-slate-600 mb-1">輔導對象 *</label><select id="counsel-student-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
           <div><label id="counsel-teacher-label" class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
@@ -740,7 +742,9 @@
     const counselTagsDict = {
       "課業輔導": ["專注度良好", "完成度高", "需要一對一指導", "數學理解困難", "容易分心", "排斥寫作業", "字體潦草需重寫", "段考前複習狀態佳"],
       "情緒行為": ["情緒平穩", "起伏大容易生氣", "與同儕發生衝突", "哭鬧難以安撫", "退縮不說話", "過度興奮坐不住", "願意道歉和好", "需要暫離冷靜"],
+      "心理層面": ["願意表達感受", "表達壓力或擔憂", "需要情緒支持", "練習情緒調節", "練習面對挫折", "給予正向鼓勵", "建立自信", "關心安全感與歸屬感", "傾聽陪伴", "需要持續關心"],
       "家庭關懷": ["家長晚接", "未吃晚餐", "家中有突發變故", "孩子表達想念家人", "衣服單薄需關心", "提供物資協助", "已主動聯繫家長了解"],
+      "家庭層面": ["關心家庭近況", "學生表達想念家人", "生活照顧需求", "接送安排需協調", "家庭支持資源需求", "家庭變動需關懷", "需要聯繫家長", "已聯繫家長", "安排後續家庭關懷"],
       "品格引導": ["主動協助同儕", "樂意分享", "說粗話需糾正", "說謊行為", "不服從老師規範", "物歸原主", "懂得感恩", "態度敷衍需教導"]
     };
     const counselFollowupOptions = ["下次課輔持續觀察", "安排一對一協助", "提供教材或練習", "與導師／同工溝通", "聯繫家長了解", "轉介同工關懷", "已完成，暫無後續追蹤"];
@@ -1540,8 +1544,20 @@
     function switchCounselTags() {
       const category = document.getElementById('counsel-category').value;
       const tags = counselTagsDict[category] || [];
+      document.getElementById('counsel-psychology-tags').innerHTML = renderCounselingTagGroup('心理層面');
+      document.getElementById('counsel-family-tags').innerHTML = renderCounselingTagGroup('家庭層面');
       document.getElementById('counsel-quick-tags').innerHTML = tags.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingTags.includes(tag) ? 'border-rose-500 bg-rose-100 text-rose-700' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselTag(${index})" class="accent-rose-600">${escapeCounselingHtml(tag)}</label>`).join('');
       document.getElementById('counsel-followup-tags').innerHTML = counselFollowupOptions.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingFollowupTags.includes(tag) ? 'border-indigo-500 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingFollowupTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselFollowupTag(${index})" class="accent-indigo-600">${escapeCounselingHtml(tag)}</label>`).join('');
+    }
+    function renderCounselingTagGroup(category) {
+      const tags = counselTagsDict[category] || [];
+      return tags.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingTags.includes(tag) ? 'border-rose-300 bg-rose-100 text-rose-800' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselDimensionTag('${category}', ${index})" class="accent-rose-600">${escapeCounselingHtml(tag)}</label>`).join('');
+    }
+    function toggleCounselDimensionTag(category, index) {
+      const tag = (counselTagsDict[category] || [])[index];
+      if (!tag) return;
+      currentCounselingTags = currentCounselingTags.includes(tag) ? currentCounselingTags.filter(item => item !== tag) : [...currentCounselingTags, tag];
+      switchCounselTags();
     }
     function toggleCounselTag(index) {
       const tag = (counselTagsDict[document.getElementById('counsel-category').value] || [])[index];
