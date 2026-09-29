@@ -162,6 +162,9 @@ test('counseling teachers can create/update, while only M can delete', async () 
   vm.runInContext('openAddCounselingModal()', context);
   vm.runInContext('switchCounselTags()', context);
   assert.match(elements.get('counsel-quick-tags').innerHTML, /type="checkbox"/u);
+  assert.match(elements.get('counsel-psychology-tags').innerHTML, /願意表達感受/u);
+  assert.match(elements.get('counsel-family-tags').innerHTML, /關心家庭近況/u);
+  assert.ok(html.indexOf('counsel-psychology-tags') < html.indexOf('counsel-student-select'), 'psychology and family checklists should appear at the top of the form');
 
   const field = (id, value) => { context.document.getElementById(id).value = value; };
   field('counsel-student-select', 'S-QA-001');
@@ -171,7 +174,7 @@ test('counseling teachers can create/update, while only M can delete', async () 
   field('counsel-content', '新增合成紀錄');
   field('counsel-category', '情緒行為');
   field('counsel-followup', '確認情緒狀況');
-  vm.runInContext('toggleCounselTag(0); toggleCounselFollowupTag(0)', context);
+  vm.runInContext("toggleCounselTag(0); toggleCounselDimensionTag('心理層面', 0); toggleCounselDimensionTag('家庭層面', 0); toggleCounselFollowupTag(0)", context);
   await vm.runInContext('handleCounselingSubmit({ preventDefault() {} })', context);
 
   const inserted = writes.find((write) => write.table === 'counseling_logs' && write.method === 'insert');
@@ -181,7 +184,9 @@ test('counseling teachers can create/update, while only M can delete', async () 
   assert.equal(inserted.payload.duration_min, 40);
   assert.equal(inserted.payload.teacher_name, 'Synthetic Teacher');
   assert.match(inserted.payload.content, /觀察與協助：情緒平穩/u);
-  assert.equal(inserted.payload.selected_tags, '情緒平穩');
+  assert.match(inserted.payload.selected_tags, /情緒平穩/u);
+  assert.match(inserted.payload.selected_tags, /願意表達感受/u);
+  assert.match(inserted.payload.selected_tags, /關心家庭近況/u);
   assert.match(inserted.payload.follow_up, /處理方式：下次課輔持續觀察/u);
   assert.match(inserted.payload.follow_up, /補充：確認情緒狀況/u);
   assert.equal(counselingRows.length, 2);
