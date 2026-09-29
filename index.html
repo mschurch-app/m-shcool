@@ -97,7 +97,7 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 
               <span id="logged-user-tag" class="text-xs font-bold text-white max-w-[80px] sm:max-w-none truncate"></span> 
             </div> 
-            <button type="button" onclick="doLogout()" class="px-2 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition shadow-xs">登出</button> 
+            <button type="button" onclick="doLogout()" class="px-2 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs">登出</button> 
           </div> 
         </div> 
       </div> 
@@ -954,7 +954,7 @@
     } 
 
     // ============================================================= 
-    // 2. AI 臉部辨識核心模組 (嚴謹防誤判 0.48 門檻) 
+    // 2. AI 臉部辨識核心模組 
     // ============================================================= 
     async function loadFaceApiModels() { 
       if (isFaceModelsLoaded) return true; 
@@ -1009,58 +1009,58 @@
     } 
 
     async function toggleFaceRecognition() { 
-      if (isFaceDetecting) {
-        stopFaceRecognition();
-      } else {
-        await startFaceRecognition();
-      }
+      if (isFaceDetecting) { 
+        stopFaceRecognition(); 
+      } else { 
+        await startFaceRecognition(); 
+      } 
     } 
 
     async function startFaceRecognition() { 
       if (isCameraScanning) stopCameraScanner(); 
-      
-      const container = document.getElementById('face-recognition-container');
-      const btnText = document.getElementById('btn-face-text');
-      if (!container || !btnText) return;
+       
+      const container = document.getElementById('face-recognition-container'); 
+      const btnText = document.getElementById('btn-face-text'); 
+      if (!container || !btnText) return; 
 
       container.classList.remove('hidden'); 
       btnText.textContent = "關閉相機"; 
-      
+       
       faceVideoEl = document.getElementById('face-video'); 
       faceCanvasEl = document.getElementById('face-canvas'); 
-      
-      const loadingMsg = document.getElementById('face-loading-msg');
-      if (loadingMsg) loadingMsg.classList.remove('hidden');
+       
+      const loadingMsg = document.getElementById('face-loading-msg'); 
+      if (loadingMsg) loadingMsg.classList.remove('hidden'); 
 
-      if (!isFaceModelsLoaded) {
-        await loadFaceApiModels(); 
-      }
-      await buildFaceMatcher(); 
+      if (!isFaceModelsLoaded) { 
+        await loadFaceApiModels();  
+      } 
+      await buildFaceMatcher();  
 
       try { 
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          alert("⚠️ 瀏覽器不支援相機存取，或目前處於 file:// 本機檔案協議（請改用 Live Server 或 https:// 網址）。");
+          alert("⚠️ 瀏覽器不支援相機存取！(若在電腦本機測試，請勿直接用 file:// 開啟，請透過 Live Server 或 http:// 伺服器運作)");
           stopFaceRecognition();
           return;
         }
 
-        faceStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, 
-          audio: false 
-        }); 
-        
-        faceVideoEl.srcObject = faceStream; 
-        isFaceDetecting = true; 
-        
-        faceVideoEl.onloadedmetadata = () => { 
-          faceVideoEl.play(); 
-          if (loadingMsg) loadingMsg.classList.add('hidden');
-          startFaceDetectionLoop(); 
-        }; 
-      } catch (err) { 
-        console.error("相機啟動錯誤:", err);
-        alert("⚠️ 無法開啟相機！請確認是否已授權相機權限，或確認網址是否為 https:// 或 http:// 127.0.0.1 (非 file://)");
-        stopFaceRecognition(); 
+        faceStream = await navigator.mediaDevices.getUserMedia({  
+          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },  
+          audio: false  
+        });  
+         
+        faceVideoEl.srcObject = faceStream;  
+        isFaceDetecting = true;  
+         
+        faceVideoEl.onloadedmetadata = () => {  
+          faceVideoEl.play();  
+          if (loadingMsg) loadingMsg.classList.add('hidden'); 
+          startFaceDetectionLoop();  
+        };  
+      } catch (err) {  
+        console.error("相機啟動錯誤:", err); 
+        alert("⚠️ 無法開啟相機！請檢查是否已授權相機權限。"); 
+        stopFaceRecognition();  
       } 
     } 
 
@@ -1071,9 +1071,9 @@
         faceStream = null; 
       } 
       if (faceVideoEl) faceVideoEl.srcObject = null; 
-      const container = document.getElementById('face-recognition-container');
+      const container = document.getElementById('face-recognition-container'); 
       if (container) container.classList.add('hidden'); 
-      const btnText = document.getElementById('btn-face-text');
+      const btnText = document.getElementById('btn-face-text'); 
       if (btnText) btnText.textContent = "👤 開啟人臉相機"; 
     } 
 
@@ -1125,18 +1125,18 @@
     // ============================================================= 
     async function startCameraSnapForFace() { 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("⚠️ 瀏覽器不支援相機，請使用 https:// 或本機伺服器開啟！");
+        alert("⚠️ 瀏覽器不支援相機！");
         return;
       }
-      await loadFaceApiModels(); 
-      document.getElementById('camera-snap-box').classList.remove('hidden'); 
-      try { 
-        snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 480, height: 480 }, audio: false }); 
-        document.getElementById('snap-video').srcObject = snapStream; 
-      } catch (e) { 
-        alert("⚠️ 無法開啟相機，請檢查瀏覽器相機權限！");
-        stopCameraSnap(); 
-      } 
+      await loadFaceApiModels();  
+      document.getElementById('camera-snap-box').classList.remove('hidden');  
+      try {  
+        snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 480, height: 480 }, audio: false });  
+        document.getElementById('snap-video').srcObject = snapStream;  
+      } catch (e) {  
+        alert("⚠️ 無法開啟相機，請檢查瀏覽器相機權限！"); 
+        stopCameraSnap();  
+      }  
     } 
     function stopCameraSnap() { if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; } document.getElementById('camera-snap-box').classList.add('hidden'); } 
     async function captureAndExtractFace() { 
@@ -1960,19 +1960,42 @@
     } 
 
     // ============================================================= 
-    // 9. 同工登入與權限管理 
+    // 9. 同工登入與權限管理 (🌟 加強搜尋與除錯) 
     // ============================================================= 
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); } 
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); } 
+    
     async function handleLoginSubmit(e) { 
       e.preventDefault(); 
       const r = document.getElementById('login-uid').value.trim(); 
-      const { data } = await db.from('users').select('*').or(`id.ilike.${r},name.eq.${r}`).limit(1); 
-      if (!data || data.length === 0) { document.getElementById('login-err').textContent = "查無此人"; document.getElementById('login-err').classList.remove('hidden'); return; } 
-      currentUser = data[0]; localStorage.setItem('mplus_current_user', JSON.stringify(currentUser)); 
-      updateAuthUI(); closeLoginModal(); switchTab('schedules'); 
+      const pwd = document.getElementById('login-pwd').value.trim();
+      
+      try {
+        // 同時透過 id 或 name 查詢
+        const { data, error } = await db.from('users').select('*').or(`id.ilike.%${r}%,name.eq.${r}`); 
+        if (error || !data || data.length === 0) { 
+          document.getElementById('login-err').textContent = "查無此人，請確認編號或姓名"; 
+          document.getElementById('login-err').classList.remove('hidden'); 
+          return; 
+        } 
+        
+        currentUser = data[0]; 
+        localStorage.setItem('mplus_current_user', JSON.stringify(currentUser)); 
+        updateAuthUI(); 
+        closeLoginModal(); 
+        switchTab('schedules'); 
+      } catch (err) {
+        console.error("登入例外:", err);
+        alert("登入連線異常，請檢查網路或 Supabase 連線設定。");
+      }
     } 
-    function doLogout() { currentUser = null; localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); } 
+
+    function doLogout() { 
+      currentUser = null; 
+      localStorage.removeItem('mplus_current_user'); 
+      updateAuthUI(); 
+      switchTab('checkin'); 
+    } 
      
     function updateAuthUI() { 
       const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock'); 
@@ -1980,30 +2003,30 @@
       const loggedBox = document.getElementById('auth-logged'); 
 
       if (currentUser) { 
-        unloggedBox.classList.add('hidden'); 
-        loggedBox.classList.remove('hidden'); 
-        loggedBox.classList.add('flex'); 
-        document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`; 
+        if (unloggedBox) unloggedBox.classList.add('hidden'); 
+        if (loggedBox) {
+          loggedBox.classList.remove('hidden'); 
+          loggedBox.classList.add('flex'); 
+        }
+        const tag = document.getElementById('logged-user-tag');
+        if (tag) tag.textContent = `👤 ${currentUser.name}`; 
          
         const isStaffOrTeacher = currentUser.id.includes('M') || currentUser.id.includes('T') || currentUser.role_type !== '學生'; 
-        if (isStaffOrTeacher) { 
-          printNav.classList.remove('hidden'); 
-          importNav.classList.remove('hidden'); 
-        } else { 
-          printNav.classList.add('hidden'); 
-          importNav.classList.add('hidden'); 
-        } 
+        if (printNav) printNav.classList.toggle('hidden', !isStaffOrTeacher); 
+        if (importNav) importNav.classList.toggle('hidden', !isStaffOrTeacher); 
          
         if (dock) { 
           dock.classList.remove('hidden'); 
           dock.classList.add('flex'); 
         } 
       } else { 
-        unloggedBox.classList.remove('hidden'); 
-        loggedBox.classList.add('hidden'); 
-        loggedBox.classList.remove('flex'); 
-        printNav.classList.add('hidden'); 
-        importNav.classList.add('hidden'); 
+        if (unloggedBox) unloggedBox.classList.remove('hidden'); 
+        if (loggedBox) {
+          loggedBox.classList.add('hidden'); 
+          loggedBox.classList.remove('flex'); 
+        }
+        if (printNav) printNav.classList.add('hidden'); 
+        if (importNav) importNav.classList.add('hidden'); 
         if (dock) { 
           dock.classList.add('hidden'); 
           dock.classList.remove('flex'); 
@@ -2014,7 +2037,8 @@
     document.addEventListener('DOMContentLoaded', () => { 
       const saved = localStorage.getItem('mplus_current_user'); 
       if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} } 
-      updateAuthUI(); switchTab('checkin'); 
+      updateAuthUI(); 
+      switchTab('checkin'); 
     }); 
   </script> 
 </body> 
