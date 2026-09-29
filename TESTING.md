@@ -27,7 +27,7 @@ Once staff accounts map to trusted Supabase Auth identities, test server-enforce
 | Check-in | Unknown code; first and duplicate student scan; staff first/second scan; recent duplicate staff scan; write failure at each step | Current mock smoke tests cover unknown code, first/duplicate student scan, staff first scan, staff cooldown, and checkout after cooldown. Extend with error handling and partial-write cases. Verify exact `users`, `points_logs`, and `check_in_logs` writes. Do not attempt real rows. |
 | Scheduling | Monthly view, worker filter, multi-date batch, overnight shift calculation, missing staff | Verify generated payloads and totals against mock data; edit/delete affordances currently have no matching database write path. |
 | Roll call | Load a date, change status/note, save twice, failed insert | Assert the exact batch payload and characterize duplicate-save behavior. |
-| Counseling | Load records, submit add form, delete record | Current submit handler only displays success and reloads; assert no insert until product behavior is explicitly scoped. |
+| Counseling | Load, add, edit, filter by student/category, render follow-up/tags, summary counts, delete role gate, and database errors | Offline harness checks writes against existing `counseling_logs` columns, HTML escaping, and M/T/P UI controls; no production rows are used. |
 | Parent messages | Load parent text, empty reply, save reply, reply failure | Verify mock update payload. Current handler updates `reply_content` only. |
 | Reports | Attendance/month work-hour/roster reports, empty result, month boundary | Use fake records only; assert output totals, date ranges, and included columns without printing or exporting real PII. |
 

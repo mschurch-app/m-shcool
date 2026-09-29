@@ -13,7 +13,7 @@ test('Supabase business table access matches the documented baseline', () => {
     check_in_logs: ['insert', 'select'],
     points_logs: ['insert'],
     roll_calls: ['insert', 'select'],
-    counseling_logs: ['delete', 'select'],
+    counseling_logs: ['delete', 'insert', 'select', 'update'],
     parent_messages: ['select', 'update'],
   };
 

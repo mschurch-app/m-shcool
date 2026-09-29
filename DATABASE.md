@@ -85,7 +85,7 @@ The app uses these columns as observed in `index.html`; this inventory is not a 
 | `check_in_logs` | student/staff scan inserts; check-in activity reads |
 | `points_logs` | student scan inserts a point transaction; roster point buttons do not write this log |
 | `roll_calls` | daily load and batch insert |
-| `counseling_logs` | list/delete only; form submit currently shows “saved” and reloads without inserting |
+| `counseling_logs` | `feature/counseling-records` adds reads/inserts/updates and keeps delete visible to M-role UI only; database RLS remains disabled and does not enforce these frontend role controls |
 | `parent_messages` | list and reply update |
 | `avatars` Storage | browser uploads JPEG to `students/<id>_<timestamp>.jpg` with `upsert: true`, then obtains a public URL |
 
