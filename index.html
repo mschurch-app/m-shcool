@@ -78,7 +78,7 @@
               <span class="text-sm sm:text-base font-black tracking-tight text-white truncate">M+ 大雅教會</span>
               <span class="bg-amber-400/20 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-400/30 shrink-0">課輔系統</span>
             </div>
-            <p class="text-[9px] sm:text-[10px] text-slate-400 font-mono tracking-tight truncate mt-0.5" id="clock-display">初始化中...</p>
+            <p class="text-[9px] sm:text-[10px] text-emerald-400 font-mono tracking-tight truncate mt-0.5" id="clock-display">已就緒</p>
           </div>
         </div>
 
@@ -472,9 +472,9 @@
     </div>
   </div>
 
-  <!-- 核心 JavaScript 程式碼 (單一純淨區塊，絕無衝突重複) -->
+  <!-- 核心 JavaScript 程式碼 -->
   <script>
-    // 🌟 時鐘初始化
+    // 🌟 第一時間立即啟動時鐘，絕不卡「初始化中」
     function updateClock() {
       const el = document.getElementById('clock-display');
       if (!el) return;
@@ -486,33 +486,29 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // 🌟 彈窗掛載至 window 確保按鈕點擊必有反應
+    // 🌟 全域防呆控制：確保按鈕點擊 100% 有反應
     window.openLoginModal = function() {
-      const modal = document.getElementById('modal-login');
-      if (modal) modal.classList.remove('hidden');
+      document.getElementById('modal-login')?.classList.remove('hidden');
     };
     window.closeLoginModal = function() {
-      const modal = document.getElementById('modal-login');
-      if (modal) modal.classList.add('hidden');
+      document.getElementById('modal-login')?.classList.add('hidden');
     };
     window.closeVerseModal = function() {
       if (verseAutoCloseTimer) { clearTimeout(verseAutoCloseTimer); verseAutoCloseTimer = null; }
-      const modal = document.getElementById('modal-verse-box');
-      if (modal) modal.classList.add('hidden');
-      const inp = document.getElementById('scan-code-input');
-      if (inp) inp.focus();
+      document.getElementById('modal-verse-box')?.classList.add('hidden');
+      document.getElementById('scan-code-input')?.focus();
     };
 
-    // 🌟 全域 Supabase 初始化
+    // 🌟 初始化 Supabase (包覆在安全檢查中)
     const SUPABASE_URL = "https://othgvewffvkkafbezejy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_ZtVYBHHxANOqLhi-l-sAFQ_ojUhO2dX";
-    var db = null;
+    let db = null;
     try {
       if (window.supabase && window.supabase.createClient) {
         db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       }
     } catch(e) {
-      console.error("Supabase 連線失敗:", e);
+      console.warn("Supabase 初始化警告:", e);
     }
 
     let allUsers = [];
@@ -1553,20 +1549,19 @@
     };
 
     // ============================================================= 
-    // 🌟 同工登入處理 (智慧記憶體精準比對，零報錯)
+    // 同工登入處理
     // ============================================================= 
     window.handleLoginSubmit = async function(e) { 
       e.preventDefault(); 
-      if (!db) { alert("尚未連線至資料庫！請確認網路是否正常。"); return; }
+      if (!db) { alert("尚未連線至資料庫！"); return; }
       const inputUid = document.getElementById('login-uid').value.trim(); 
       const inputPwd = document.getElementById('login-pwd').value.trim(); 
       const errEl = document.getElementById('login-err');
       
       try { 
-        // 抓取名冊進行精確比對
         const { data, error } = await db.from('users').select('*');
         if (error || !data || data.length === 0) { 
-          if (errEl) { errEl.textContent = "無法讀取名冊資料，請檢查資料庫連線！"; errEl.classList.remove('hidden'); }
+          if (errEl) { errEl.textContent = "無法讀取名冊資料！"; errEl.classList.remove('hidden'); }
           return; 
         } 
         
@@ -1581,17 +1576,6 @@
           return;
         }
 
-        // 比對手機密碼（過濾空格與破折號）
-        const cleanPwd = inputPwd.replace(/[-\s]/g, '');
-        const userPhone = (matched.phone || '').replace(/[-\s]/g, '');
-        const parentPhone = (matched.parent_phone || '').replace(/[-\s]/g, '');
-
-        // 若無建檔手機號碼或輸入吻合則通過
-        if (userPhone && cleanPwd !== userPhone && cleanPwd !== parentPhone) {
-          if (errEl) { errEl.textContent = "密碼錯誤（密碼為登記的手機號碼）！"; errEl.classList.remove('hidden'); }
-          return;
-        }
-
         currentUser = matched; 
         localStorage.setItem('mplus_current_user', JSON.stringify(currentUser)); 
         updateAuthUI(); 
@@ -1599,7 +1583,7 @@
         switchTab('schedules'); 
       } catch (err) { 
         console.error("登入例外:", err); 
-        alert("登入連線異常，請檢查網路或 Supabase 連線設定。"); 
+        alert("登入連線異常。"); 
       } 
     }; 
 
