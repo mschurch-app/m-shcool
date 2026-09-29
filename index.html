@@ -333,7 +333,7 @@
             <select id="counsel-filter-category" onchange="filterCounselingList()" class="flex-1 sm:flex-none px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
               <option value="">全部向度</option><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option>
             </select>
-            <button onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition active:scale-95"><i class="fa-solid fa-pen-nib"></i><span>新增輔導</span></button>
+            <button id="counsel-add-button" onclick="openAddCounselingModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition active:scale-95"><i class="fa-solid fa-pen-nib"></i><span>新增輔導</span></button>
           </div>
         </div>
 
@@ -639,26 +639,27 @@
   <div id="modal-counseling-add" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-3.5 border-b pb-3">
-        <h3 class="text-base sm:text-lg font-black text-slate-800">新增個別學童輔導紀錄</h3>
+        <h3 id="counsel-modal-title" class="text-base sm:text-lg font-black text-slate-800">新增個別學童輔導紀錄</h3>
         <button onclick="closeAddCounselingModal()" class="text-slate-400 font-bold text-xl">&times;</button>
       </div>
       <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
         <input type="hidden" id="counsel-edit-id" value="">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div><label class="block font-bold text-slate-600 mb-1">輔導對象 *</label><select id="counsel-student-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
-          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
+          <div><label id="counsel-teacher-label" class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <div><label class="block font-bold text-slate-600 mb-1">日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
           <div><label class="block font-bold text-slate-600 mb-1">向度</label><select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2 py-2 bg-slate-50 border rounded-xl font-bold text-xs"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
           <div><label class="block font-bold text-slate-600 mb-1">時長(分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs"></div>
         </div>
-        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">快捷狀態點選：</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
-        <div><label class="block font-bold text-slate-600 mb-1">晤談描述 *</label><textarea id="counsel-content" rows="3" required class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
-        <div><label class="block font-bold text-slate-600 mb-1">後續追蹤</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
+        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">本次觀察與協助（可複選）</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">後續處理與追蹤（可複選）</label><div id="counsel-followup-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div><label class="block font-bold text-slate-600 mb-1">補充描述（選填）</label><textarea id="counsel-content" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl" placeholder="可補充勾選項目未涵蓋的內容"></textarea></div>
+        <div><label class="block font-bold text-slate-600 mb-1">其他追蹤說明（選填）</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
         <div class="flex space-x-2.5 pt-3 border-t">
           <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
+          <button id="counsel-submit-button" type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
         </div>
       </form>
     </div>
@@ -705,6 +706,9 @@
     let rawSchedules = [];
     let activeRollCallList = [];
     let rawCounselingList = [];
+    let counselingPeople = [];
+    let currentCounselingTags = [];
+    let currentCounselingFollowupTags = [];
     let currentUser = null;
 
     let currentCalYear = 2026;
@@ -739,6 +743,7 @@
       "家庭關懷": ["家長晚接", "未吃晚餐", "家中有突發變故", "孩子表達想念家人", "衣服單薄需關心", "提供物資協助", "已主動聯繫家長了解"],
       "品格引導": ["主動協助同儕", "樂意分享", "說粗話需糾正", "說謊行為", "不服從老師規範", "物歸原主", "懂得感恩", "態度敷衍需教導"]
     };
+    const counselFollowupOptions = ["下次課輔持續觀察", "安排一對一協助", "提供教材或練習", "與導師／同工溝通", "聯繫家長了解", "轉介同工關懷", "已完成，暫無後續追蹤"];
 
     function updateClock() {
       const now = new Date();
@@ -749,7 +754,11 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    function requireTab(tabId) { if (!currentUser) { openLoginModal(); return; } switchTab(tabId); }
+    function requireTab(tabId) {
+      if (!currentUser) { openLoginModal(); return; }
+      if (tabId === 'counseling' && !['M', 'T', 'P'].includes(counselingAccessRole())) { alert('目前帳號沒有輔導紀錄的查閱權限。'); return; }
+      switchTab(tabId);
+    }
     function requireStaffPrintTab() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
       if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
@@ -1447,14 +1456,215 @@
     // 6 & 7. 輔導、留言與報表中心
     // =============================================================
     async function loadCounseling() {
-      const { data } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
-      rawCounselingList = data || [];
-      document.getElementById('counseling-list').innerHTML = rawCounselingList.map(c => `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 font-mono text-xs">${new Date(c.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${c.student_name}</td><td class="py-2.5 px-3">${c.category||'課業'}</td><td class="py-2.5 px-3">${c.teacher_name}</td><td class="py-2.5 px-3">${c.content}</td><td class="py-2.5 px-3 text-center"><button onclick="deleteCounseling(${c.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
+      const list = document.getElementById('counseling-list');
+      list.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-400">載入輔導紀錄中...</td></tr>';
+      try {
+        const [logsResult, peopleResult] = await Promise.all([
+          db.from('counseling_logs').select('*').order('created_at', { ascending: false }),
+          db.from('users').select('id,name,role_type,status').order('id')
+        ]);
+        if (logsResult.error) throw logsResult.error;
+        rawCounselingList = logsResult.data || [];
+        counselingPeople = peopleResult.error ? [] : (peopleResult.data || []);
+        populateCounselingPeople();
+        filterCounselingList();
+        if (peopleResult.error) alert('學員名冊載入失敗；目前仍可查看既有輔導紀錄，但新增與修改暫不可用。');
+      } catch (error) {
+        list.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-rose-600">輔導紀錄載入失敗，請重新載入。</td></tr>';
+        alert(`載入輔導紀錄失敗：${error?.message || '未知錯誤'}`);
+      }
     }
-    function openAddCounselingModal() { document.getElementById('modal-counseling-add').classList.remove('hidden'); }
+    function counselingAccessRole() {
+      const role = currentUser?.role_type || '';
+      if (role === '同工') return 'M';
+      if (role === '老師') return 'T';
+      if (role === '工讀生') return 'P';
+      return '';
+    }
+    function canManageCounseling() { return ['M', 'T'].includes(counselingAccessRole()); }
+    function escapeCounselingHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+    function formatCounselingDate(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' });
+    }
+    function populateCounselingPeople() {
+      const activePeople = counselingPeople.filter(person => person.status !== '離職');
+      const staffRoles = ['同工', '老師', '工讀生'];
+      const students = activePeople.filter(person => !staffRoles.includes(person.role_type) && person.status !== '退班' && person.status !== '畢業');
+      const teachersById = new Map(activePeople.filter(person => staffRoles.includes(person.role_type)).map(person => [String(person.id), person]));
+      if (currentUser && ['M', 'T'].includes(counselingAccessRole())) teachersById.set(String(currentUser.id), currentUser);
+      const teachers = [...teachersById.values()];
+      const studentOptions = `<option value="">請選擇學童</option>${students.map(person => `<option value="${escapeCounselingHtml(person.id)}">${escapeCounselingHtml(person.name)} (${escapeCounselingHtml(person.id)})</option>`).join('')}`;
+      const teacherOptions = `<option value="">請選擇老師</option>${teachers.map(person => `<option value="${escapeCounselingHtml(person.id)}">${escapeCounselingHtml(person.name)} (${escapeCounselingHtml(person.id)})</option>`).join('')}`;
+      document.getElementById('counsel-student-select').innerHTML = studentOptions;
+      document.getElementById('counsel-teacher-select').innerHTML = teacherOptions;
+      const isTeacher = counselingAccessRole() === 'T';
+      document.getElementById('counsel-teacher-label').textContent = isTeacher ? '輔導老師（登入者）*' : '輔導老師 *';
+      document.getElementById('counsel-teacher-select').disabled = isTeacher;
+      if (isTeacher) document.getElementById('counsel-teacher-select').value = String(currentUser.id);
+      const filter = document.getElementById('counsel-filter-student');
+      const selected = filter.value;
+      const filterStudents = new Map(students.map(person => [String(person.id), person.name]));
+      rawCounselingList.forEach(record => {
+        if (record.student_id && !filterStudents.has(String(record.student_id))) filterStudents.set(String(record.student_id), record.student_name || record.student_id);
+      });
+      filter.innerHTML = `<option value="">全部學童</option>${[...filterStudents].map(([id, name]) => `<option value="${escapeCounselingHtml(id)}">${escapeCounselingHtml(name)}</option>`).join('')}`;
+      if (filterStudents.has(selected)) filter.value = selected;
+    }
+    function getFilteredCounselingList() {
+      const studentId = document.getElementById('counsel-filter-student').value;
+      const category = document.getElementById('counsel-filter-category').value;
+      return rawCounselingList.filter(record => (!studentId || String(record.student_id) === studentId) && (!category || record.category === category));
+    }
+    function renderCounselingList() {
+      const list = getFilteredCounselingList();
+      const canEdit = canManageCounseling();
+      const canDelete = counselingAccessRole() === 'M';
+      const listElement = document.getElementById('counseling-list');
+      const addButton = document.getElementById('counsel-add-button');
+      if (canEdit) addButton.classList.remove('hidden'); else addButton.classList.add('hidden');
+      listElement.innerHTML = list.length ? list.map(record => {
+        const tags = String(record.selected_tags || '').split(/[,、]/).map(tag => tag.trim()).filter(Boolean);
+        const operations = `${canEdit ? `<button type="button" data-counsel-action="edit" data-counsel-id="${escapeCounselingHtml(record.id)}" class="text-indigo-600 font-bold text-xs mr-2">編輯</button>` : ''}${canDelete ? `<button type="button" data-counsel-action="delete" data-counsel-id="${escapeCounselingHtml(record.id)}" class="text-rose-600 font-bold text-xs">刪除</button>` : ''}`;
+        return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 font-mono text-xs">${formatCounselingDate(record.created_at)}</td><td class="py-2.5 px-3 font-bold">${escapeCounselingHtml(record.student_name)}<span class="block text-[10px] text-slate-400">${escapeCounselingHtml(record.student_id)}</span></td><td class="py-2.5 px-3">${escapeCounselingHtml(record.category || '課業輔導')}</td><td class="py-2.5 px-3">${escapeCounselingHtml(record.teacher_name)}</td><td class="py-2.5 px-3">${Number(record.duration_min) || 0} 分</td><td class="py-2.5 px-3 whitespace-pre-wrap">${escapeCounselingHtml(record.content)}${tags.length ? `<div class="mt-1 flex flex-wrap gap-1">${tags.map(tag => `<span class="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] text-rose-700">${escapeCounselingHtml(tag)}</span>`).join('')}</div>` : ''}</td><td class="py-2.5 px-3 whitespace-pre-wrap">${escapeCounselingHtml(record.follow_up || '') || '<span class="text-slate-300">—</span>'}</td><td class="py-2.5 px-3 text-center">${operations || '<span class="text-slate-300">—</span>'}</td></tr>`;
+      }).join('') : '<tr><td colspan="8" class="py-6 text-center text-slate-400">沒有符合條件的輔導紀錄</td></tr>';
+      document.getElementById('cs-stat-count').textContent = `${list.length} 次`;
+      document.getElementById('cs-stat-mins').textContent = `${list.reduce((sum, record) => sum + (Number(record.duration_min) || 0), 0)} 分鐘`;
+      document.getElementById('cs-stat-students').textContent = `${new Set(list.map(record => record.student_id || record.student_name).filter(Boolean)).size} 位`;
+      document.getElementById('cs-stat-followup').textContent = `${list.filter(record => String(record.follow_up || '').trim()).length} 案`;
+    }
+    function filterCounselingList() { renderCounselingList(); }
+    function switchCounselTags() {
+      const category = document.getElementById('counsel-category').value;
+      const tags = counselTagsDict[category] || [];
+      document.getElementById('counsel-quick-tags').innerHTML = tags.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingTags.includes(tag) ? 'border-rose-500 bg-rose-100 text-rose-700' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselTag(${index})" class="accent-rose-600">${escapeCounselingHtml(tag)}</label>`).join('');
+      document.getElementById('counsel-followup-tags').innerHTML = counselFollowupOptions.map((tag, index) => `<label class="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] cursor-pointer ${currentCounselingFollowupTags.includes(tag) ? 'border-indigo-500 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}"><input type="checkbox" ${currentCounselingFollowupTags.includes(tag) ? 'checked' : ''} onchange="toggleCounselFollowupTag(${index})" class="accent-indigo-600">${escapeCounselingHtml(tag)}</label>`).join('');
+    }
+    function toggleCounselTag(index) {
+      const tag = (counselTagsDict[document.getElementById('counsel-category').value] || [])[index];
+      if (!tag) return;
+      currentCounselingTags = currentCounselingTags.includes(tag) ? currentCounselingTags.filter(item => item !== tag) : [...currentCounselingTags, tag];
+      switchCounselTags();
+    }
+    function toggleCounselFollowupTag(index) {
+      const tag = counselFollowupOptions[index];
+      if (!tag) return;
+      currentCounselingFollowupTags = currentCounselingFollowupTags.includes(tag) ? currentCounselingFollowupTags.filter(item => item !== tag) : [...currentCounselingFollowupTags, tag];
+      switchCounselTags();
+    }
+    function resetCounselingForm() {
+      document.getElementById('counsel-edit-id').value = '';
+      document.getElementById('counsel-student-select').value = '';
+      document.getElementById('counsel-teacher-select').value = currentUser && counselingAccessRole() === 'T' ? String(currentUser.id) : '';
+      document.getElementById('counsel-teacher-select').disabled = counselingAccessRole() === 'T';
+      document.getElementById('counsel-date').value = counselingDateInputValue(new Date());
+      document.getElementById('counsel-category').value = '課業輔導';
+      document.getElementById('counsel-duration').value = '30';
+      document.getElementById('counsel-content').value = '';
+      document.getElementById('counsel-followup').value = '';
+      currentCounselingTags = [];
+      currentCounselingFollowupTags = [];
+      document.getElementById('counsel-modal-title').textContent = '新增個別學童輔導紀錄';
+      document.getElementById('counsel-submit-button').textContent = '確認儲存';
+      switchCounselTags();
+    }
+    function counselingDateInputValue(value) {
+      const parts = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(value);
+      const part = Object.fromEntries(parts.map(item => [item.type, item.value]));
+      return `${part.year}-${part.month}-${part.day}`;
+    }
+    function openAddCounselingModal() {
+      if (!canManageCounseling()) { alert('目前帳號只有檢視權限，無法新增輔導紀錄。'); return; }
+      resetCounselingForm();
+      document.getElementById('modal-counseling-add').classList.remove('hidden');
+    }
     function closeAddCounselingModal() { document.getElementById('modal-counseling-add').classList.add('hidden'); }
-    async function handleCounselingSubmit(e) { e.preventDefault(); alert("已儲存"); closeAddCounselingModal(); loadCounseling(); }
-    async function deleteCounseling(id) { await db.from('counseling_logs').delete().eq('id', id); loadCounseling(); }
+    function editCounseling(id) {
+      if (!canManageCounseling()) { alert('目前帳號沒有修改輔導紀錄的權限。'); return; }
+      const record = rawCounselingList.find(item => String(item.id) === String(id));
+      if (!record) { alert('找不到這筆輔導紀錄，請重新載入清單。'); return; }
+      resetCounselingForm();
+      document.getElementById('counsel-edit-id').value = record.id;
+      document.getElementById('counsel-student-select').value = record.student_id || '';
+      document.getElementById('counsel-teacher-select').value = String(counselingPeople.find(person => person.name === record.teacher_name)?.id || (counselingAccessRole() === 'T' ? currentUser?.id : ''));
+      document.getElementById('counsel-date').value = record.created_at ? counselingDateInputValue(new Date(record.created_at)) : '';
+      document.getElementById('counsel-category').value = record.category || '課業輔導';
+      document.getElementById('counsel-duration').value = Number(record.duration_min) || 30;
+      document.getElementById('counsel-content').value = record.content || '';
+      const followupLines = String(record.follow_up || '').split('\n');
+      const actionLine = followupLines[0]?.startsWith('處理方式：') ? followupLines.shift().slice('處理方式：'.length) : '';
+      currentCounselingFollowupTags = actionLine ? actionLine.split(/[、,]/).map(tag => tag.trim()).filter(tag => counselFollowupOptions.includes(tag)) : [];
+      document.getElementById('counsel-followup').value = followupLines.join('\n').replace(/^補充：/, '');
+      currentCounselingTags = String(record.selected_tags || '').split(/[,、]/).map(tag => tag.trim()).filter(Boolean);
+      document.getElementById('counsel-modal-title').textContent = '修改個別學童輔導紀錄';
+      document.getElementById('counsel-submit-button').textContent = '儲存修改';
+      switchCounselTags();
+      document.getElementById('modal-counseling-add').classList.remove('hidden');
+    }
+    async function handleCounselingSubmit(e) {
+      e.preventDefault();
+      if (!canManageCounseling()) { alert('目前帳號沒有新增或修改輔導紀錄的權限。'); return; }
+      const studentId = document.getElementById('counsel-student-select').value;
+      const teacherId = counselingAccessRole() === 'T' ? String(currentUser?.id || '') : document.getElementById('counsel-teacher-select').value;
+      const meetingDate = document.getElementById('counsel-date').value;
+      const duration = Number(document.getElementById('counsel-duration').value);
+      const note = document.getElementById('counsel-content').value.trim();
+      const student = counselingPeople.find(person => String(person.id) === studentId);
+      const teacher = counselingAccessRole() === 'T' ? currentUser : counselingPeople.find(person => String(person.id) === teacherId);
+      const content = [currentCounselingTags.length ? `觀察與協助：${currentCounselingTags.join('、')}` : '', note].filter(Boolean).join('\n補充：');
+      const followupNote = document.getElementById('counsel-followup').value.trim();
+      const followUp = [currentCounselingFollowupTags.length ? `處理方式：${currentCounselingFollowupTags.join('、')}` : '', followupNote ? `補充：${followupNote}` : ''].filter(Boolean).join('\n');
+      if (!student || !teacher || !meetingDate || !Number.isFinite(duration) || duration <= 0 || !content) { alert('請選擇學童、輔導老師、日期與有效時長，並勾選至少一項觀察或填寫補充描述。'); return; }
+      const payload = {
+        student_id: String(student.id),
+        student_name: student.name,
+        teacher_name: teacher.name,
+        created_at: `${meetingDate}T16:00:00.000Z`,
+        duration_min: Math.round(duration),
+        content,
+        category: document.getElementById('counsel-category').value || '課業輔導',
+        follow_up: followUp || null,
+        selected_tags: currentCounselingTags.join('、') || null
+      };
+      const editId = document.getElementById('counsel-edit-id').value;
+      const submitButton = document.getElementById('counsel-submit-button');
+      submitButton.disabled = true;
+      try {
+        const result = editId
+          ? await db.from('counseling_logs').update(payload).eq('id', editId)
+          : await db.from('counseling_logs').insert(payload);
+        if (result.error) throw result.error;
+        closeAddCounselingModal();
+        alert(editId ? '✅ 輔導紀錄修改成功！' : '✅ 輔導紀錄新增成功！');
+        await loadCounseling();
+      } catch (error) {
+        alert(`儲存輔導紀錄失敗：${error?.message || '未知錯誤'}`);
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+    async function handleCounselingAction(event) {
+      const button = event.target.closest('button[data-counsel-action]');
+      if (!button) return;
+      if (button.dataset.counselAction === 'edit') editCounseling(button.dataset.counselId);
+      if (button.dataset.counselAction === 'delete') await deleteCounseling(button.dataset.counselId);
+    }
+    async function deleteCounseling(id) {
+      if (counselingAccessRole() !== 'M') { alert('只有同工可以刪除輔導紀錄。'); return; }
+      if (!confirm('確定刪除這筆輔導紀錄？此操作無法復原。')) return;
+      try {
+        const { error } = await db.from('counseling_logs').delete().eq('id', id);
+        if (error) throw error;
+        await loadCounseling();
+        alert('✅ 輔導紀錄已刪除。');
+      } catch (error) {
+        alert(`刪除輔導紀錄失敗：${error?.message || '未知錯誤'}`);
+      }
+    }
+    document.getElementById('counseling-list').addEventListener('click', handleCounselingAction);
 
     async function loadMessages() {
       const { data } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
