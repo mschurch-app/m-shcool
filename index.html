@@ -78,7 +78,7 @@
               <span class="text-sm sm:text-base font-black tracking-tight text-white truncate">M+ 大雅教會</span>
               <span class="bg-amber-400/20 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-400/30 shrink-0">課輔系統</span>
             </div>
-            <p class="text-[9px] sm:text-[10px] text-emerald-400 font-mono tracking-tight truncate mt-0.5" id="clock-display">已就緒</p>
+            <p class="text-[9px] sm:text-[10px] text-emerald-400 font-mono tracking-tight truncate mt-0.5" id="clock-display">就緒</p>
           </div>
         </div>
 
@@ -197,7 +197,7 @@
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
               <button type="button" onclick="setScheduleView('calendar')" id="btn-view-cal" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 font-bold shadow-xs cursor-pointer"><i class="fa-solid fa-calendar mr-1"></i>月曆</button>
-              <button type="button" onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
+              <button type="button" onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold cursor-pointer"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
             </div>
             <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
             <button type="button" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95 cursor-pointer"><i class="fa-solid fa-calendar-plus"></i><span>每週週期批次排班</span></button>
@@ -442,7 +442,7 @@
     <button type="button" onclick="requireTab('counseling')" id="m-nav-counseling" class="flex flex-col items-center py-1 hover:text-white cursor-pointer"><i class="fa-solid fa-hand-holding-heart text-base mb-0.5"></i><span>輔導</span></button>
   </nav>
 
-  <!-- 登入彈窗 -->
+  <!-- 彈窗區域：登入 -->
   <div id="modal-login" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl border">
       <div class="text-center mb-4"><h3 class="text-lg font-black text-slate-800">同工管理者登入</h3><p class="text-xs text-slate-400">請輸入人員編號或姓名與手機號碼</p></div>
@@ -458,7 +458,6 @@
     </div>
   </div>
 
-  <!-- 金句彈窗 -->
   <div id="modal-verse-box" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 text-center shadow-2xl">
       <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl"><i class="fa-solid fa-circle-check"></i></div>
@@ -472,9 +471,9 @@
     </div>
   </div>
 
-  <!-- 核心 JavaScript 程式碼 -->
+  <!-- 非阻塞式 JavaScript 核心 -->
   <script>
-    // 🌟 第一時間立即啟動時鐘，絕不卡「初始化中」
+    // 立即啟動時鐘（零阻塞）
     function updateClock() {
       const el = document.getElementById('clock-display');
       if (!el) return;
@@ -486,7 +485,6 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // 🌟 全域防呆控制：確保按鈕點擊 100% 有反應
     window.openLoginModal = function() {
       document.getElementById('modal-login')?.classList.remove('hidden');
     };
@@ -499,10 +497,11 @@
       document.getElementById('scan-code-input')?.focus();
     };
 
-    // 🌟 初始化 Supabase (包覆在安全檢查中)
+    // 全域變數
     const SUPABASE_URL = "https://othgvewffvkkafbezejy.supabase.co";
     const SUPABASE_KEY = "sb_publishable_ZtVYBHHxANOqLhi-l-sAFQ_ojUhO2dX";
     let db = null;
+
     try {
       if (window.supabase && window.supabase.createClient) {
         db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -592,9 +591,7 @@
       if (tabId === 'print-center') onReportTypeChange();
     };
 
-    // =============================================================
-    // 排班管理邏輯
-    // =============================================================
+    // 排班管理
     window.openBatchScheduleModal = async function() {
       if (staffList.length === 0 && db) {
         const { data } = await db.from('users').select('*');
@@ -692,7 +689,7 @@
       let diff = (eH * 60 + eM) - (sH * 60 + sM); if (diff < 0) diff += 1440;
       const hrs = Math.round((diff / 60) * 10) / 10;
       const valEl = document.getElementById('sch-hours-val'), dispEl = document.getElementById('sch-hours-display');
-      if (valEl) valEl.value = hrs;
+      if (valEl) valEl.value = hrs; 
       if (dispEl) dispEl.textContent = `${hrs} 小時`;
     };
     window.onWorkerSelectChange = function() { autoCalcHours(); };
@@ -773,9 +770,7 @@
     }
     window.deleteSchedule = async function(id) { if (!confirm("確定刪除此排班？") || !db) return; await db.from('schedules').delete().eq('id', id); loadSchedules(); };
 
-    // =============================================================
-    // 課堂點名簿
-    // =============================================================
+    // 課堂點名
     window.initRollCallTab = async function() {
       const p = document.getElementById('rollcall-date-picker');
       if (p) p.value = new Date().toISOString().split('T')[0];
@@ -816,9 +811,7 @@
     };
     window.batchSetAll = function(f, v) { activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); };
 
-    // =============================================================
-    // 人員名冊管理
-    // =============================================================
+    // 人員名冊
     async function loadUsers() {
       if (!db) return;
       const { data } = await db.from('users').select('*').order('id');
@@ -1097,478 +1090,25 @@
       loadUsers();
     };
 
-    // =============================================================
-    // 個別輔導紀錄
-    // =============================================================
-    async function loadCounseling() {
-      if (!db) return;
-      if (allUsers.length === 0) {
-        const { data: uData } = await db.from('users').select('*');
-        if (uData) allUsers = uData;
-      }
-      const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生'));
-      const sSel = document.getElementById('counsel-student-select');
-      if (sSel) {
-        sSel.innerHTML = `<option value="">請選擇學童...</option>` +
-          students.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-      }
-
-      const staff = allUsers.filter(u => u.id.includes('M') || u.id.includes('T') || u.role_type !== '學生');
-      const tSel = document.getElementById('counsel-teacher-select');
-      if (tSel) {
-        tSel.innerHTML = `<option value="">請選擇輔導老師...</option>` +
-          staff.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-      }
-
-      const fSel = document.getElementById('counsel-filter-student');
-      if (fSel) {
-        fSel.innerHTML = `<option value="">全部學童</option>` +
-          students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-      }
-
-      const { data } = await db.from('counseling_logs').select('*').order('created_at', { ascending: false });
-      rawCounselingList = data || [];
-      renderCounselingTable(rawCounselingList);
-      updateCounselingStats(rawCounselingList);
-    }
-
-    window.toggleCounselCategory = function(catName) {
-      const idx = currentCounselingTags.indexOf(catName);
-      if (idx > -1) currentCounselingTags.splice(idx, 1); else currentCounselingTags.push(catName);
-      updateCounselCategoryUI();
-      switchCounselTags();
-    };
-    function updateCounselCategoryUI() {
-      const catInput = document.getElementById('form-counsel-category');
-      if (catInput) catInput.value = currentCounselingTags.join('、');
-      const box = document.getElementById('selected-counsel-category-preview');
-      if (box) {
-        box.innerHTML = currentCounselingTags.length === 0 ? `<span class="text-xs text-slate-400 italic">請至少勾選一個輔導向度</span>` : currentCounselingTags.map((t, i) => `<span class="px-2 py-0.5 rounded text-[11px] font-black ${i===0?'bg-indigo-600 text-white':'bg-slate-200 text-slate-700'}">${i===0?'⭐主: ':''}${t}</span>`).join(' ');
-      }
-      document.querySelectorAll('#counsel-category-container button').forEach(btn => {
-        const txt = btn.textContent.replace('＋ ', '').replace('✓ ', '').replace(' (優先)', '').trim();
-        if (currentCounselingTags.includes(txt)) {
-          const isP = currentCounselingTags[0] === txt;
-          btn.className = `px-3 py-1.5 rounded-xl text-xs font-black transition ${isP ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700 border border-indigo-300'}`;
-          btn.innerHTML = `✓ ${txt}${isP ? ' (優先)' : ''}`;
-        } else {
-          btn.className = `px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold`;
-          btn.innerHTML = `＋ ${txt}`;
-        }
-      });
-    }
-
-    function switchCounselTags() {
-      const primaryCat = currentCounselingTags[0] || "課業輔導";
-      const tags = counselTagsDict[primaryCat] || counselTagsDict["課業輔導"];
-      const box = document.getElementById('counsel-quick-tags');
-      if (box) {
-        box.innerHTML = tags.map(t => `<button type="button" onclick="appendCounselTag('${t}')" class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-rose-50 hover:border-rose-400 text-slate-700 rounded-lg text-xs font-bold transition cursor-pointer">＋ ${t}</button>`).join('');
-      }
-    }
-
-    window.appendCounselTag = function(t) {
-      const ta = document.getElementById('counsel-content');
-      if (ta) ta.value = ta.value ? ta.value + "、" + t : t;
-    };
-
-    function renderCounselingTable(list) {
-      const tbody = document.getElementById('counseling-list');
-      if (!tbody) return;
-      tbody.innerHTML = list.length === 0 ? `<tr><td colspan="8" class="py-6 text-center text-slate-400">目前無個別輔導紀錄</td></tr>` :
-        list.map(c => `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-3 font-mono text-xs">${c.created_at ? c.created_at.split('T')[0] : '-'}</td>
-            <td class="py-3 px-3 font-bold">${c.student_name} <span class="text-[10px] font-mono text-slate-400">(${c.student_id})</span></td>
-            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700">${c.category || '課業輔導'}</span></td>
-            <td class="py-3 px-3 font-bold text-slate-700">${c.teacher_name}</td>
-            <td class="py-3 px-3 font-mono font-bold text-indigo-700">${c.duration || 30} 分鐘</td>
-            <td class="py-3 px-3 text-xs text-slate-700 max-w-xs">${c.content}</td>
-            <td class="py-3 px-3 text-xs text-slate-500 max-w-xs">${c.follow_up || '無'}</td>
-            <td class="py-3 px-3 text-center"><button type="button" onclick="deleteCounseling(${c.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs cursor-pointer">刪除</button></td>
-          </tr>`).join('');
-    }
-
-    function updateCounselingStats(list) {
-      let totalMins = 0;
-      const stuSet = new Set();
-      list.forEach(c => {
-        totalMins += Number(c.duration || 30);
-        stuSet.add(c.student_id);
-      });
-      const sCount = document.getElementById('cs-stat-count');
-      const sMins = document.getElementById('cs-stat-mins');
-      const sStu = document.getElementById('cs-stat-students');
-      const sFollow = document.getElementById('cs-stat-followup');
-      if (sCount) sCount.textContent = `${list.length} 次`;
-      if (sMins) sMins.textContent = `${totalMins} 分鐘`;
-      if (sStu) sStu.textContent = `${stuSet.size} 位`;
-      if (sFollow) sFollow.textContent = `${list.filter(x => x.follow_up && x.follow_up.includes('向牧者報告')).length} 案`;
-    }
-
-    window.filterCounselingList = function() {
-      const sId = document.getElementById('counsel-filter-student')?.value || '';
-      const cat = document.getElementById('counsel-filter-category')?.value || '';
-      const filtered = rawCounselingList.filter(c => (!sId || c.student_id === sId) && (!cat || (c.category && c.category.includes(cat))));
-      renderCounselingTable(filtered);
-    };
-
-    window.openAddCounselingModal = function() {
-      document.getElementById('counsel-edit-id').value = "";
-      document.getElementById('counsel-date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('counsel-content').value = "";
-      document.getElementById('counsel-followup-extra').value = "";
-      document.querySelectorAll('.followup-checkbox').forEach(cb => cb.checked = false);
-      currentCounselingTags = ["課業輔導"];
-      updateCounselCategoryUI();
-      switchCounselTags();
-      document.getElementById('modal-counseling-add')?.classList.remove('hidden');
-    };
-    window.closeAddCounselingModal = function() { document.getElementById('modal-counseling-add')?.classList.add('hidden'); };
-
-    window.handleCounselingSubmit = async function(e) {
+    // 登入處理
+    window.handleLoginSubmit = async function(e) {
       e.preventDefault();
       if (!db) { alert("尚未連線至資料庫！"); return; }
-      if (currentCounselingTags.length === 0) { alert("請至少勾選一個輔導向度！"); return; }
-      
-      const checkboxes = document.querySelectorAll('.followup-checkbox:checked');
-      const actions = Array.from(checkboxes).map(cb => cb.value);
-      const extra = document.getElementById('counsel-followup-extra').value.trim();
-      const combinedFollowup = [...actions, ...(extra ? [extra] : [])].join('、');
-
-      const sSel = document.getElementById('counsel-student-select');
-      const tSel = document.getElementById('counsel-teacher-select');
-      const payload = {
-        student_id: sSel.value,
-        student_name: sSel.selectedOptions[0]?.getAttribute('data-name') || '',
-        teacher_id: tSel.value,
-        teacher_name: tSel.selectedOptions[0]?.getAttribute('data-name') || '',
-        created_at: document.getElementById('counsel-date').value,
-        category: currentCounselingTags.join('、'),
-        duration: parseInt(document.getElementById('counsel-duration').value) || 30,
-        content: document.getElementById('counsel-content').value.trim(),
-        follow_up: combinedFollowup
-      };
-
-      const { error } = await db.from('counseling_logs').insert([payload]);
-      if (error) { alert("儲存失敗：" + error.message); return; }
-      alert("✅ 輔導紀錄已成功儲存！");
-      closeAddCounselingModal(); loadCounseling();
-    };
-    window.deleteCounseling = async function(id) { if (!confirm("確定刪除此筆輔導紀錄？")) return; await db.from('counseling_logs').delete().eq('id', id); loadCounseling(); };
-
-    // =============================================================
-    // 家長留言板
-    // =============================================================
-    async function loadMessages() {
-      if (!db) return;
-      const { data } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
-      const mList = document.getElementById('messages-list');
-      if (mList) {
-        mList.innerHTML = (data||[]).map(m => `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 text-xs">${new Date(m.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${m.student_name}</td><td class="py-2.5 px-3 text-xs">${m.parent_message}</td><td class="py-2.5 px-3 text-xs">${m.reply_content||'未回覆'}</td><td class="py-2.5 px-3 text-center"><button type="button" onclick="replyParentMsg(${m.id})" class="text-indigo-600 font-bold text-xs cursor-pointer">回覆</button></td></tr>`).join('');
-      }
-    }
-    window.replyParentMsg = async function(id) {
-      if (!db) return;
-      const txt = prompt("回覆內容：");
-      if (!txt) return;
-      await db.from('parent_messages').update({ reply_content: txt }).eq('id', id);
-      loadMessages();
-    };
-
-    // =============================================================
-    // 舊資料 CSV 智慧匯入精靈
-    // =============================================================
-    let parsedCsvHeaders = []; let parsedCsvRows = [];
-    window.handleCsvFileUpload = function(e) {
-      const f = e.target.files[0]; if (!f) return;
-      const r = new FileReader(); r.onload = (evt) => { document.getElementById('csv-raw-textarea').value = evt.target.result; parseCsvContent(); };
-      r.readAsText(f, 'UTF-8');
-    };
-    window.parseCsvContent = function() {
-      const raw = document.getElementById('csv-raw-textarea')?.value.trim(); if (!raw) { alert("請先貼上內容！"); return; }
-      const lines = raw.split(/\r\n|\n/); const delim = lines[0].includes('\t') ? '\t' : ',';
-      parsedCsvHeaders = lines[0].split(delim).map(h => h.trim().replace(/^["']|["']$/g, ''));
-      parsedCsvRows = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim()) {
-          const rowRegex = /(?:,|\t)(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-          parsedCsvRows.push(lines[i].split(rowRegex).map(c => c.trim().replace(/^["']|["']$/g, '').replace(/^"+\vert{}"+$/g, '')));
-        }
-      }
-      document.getElementById('csv-mapping-section')?.classList.remove('hidden');
-      const countEl = document.getElementById('csv-preview-count');
-      if (countEl) countEl.textContent = `共解析出 ${parsedCsvRows.length} 筆資料 (偵測到 ${parsedCsvHeaders.length} 個欄位)`;
-      
-      const targetFields = [
-        { key: 'id', label: '學號 / 編號 (id) *' },
-        { key: 'name', label: '姓名 (name) *' },
-        { key: 'gender', label: '性別 (gender)' },
-        { key: 'birth', label: '出生日期 (birth)' },
-        { key: 'school', label: '學校 (school)' },
-        { key: 'grade', label: '年級 (grade)' },
-        { key: 'phone', label: '電話 (phone)' },
-        { key: 'id_card', label: '身分證字號 (id_card)' },
-        { key: 'parent_name', label: '家長姓名 (parent_name)' },
-        { key: 'parent_relation', label: '家長關係 (parent_relation)' },
-        { key: 'parent_phone', label: '家長電話 (parent_phone)' },
-        { key: 'address', label: '地址 (address)' },
-        { key: 'family_status', label: '家庭狀況 (family_status)' },
-        { key: 'health_notes', label: '健康備註 (health_notes)' },
-        { key: 'status', label: '狀態 (status)' },
-        { key: 'points', label: '點數 (points)' }
-      ];
-
-      const grid = document.getElementById('mapping-dropdowns-grid');
-      if (grid) {
-        grid.innerHTML = targetFields.map(tf => {
-          const matchIdx = parsedCsvHeaders.findIndex(h => h.toLowerCase().includes(tf.key.toLowerCase()));
-          return `
-            <div class="bg-white p-3 rounded-xl border space-y-1"><label class="block text-xs font-bold text-slate-700">${tf.label}</label>
-            <select data-target-key="${tf.key}" class="csv-mapping-select w-full px-3 py-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-slate-800">
-            <option value="">-- 略過此欄位 --</option>${parsedCsvHeaders.map((h, hIdx) => `<option value="${hIdx}" ${hIdx === matchIdx ? 'selected' : ''}>${h} (欄 ${hIdx+1})</option>`).join('')}</select></div>`;
-        }).join('');
-      }
-    };
-
-    window.executeCsvImport = async function() {
-      if (!db) { alert("尚未連線至資料庫！"); return; }
-      const selects = document.querySelectorAll('.csv-mapping-select'); const mapping = {};
-      selects.forEach(s => { if (s.value !== "") mapping[s.getAttribute('data-target-key')] = parseInt(s.value, 10); });
-      if (mapping.id === undefined || mapping.name === undefined) { alert("⚠️ 必須對應「學號」與「姓名」！"); return; }
-      if (!confirm(`確定要將 ${parsedCsvRows.length} 筆資料匯入資料庫嗎？`)) return;
-
-      let successCount = 0;
-      for (const row of parsedCsvRows) {
-        const uid = mapping.id !== undefined ? row[mapping.id]?.trim().toUpperCase() : null;
-        if (!uid) continue;
-
-        const payload = {
-          id: uid,
-          name: mapping.name !== undefined ? row[mapping.name] : '未命名',
-          gender: mapping.gender !== undefined ? row[mapping.gender] : '',
-          birth: mapping.birth !== undefined && row[mapping.birth] ? row[mapping.birth] : null,
-          school: mapping.school !== undefined ? row[mapping.school] : '',
-          grade: mapping.grade !== undefined ? row[mapping.grade] : '',
-          phone: mapping.phone !== undefined ? row[mapping.phone] : '',
-          id_card: mapping.id_card !== undefined ? row[mapping.id_card] : '',
-          parent_name: mapping.parent_name !== undefined ? row[mapping.parent_name] : '',
-          parent_relation: mapping.parent_relation !== undefined ? row[mapping.parent_relation] : '',
-          parent_phone: mapping.parent_phone !== undefined ? row[mapping.parent_phone] : '',
-          address: mapping.address !== undefined ? row[mapping.address] : '',
-          family_status: mapping.family_status !== undefined ? row[mapping.family_status] : '',
-          health_notes: mapping.health_notes !== undefined ? row[mapping.health_notes] : '',
-          status: mapping.status !== undefined && row[mapping.status] ? row[mapping.status] : '在班',
-          points: mapping.points !== undefined && !isNaN(parseInt(row[mapping.points])) ? parseInt(row[mapping.points]) : 0
-        };
-
-        const { error } = await db.from('users').upsert([payload]);
-        if (!error) successCount++;
-      }
-      alert(`✅ 成功匯入 ${successCount} 筆學員完整資料！`); loadUsers(); switchTab('students');
-    };
-
-    // =============================================================
-    // 列印報表中心
-    // =============================================================
-    window.onReportTypeChange = function() {
-      const t = document.getElementById('print-report-type')?.value;
-      const classFilter = document.getElementById('print-class-filter');
-      const monthFilter = document.getElementById('print-month-filter');
-      if (classFilter) classFilter.classList.toggle('hidden', t !== 'month_rollcall');
-      if (monthFilter) monthFilter.classList.toggle('hidden', t === 'roster' || t === 'qrcode');
-      renderSelectedReport();
-    };
-
-    function isJuniorHighStudent(stu) {
-      const g = (stu.grade || '').trim(), s = (stu.school || '').trim();
-      return g.includes('七') || g.includes('八') || g.includes('九') || g.includes('7') || g.includes('8') || g.includes('9') || g.includes('國一') || g.includes('國二') || g.includes('國三') || s.includes('國中');
-    }
-
-    window.renderSelectedReport = async function() {
-      if (!db) return;
-      const type = document.getElementById('print-report-type')?.value || 'month_rollcall';
-      const targetMonth = document.getElementById('print-month-filter')?.value || '2026-09';
-      const classOption = document.getElementById('print-class-filter')?.value || 'elementary';
-      const container = document.getElementById('print-paper-content');
-      if (!container) return;
-
-      if (allUsers.length === 0) {
-        const { data } = await db.from('users').select('*').order('id');
-        if (data) allUsers = data;
-      }
-      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
-
-      if (type === 'month_rollcall') {
-        const [y, m] = targetMonth.split('-').map(Number);
-        const rocY = y - 1911;
-        const daysInM = new Date(y, m, 0).getDate();
-        const schoolDays = [];
-        for (let d = 1; d <= daysInM; d++) {
-          const dt = new Date(y, m - 1, d);
-          if (dt.getDay() >= 1 && dt.getDay() <= 5) schoolDays.push({ day: d, dateStr: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` });
-        }
-
-        const { data: mLogs } = await db.from('check_in_logs').select('*')
-          .gte('check_time', `${targetMonth}-01T00:00:00.000Z`)
-          .lte('check_time', `${targetMonth}-${daysInM}T23:59:59.999Z`);
-
-        const map = {};
-        (mLogs || []).forEach(l => {
-          if (!map[l.target_id]) map[l.target_id] = {};
-          map[l.target_id][new Date(l.check_time).toLocaleDateString('en-CA')] = true;
-        });
-
-        const elem = activeStudents.filter(s => !isJuniorHighStudent(s));
-        const jun = activeStudents.filter(s => isJuniorHighStudent(s));
-
-        const renderTbl = (title, list) => `
-          <div class="space-y-3">
-            <div class="text-center border-b-2 border-slate-900 pb-2">
-              <h1 class="text-xl font-black font-serif">社團法人台灣基督教社會關懷協會 夢想加油站</h1>
-              <h2 class="text-base font-black">中華民國 ${rocY} 年 ${m} 月 學生出勤點名總表</h2>
-              <div class="flex justify-between text-xs font-bold pt-1">
-                <span>班級：大雅課後陪讀班（${title}）</span>
-                <span>應到學員：${list.length} 位</span>
-                <span>應上課日：${schoolDays.length} 天</span>
-              </div>
-            </div>
-            <table class="w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
-              <thead>
-                <tr class="bg-slate-100 font-bold border-b-2 border-slate-900">
-                  <th class="border p-1 w-7">序</th>
-                  <th class="border p-1 w-20">學號</th>
-                  <th class="border p-1 w-16">姓名</th>
-                  ${schoolDays.map(sd => `<th class="border p-0.5">${sd.day}</th>`).join('')}
-                  <th class="border p-1 w-12">出席率</th>
-                  <th class="border p-1 w-14">簽核</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${list.map((s, i) => {
-                  let p = 0;
-                  const days = schoolDays.map(sd => {
-                    const ok = map[s.id]?.[sd.dateStr];
-                    if (ok) p++;
-                    return `<td class="border p-0.5 ${ok ? 'text-emerald-700 font-black' : 'text-rose-600 font-bold'}">${ok ? '✔' : '曠'}</td>`;
-                  }).join('');
-                  const rate = schoolDays.length > 0 ? Math.round((p / schoolDays.length) * 100) : 0;
-                  return `
-                    <tr>
-                      <td class="border p-1">${i + 1}</td>
-                      <td class="border p-1 font-mono">${s.id}</td>
-                      <td class="border p-1 font-bold">${s.name}</td>${days}
-                      <td class="border p-1 font-bold">${rate}%</td>
-                      <td class="border p-1"></td>
-                    </tr>`;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>`;
-
-        container.innerHTML = classOption === 'elementary' ? renderTbl("國小班", elem) :
-                              classOption === 'junior' ? renderTbl("國中班", jun) :
-                              renderTbl("國小班", elem) + `<div class="print-page-break pt-8"></div>` + renderTbl("國中班", jun);
-      }
-      else if (type === 'qrcode') {
-        container.innerHTML = `
-          <div class="space-y-4">
-            <div class="text-center border-b pb-2">
-              <h2 class="text-lg font-black">M+ 大雅教會 課輔班 學生識別 QR Code 裁切名片卡</h2>
-            </div>
-            <div id="qrcode-cards-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-          </div>`;
-        const grid = document.getElementById('qrcode-cards-grid');
-        if (grid) {
-          grid.innerHTML = activeStudents.map((s, idx) => `
-            <div class="border-2 border-dashed border-slate-300 p-4 rounded-2xl flex items-center space-x-3 bg-white">
-              <div id="qr-box-${idx}" class="shrink-0 w-24 h-24 bg-slate-50 border p-1 rounded-xl flex items-center justify-center"></div>
-              <div class="min-w-0 flex-1">
-                <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">M+ 大雅課輔</span>
-                <h3 class="text-base font-black text-slate-900 mt-1 truncate">${s.name}</h3>
-                <p class="text-xs font-mono font-bold text-indigo-700 mt-0.5">${s.id}</p>
-              </div>
-            </div>
-          `).join('');
-          activeStudents.forEach((s, idx) => {
-            const el = document.getElementById(`qr-box-${idx}`);
-            if (el && window.QRCode) {
-              new QRCode(el, { text: s.id, width: 88, height: 88, correctLevel: QRCode.CorrectLevel.M });
-            }
-          });
-        }
-      }
-      else if (type === 'rollcall') {
-        container.innerHTML = `
-          <div class="space-y-3">
-            <div class="text-center border-b-2 border-slate-900 pb-2">
-              <h1 class="text-xl font-black font-serif">M+ 大雅教會 課輔班 現場點名與聯絡簿核章簽核表</h1>
-            </div>
-            <table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
-              <thead><tr class="bg-slate-100 font-bold border-b-2 border-slate-900"><th class="border p-2">序</th><th class="border p-2">學號</th><th class="border p-2">姓名</th><th class="border p-2">出席</th><th class="border p-2">作業完成</th><th class="border p-2">聯絡簿核章</th><th class="border p-2">家長簽名</th></tr></thead>
-              <tbody>
-                ${activeStudents.map((s, i) => `
-                  <tr><td class="border p-2">${i+1}</td><td class="border p-2 font-mono">${s.id}</td><td class="border p-2 font-bold">${s.name}</td><td class="border p-2">□ 到 □ 假</td><td class="border p-2">□ 完 □ 未</td><td class="border p-2">□ 已 □ 缺</td><td class="border p-2"></td></tr>`).join('')}
-              </tbody>
-            </table>
-          </div>`;
-      }
-      else if (type === 'workhours') {
-        const { data: monthSchedules } = await db.from('schedules').select('*').gte('date', `${targetMonth}-01`).lte('date', `${targetMonth}-31`);
-        const shifts = monthSchedules || [];
-        const summary = {};
-        shifts.forEach(s => {
-          if (!summary[s.worker_id]) summary[s.worker_id] = { id: s.worker_id, name: s.worker_name, hours: 0, shifts: [] };
-          summary[s.worker_id].hours += Number(s.hours || 0);
-          summary[s.worker_id].shifts.push(s);
-        });
-        const workers = Object.values(summary);
-        container.innerHTML = `
-          <div class="space-y-4">
-            <div class="text-center border-b-2 border-slate-900 pb-2"><h1 class="text-xl font-black font-serif">教職員與工讀同工每月工時領據明細表</h1></div>
-            <table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
-              <thead><tr class="bg-slate-100 font-bold border-b border-slate-900"><th class="border p-2">編號</th><th class="border p-2">姓名</th><th class="border p-2">班次</th><th class="border p-2">總工時</th><th class="border p-2">預估薪資($190/h)</th><th class="border p-2">簽名</th></tr></thead>
-              <tbody>
-                ${workers.map(w => `<tr><td class="border p-2 font-mono">${w.id}</td><td class="border p-2 font-bold">${w.name}</td><td class="border p-2">${w.shifts.length}</td><td class="border p-2 font-mono">${w.hours}h</td><td class="border p-2 font-mono font-black">$${w.hours*190}</td><td class="border p-2"></td></tr>`).join('')}
-              </tbody>
-            </table>
-          </div>`;
-      }
-      else if (type === 'roster') {
-        container.innerHTML = `
-          <div class="space-y-3">
-            <div class="text-center border-b-2 border-slate-900 pb-2"><h1 class="text-xl font-black font-serif">M+ 大雅教會 課輔班 全校學員通訊名冊</h1></div>
-            <table class="w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
-              <thead><tr class="bg-slate-100 font-bold border-b-2 border-slate-900"><th class="border p-1">學號</th><th class="border p-1">姓名</th><th class="border p-1">學校/年級</th><th class="border p-1">家長</th><th class="border p-1">關係</th><th class="border p-1">電話</th><th class="border p-1">地址</th></tr></thead>
-              <tbody>
-                ${activeStudents.map(s => `<tr><td class="border p-1 font-mono">${s.id}</td><td class="border p-1 font-bold">${s.name}</td><td class="border p-1">${s.school\vert{}\vert{}''}${s.grade||''}</td><td class="border p-1">${s.parent_name||'-'}</td><td class="border p-1">${s.parent_relation||'-'}</td><td class="border p-1 font-mono">${s.parent_phone||s.phone||'-'}</td><td class="border p-1 text-left">${s.address||'-'}</td></tr>`).join('')}
-              </tbody>
-            </table>
-          </div>`;
-      }
-    };
-
-    // ============================================================= 
-    // 同工登入處理
-    // ============================================================= 
-    window.handleLoginSubmit = async function(e) { 
-      e.preventDefault(); 
-      if (!db) { alert("尚未連線至資料庫！"); return; }
-      const inputUid = document.getElementById('login-uid').value.trim(); 
-      const inputPwd = document.getElementById('login-pwd').value.trim(); 
+      const r = document.getElementById('login-uid').value.trim();
+      const pwd = document.getElementById('login-pwd').value.trim();
       const errEl = document.getElementById('login-err');
       
-      try { 
+      try {
         const { data, error } = await db.from('users').select('*');
-        if (error || !data || data.length === 0) { 
+        if (error || !data || data.length === 0) {
           if (errEl) { errEl.textContent = "無法讀取名冊資料！"; errEl.classList.remove('hidden'); }
-          return; 
-        } 
+          return;
+        }
         
-        const qLower = inputUid.toLowerCase();
+        const qLower = r.toLowerCase();
         const matched = data.find(u => 
           (u.id && u.id.toLowerCase() === qLower) || 
-          (u.name && u.name.trim() === inputUid)
+          (u.name && u.name.trim() === r)
         );
 
         if (!matched) {
@@ -1576,69 +1116,78 @@
           return;
         }
 
-        currentUser = matched; 
-        localStorage.setItem('mplus_current_user', JSON.stringify(currentUser)); 
-        updateAuthUI(); 
-        closeLoginModal(); 
-        switchTab('schedules'); 
-      } catch (err) { 
-        console.error("登入例外:", err); 
-        alert("登入連線異常。"); 
-      } 
-    }; 
+        const cleanPwd = pwd.replace(/[-\s]/g, '');
+        const userPhone = (matched.phone || '').replace(/[-\s]/g, '');
+        const parentPhone = (matched.parent_phone || '').replace(/[-\s]/g, '');
 
-    window.doLogout = function() { 
-      currentUser = null; 
-      localStorage.removeItem('mplus_current_user'); 
-      updateAuthUI(); 
-      switchTab('checkin'); 
-    }; 
-     
-    function updateAuthUI() { 
-      const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock'); 
-      const unloggedBox = document.getElementById('auth-unlogged'); 
-      const loggedBox = document.getElementById('auth-logged'); 
+        if (userPhone && cleanPwd !== userPhone && cleanPwd !== parentPhone) {
+          if (errEl) { errEl.textContent = "密碼錯誤（密碼為登記的手機號碼）！"; errEl.classList.remove('hidden'); }
+          return;
+        }
 
-      if (currentUser) { 
-        if (unloggedBox) unloggedBox.classList.add('hidden'); 
-        if (loggedBox) { 
-          loggedBox.classList.remove('hidden'); 
-          loggedBox.classList.add('flex'); 
-        } 
+        currentUser = matched;
+        localStorage.setItem('mplus_current_user', JSON.stringify(currentUser));
+        updateAuthUI();
+        closeLoginModal();
+        switchTab('schedules');
+      } catch (err) {
+        console.error("登入例外:", err);
+        alert("登入連線異常！");
+      }
+    };
+
+    window.doLogout = function() {
+      currentUser = null;
+      localStorage.removeItem('mplus_current_user');
+      updateAuthUI();
+      switchTab('checkin');
+    };
+
+    function updateAuthUI() {
+      const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock');
+      const unloggedBox = document.getElementById('auth-unlogged');
+      const loggedBox = document.getElementById('auth-logged');
+
+      if (currentUser) {
+        if (unloggedBox) unloggedBox.classList.add('hidden');
+        if (loggedBox) {
+          loggedBox.classList.remove('hidden');
+          loggedBox.classList.add('flex');
+        }
         const tag = document.getElementById('logged-user-tag');
-        if (tag) tag.textContent = `👤 ${currentUser.name}`; 
-         
-        const isStaffOrTeacher = currentUser.id.includes('M') || currentUser.id.includes('T') || currentUser.role_type !== '學生'; 
-        if (printNav) printNav.classList.toggle('hidden', !isStaffOrTeacher); 
-        if (importNav) importNav.classList.toggle('hidden', !isStaffOrTeacher); 
-         
-        if (dock) { 
-          dock.classList.remove('hidden'); 
-          dock.classList.add('flex'); 
-        } 
-      } else { 
-        if (unloggedBox) unloggedBox.classList.remove('hidden'); 
-        if (loggedBox) { 
-          loggedBox.classList.add('hidden'); 
-          loggedBox.classList.remove('flex'); 
-        } 
-        if (printNav) printNav.classList.add('hidden'); 
-        if (importNav) importNav.classList.add('hidden'); 
-        if (dock) { 
-          dock.classList.add('hidden'); 
-          dock.classList.remove('flex'); 
-        } 
-      } 
-    } 
+        if (tag) tag.textContent = `👤 ${currentUser.name}`;
+        
+        const isStaffOrTeacher = currentUser.id.includes('M') || currentUser.id.includes('T') || currentUser.role_type !== '學生';
+        if (printNav) printNav.classList.toggle('hidden', !isStaffOrTeacher);
+        if (importNav) importNav.classList.toggle('hidden', !isStaffOrTeacher);
+        
+        if (dock) {
+          dock.classList.remove('hidden');
+          dock.classList.add('flex');
+        }
+      } else {
+        if (unloggedBox) unloggedBox.classList.remove('hidden');
+        if (loggedBox) {
+          loggedBox.classList.add('hidden');
+          loggedBox.classList.remove('flex');
+        }
+        if (printNav) printNav.classList.add('hidden');
+        if (importNav) importNav.classList.add('hidden');
+        if (dock) {
+          dock.classList.add('hidden');
+          dock.classList.remove('flex');
+        }
+      }
+    }
 
-    // 初始化啟動
-    document.addEventListener('DOMContentLoaded', () => { 
-      updateClock(); 
-      const saved = localStorage.getItem('mplus_current_user'); 
-      if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} } 
-      updateAuthUI(); 
-      switchTab('checkin'); 
-    }); 
-  </script> 
-</body> 
+    // 系統完全啟動入口 (非阻塞)
+    document.addEventListener('DOMContentLoaded', () => {
+      updateClock();
+      const saved = localStorage.getItem('mplus_current_user');
+      if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
+      updateAuthUI();
+      switchTab('checkin');
+    });
+  </script>
+</body>
 </html>
