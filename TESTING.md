@@ -3,7 +3,7 @@
 ## Safety boundary
 
 - Use an in-memory Supabase client mock or an isolated test project with synthetic-only data. Never point test code at `othgvewffvkkafbezejy`.
-- Add a network guard that rejects every request to `*.supabase.co`; assert the test run makes zero requests to the production host.
+- The offline harness blocks `fetch` and `XMLHttpRequest` and asserts there are no outbound requests; preserve this guard for all new tests.
 - Keep fixtures in memory or under `tests/fixtures/`. Do not import them to any connected database.
 - Use generated placeholder images only. Do not use student or staff photographs, face templates, names, contact details, or notes.
 - `node --test` includes an in-memory app harness for check-in/login/role-gate behavior and static source validation. The harness injects an in-memory Supabase client, rejects `fetch` and `XMLHttpRequest`, and does not load CDNs or connect to Supabase.
@@ -11,6 +11,10 @@
 ## Synthetic records for future mocked UI tests
 
 Create in-memory records with IDs `S-QA-001` and `M-QA-001`, names `Synthetic Student` and `Synthetic Staff`, generic phone/address values, and no real dates or human data. Use an all-zero 128-number descriptor only if a mocked face-matcher test requires the shape. Keep mocked files as generated colored placeholders and do not upload them.
+
+## Target authorization contract
+
+Once staff accounts map to trusted Supabase Auth identities, test server-enforced access with synthetic identities: M can read/create/update/delete all approved domains; T can read/create/update and is denied deletes; P can read and is denied writes. “Other” receives no administrative access until a role is specified. Test kiosk access separately with only its approved minimum fields and writes. Do not infer success from hidden buttons or local storage. Treat reports/print as read under the supplied matrix for now; do not implement a distinct T/P export permission until the owner confirms whether sensitive PII downloads follow that rule.
 
 ## Workflow matrix
 
