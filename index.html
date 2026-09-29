@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 39419)
-Total output lines: 2108
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -639,7 +636,541 @@ Total output lines: 2108
   </div>
 
   <!-- 輔導紀錄 彈窗 -->
-  <div id="modal-counseling-add"…9419 tokens truncated…CallTab() { document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0]; loadRollCallsForDate(); }
+  <div id="modal-counseling-add" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
+      <div class="flex justify-between items-center mb-3.5 border-b pb-3">
+        <h3 id="counsel-modal-title" class="text-base sm:text-lg font-black text-slate-800">新增個別學童輔導紀錄</h3>
+        <button onclick="closeAddCounselingModal()" class="text-slate-400 font-bold text-xl">&times;</button>
+      </div>
+      <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
+        <input type="hidden" id="counsel-edit-id" value="">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div><label class="block font-bold text-slate-600 mb-1">輔導對象 *</label><select id="counsel-student-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div><label class="block font-bold text-slate-600 mb-1">日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">向度</label><select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2 py-2 bg-slate-50 border rounded-xl font-bold text-xs"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
+          <div><label class="block font-bold text-slate-600 mb-1">時長(分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs"></div>
+        </div>
+        <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">快捷狀態點選：</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div><label class="block font-bold text-slate-600 mb-1">晤談描述 *</label><textarea id="counsel-content" rows="3" required class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
+        <div><label class="block font-bold text-slate-600 mb-1">後續追蹤</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>
+        <div class="flex space-x-2.5 pt-3 border-t">
+          <button type="button" onclick="closeAddCounselingModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
+          <button id="counsel-submit-button" type="submit" class="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 登入彈窗 -->
+  <div id="modal-login" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl border">
+      <div class="text-center mb-4"><h3 class="text-lg font-black text-slate-800">同工管理者登入</h3><p class="text-xs text-slate-400">請輸入人員編號或姓名與手機號碼</p></div>
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
+        <div><label class="block text-xs font-bold text-slate-600 mb-1">編號 或 姓名</label><input type="text" id="login-uid" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm font-bold"></div>
+        <div><label class="block text-xs font-bold text-slate-600 mb-1">密碼 (手機號碼)</label><input type="password" id="login-pwd" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm font-bold font-mono"></div>
+        <div id="login-err" class="text-xs font-bold text-rose-600 hidden"></div>
+        <div class="flex space-x-2 pt-2">
+          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">取消</button>
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">確認登入</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 金句彈窗 -->
+  <div id="modal-verse-box" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 text-center shadow-2xl">
+      <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl"><i class="fa-solid fa-circle-check"></i></div>
+      <h3 class="text-xl sm:text-2xl font-black text-slate-900" id="verse-title">簽到成功！</h3>
+      <p class="text-xs text-slate-500 mt-1" id="verse-sub">已登記出勤紀錄</p>
+      <div class="my-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
+        <p class="text-xs font-bold text-amber-800 mb-1">📖 今日屬天祝福：</p>
+        <p class="text-xs sm:text-sm text-amber-950 font-serif leading-relaxed" id="verse-quote"></p>
+      </div>
+      <button onclick="closeVerseModal()" class="w-full py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl">我知道了</button>
+    </div>
+  </div>
+
+  <!-- 核心 JavaScript 程式碼 -->
+  <script>
+    const SUPABASE_URL = "https://othgvewffvkkafbezejy.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_ZtVYBHHxANOqLhi-l-sAFQ_ojUhO2dX";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allUsers = [];
+    let staffList = [];
+    let rawSchedules = [];
+    let activeRollCallList = [];
+    let rawCounselingList = [];
+    let counselingPeople = [];
+    let currentCounselingTags = [];
+    let currentUser = null;
+
+    let currentCalYear = 2026;
+    let currentCalMonth = 9;
+    let activeScheduleView = 'calendar';
+    let verseAutoCloseTimer = null;
+
+    let isFaceModelsLoaded = false;
+    let isFaceDetecting = false;
+    let faceVideoEl = null, faceCanvasEl = null, faceStream = null;
+    let labeledFaceDescriptors = [], faceMatcher = null, lastFaceMatchTime = {};
+    let html5QrScanner = null, isCameraScanning = false, lastScanTime = 0;
+    let snapStream = null;
+    let activeBatchDates = [];
+
+    // 🌟 點選式標籤陣列
+    let currentFamilyTags = [];
+    let currentHealthTags = [];
+
+    const verses = [
+      "「你當剛強壯膽！不要懼怕，也不要驚惶；因為你無論往哪裡去，耶和華你的神必與你同在。」（約書亞記 1:9）",
+      "「應當一無掛慮，只要凡事藉著禱告、祈求，和感謝，將你們所要的告訴神。」（腓立比書 4:6）",
+      "「你的話是我腳前的燈，是我路上的光。」（詩篇 119:105）",
+      "「耶和華是我的牧者，我必不致缺乏。」（詩篇 23:1）",
+      "「教養孩童，使他走當行的道，就是到老他也不偏離。」（箴言 22:6）",
+      "「但那等候耶和華的必重新得力。他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。」（以賽亞書 40:31）"
+    ];
+
+    const counselTagsDict = {
+      "課業輔導": ["專注度良好", "完成度高", "需要一對一指導", "數學理解困難", "容易分心", "排斥寫作業", "字體潦草需重寫", "段考前複習狀態佳"],
+      "情緒行為": ["情緒平穩", "起伏大容易生氣", "與同儕發生衝突", "哭鬧難以安撫", "退縮不說話", "過度興奮坐不住", "願意道歉和好", "需要暫離冷靜"],
+      "家庭關懷": ["家長晚接", "未吃晚餐", "家中有突發變故", "孩子表達想念家人", "衣服單薄需關心", "提供物資協助", "已主動聯繫家長了解"],
+      "品格引導": ["主動協助同儕", "樂意分享", "說粗話需糾正", "說謊行為", "不服從老師規範", "物歸原主", "懂得感恩", "態度敷衍需教導"]
+    };
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock-display').textContent = 
+        now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }) + " " +
+        now.toLocaleTimeString('zh-TW', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function requireTab(tabId) {
+      if (!currentUser) { openLoginModal(); return; }
+      if (tabId === 'counseling' && !['M', 'T', 'P'].includes(counselingAccessRole())) { alert('目前帳號沒有輔導紀錄的查閱權限。'); return; }
+      switchTab(tabId);
+    }
+    function requireStaffPrintTab() {
+      if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
+      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
+      switchTab('print-center');
+    }
+    function requireImportTab() {
+      if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
+      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此匯入工具僅限同工 (M) 查閱！"); return; }
+      switchTab('import');
+    }
+
+    function switchTab(tabId) {
+      if (tabId !== 'checkin') { stopFaceRecognition(); stopCameraScanner(); }
+      ['checkin', 'schedules', 'rollcall', 'students', 'counseling', 'messages', 'print-center', 'import'].forEach(id => {
+        const el = document.getElementById(`tab-${id}`);
+        if (el) el.classList.add('hidden');
+        const nav = document.getElementById(`nav-${id}`);
+        if (nav && id !== 'print' && id !== 'import') nav.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap";
+        const mNav = document.getElementById(`m-nav-${id}`);
+        if (mNav) mNav.className = "flex flex-col items-center py-1 hover:text-white text-slate-400";
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeNav = document.getElementById(tabId === 'print-center' ? 'nav-print' : (tabId === 'import' ? 'nav-import' : `nav-${tabId}`));
+      if (activeNav) activeNav.className = "tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap";
+      const activeMNav = document.getElementById(`m-nav-${tabId}`);
+      if (activeMNav) activeMNav.className = "flex flex-col items-center py-1 text-amber-400 font-black";
+
+      if (tabId === 'checkin') { loadLogs(); setTimeout(() => document.getElementById('scan-code-input').focus(), 150); }
+      if (tabId === 'schedules') loadSchedules();
+      if (tabId === 'rollcall') initRollCallTab();
+      if (tabId === 'students') loadUsers();
+      if (tabId === 'counseling') loadCounseling();
+      if (tabId === 'messages') loadMessages();
+      if (tabId === 'print-center') onReportTypeChange();
+    }
+
+    // =============================================================
+    // 1. 排班管理與動態互動排班
+    // =============================================================
+    async function openBatchScheduleModal() {
+      if (staffList.length === 0) {
+        const { data } = await db.from('users').select('*');
+        if (data) staffList = data.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
+      }
+      document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
+        staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
+      document.getElementById('modal-batch-schedule').classList.remove('hidden');
+      previewBatchDates();
+    }
+    function closeBatchScheduleModal() { document.getElementById('modal-batch-schedule').classList.add('hidden'); }
+
+    function previewBatchDates() {
+      const monthVal = document.getElementById('batch-month').value;
+      if (!monthVal) return;
+      const [y, m] = monthVal.split('-').map(Number);
+      const daysNum = new Date(y, m, 0).getDate();
+      const checkboxes = document.querySelectorAll('#batch-weekdays-box input[type="checkbox"]:checked');
+      const selectedWds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+
+      activeBatchDates = [];
+      const wNames = ['日', '一', '二', '三', '四', '五', '六'];
+      for (let d = 1; d <= daysNum; d++) {
+        const dt = new Date(y, m - 1, d);
+        if (selectedWds.includes(dt.getDay())) {
+          activeBatchDates.push({ date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`, label: `${m}/${d} (${wNames[dt.getDay()]})` });
+        }
+      }
+      renderBatchChips();
+    }
+
+    function renderBatchChips() {
+      const box = document.getElementById('batch-preview-chips');
+      document.getElementById('batch-count-tag').textContent = `${activeBatchDates.length} 天`;
+      if (activeBatchDates.length === 0) { box.innerHTML = `<span class="text-xs text-rose-500 font-bold italic">目前無符合日期</span>`; return; }
+      box.innerHTML = activeBatchDates.map((item, idx) => `
+        <span class="inline-flex items-center bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-2.5 py-1 rounded-xl">
+          ${item.label}<button type="button" onclick="removeBatchDate(${idx})" class="ml-1.5 text-rose-600 hover:text-rose-800 font-black text-sm">&times;</button>
+        </span>`).join('');
+    }
+    function removeBatchDate(idx) { activeBatchDates.splice(idx, 1); renderBatchChips(); }
+
+    async function executeBatchSchedule() {
+      if (activeBatchDates.length === 0) { alert("沒有日期可建立！"); return; }
+      const sel = document.getElementById('batch-worker-select');
+      const workerId = sel.value; const workerName = sel.selectedOptions[0]?.getAttribute('data-name');
+      if (!workerId) { alert("請選擇同工！"); return; }
+      const start = document.getElementById('batch-start-time').value;
+      const end = document.getElementById('batch-end-time').value;
+      const [sH, sM] = start.split(':').map(Number); const [eH, eM] = end.split(':').map(Number);
+      let diff = (eH * 60 + eM) - (sH * 60 + sM); if (diff < 0) diff += 1440;
+      const hours = Math.round((diff / 60) * 10) / 10;
+      const payload = activeBatchDates.map(i => ({ date: i.date, worker_id: workerId, worker_name: workerName, shift: `${start} - ${end}`, hours: hours, job_desc: document.getElementById('batch-job').value.trim() }));
+      await db.from('schedules').insert(payload);
+      alert(`✅ 成功批次建立 ${activeBatchDates.length} 筆排班！`);
+      closeBatchScheduleModal(); loadSchedules();
+    }
+
+    async function loadSchedules() {
+      renderActiveScheduleView();
+      if (staffList.length === 0) {
+        const { data } = await db.from('users').select('*');
+        if (data) {
+          staffList = data.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
+          document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工</option>` + staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+          document.getElementById('sch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` + staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`).join('');
+        }
+      }
+      const { data } = await db.from('schedules').select('*').order('date', { ascending: false });
+      rawSchedules = data || [];
+      renderActiveScheduleView();
+    }
+
+    function autoCalcHours() {
+      const s = document.getElementById('sch-start-time').value, e = document.getElementById('sch-end-time').value;
+      if (!s || !e) return;
+      const [sH, sM] = s.split(':').map(Number), [eH, eM] = e.split(':').map(Number);
+      let diff = (eH * 60 + eM) - (sH * 60 + sM); if (diff < 0) diff += 1440;
+      const hrs = Math.round((diff / 60) * 10) / 10;
+      document.getElementById('sch-hours-val').value = hrs; document.getElementById('sch-hours-display').textContent = `${hrs} 小時`;
+    }
+    function onWorkerSelectChange() { autoCalcHours(); }
+
+    function setScheduleView(viewType) {
+      activeScheduleView = viewType;
+      document.getElementById('btn-view-cal').className = viewType === 'calendar' ? "px-3 py-1.5 rounded-lg bg-white text-indigo-600 font-bold shadow-xs" : "px-3 py-1.5 rounded-lg text-slate-600 font-bold";
+      document.getElementById('btn-view-list').className = viewType === 'list' ? "px-3 py-1.5 rounded-lg bg-white text-indigo-600 font-bold shadow-xs" : "px-3 py-1.5 rounded-lg text-slate-600 font-bold";
+      document.getElementById('schedule-calendar-view').classList.toggle('hidden', viewType !== 'calendar');
+      document.getElementById('schedule-list-view').classList.toggle('hidden', viewType !== 'list');
+      renderActiveScheduleView();
+    }
+
+    function renderActiveScheduleView() {
+      const filterWorker = document.getElementById('schedule-worker-filter')?.value || "";
+      const monthStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}`;
+      const filtered = (rawSchedules || []).filter(s => (!filterWorker || s.worker_id === filterWorker) && s.date && s.date.startsWith(monthStr));
+      let sumHrs = 0, workersSet = new Set();
+      filtered.forEach(s => { sumHrs += Number(s.hours || 0); workersSet.add(s.worker_id); });
+      document.getElementById('total-count-badge').textContent = `${filtered.length} 班`;
+      document.getElementById('total-shift-badge').textContent = `${sumHrs} 小時`;
+      document.getElementById('total-workers-badge').textContent = `${workersSet.size} 人`;
+      document.getElementById('total-wage-badge').textContent = `$${(sumHrs * 190).toLocaleString()}`;
+      if (activeScheduleView === 'calendar') renderCalendarGrid(filtered); else renderSchedulesListTable(filtered);
+    }
+
+    function renderCalendarGrid(monthSchedules = []) {
+      document.getElementById('calendar-month-title').textContent = `${currentCalYear} 年 ${String(currentCalMonth).padStart(2, '0')} 月`;
+      const grid = document.getElementById('calendar-grid'); grid.innerHTML = "";
+      const firstDay = new Date(currentCalYear, currentCalMonth - 1, 1).getDay();
+      const daysNum = new Date(currentCalYear, currentCalMonth, 0).getDate();
+      const byDay = {}; monthSchedules.forEach(s => { const d = parseInt(s.date.split('-')[2], 10); if (!byDay[d]) byDay[d] = []; byDay[d].push(s); });
+      for (let i = 0; i < firstDay; i++) grid.appendChild(Object.assign(document.createElement('div'), { className: "cal-day-cell bg-slate-50/40 p-1.5 opacity-40" }));
+      const todayStr = new Date().toISOString().split('T')[0];
+      for (let d = 1; d <= daysNum; d++) {
+        const dStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isToday = dStr === todayStr;
+        const cell = document.createElement('div');
+        cell.className = `cal-day-cell p-1 sm:p-2 flex flex-col justify-between cursor-pointer ${isToday ? 'bg-amber-50/70 ring-2 ring-inset ring-amber-400' : 'bg-white'}`;
+        const shiftsHtml = (byDay[d] || []).map(s => `<div onclick="event.stopPropagation(); openScheduleModal('edit', ${s.id})" class="text-[9px] font-bold px-1 py-0.5 rounded border bg-amber-100 text-amber-900 truncate">${s.worker_name} (${s.hours}h)</div>`).join('');
+        cell.innerHTML = `<div><div class="flex justify-between items-center mb-1"><span class="font-black font-mono text-[10px] ${isToday?'bg-amber-500 text-white px-1 rounded':''}">${d}</span><button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dStr}')" class="w-4 h-4 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center text-[9px]"><i class="fa-solid fa-plus"></i></button></div><div class="space-y-1 overflow-y-auto max-h-[55px] custom-scroll">${shiftsHtml}</div></div>`;
+        cell.onclick = () => quickAddScheduleOnDate(dStr);
+        grid.appendChild(cell);
+      }
+    }
+    function quickAddScheduleOnDate(dt) { document.getElementById('sch-edit-id').value = ""; document.getElementById('modal-sch-title').textContent = `新增排班 (${dt})`; document.getElementById('sch-date').value = dt; document.getElementById('modal-schedule').classList.remove('hidden'); }
+    function prevMonth() { currentCalMonth--; if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; } renderActiveScheduleView(); }
+    function nextMonth() { currentCalMonth++; if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } renderActiveScheduleView(); }
+    function goToCurrentMonth() { const n = new Date(); currentCalYear = n.getFullYear(); currentCalMonth = n.getMonth() + 1; renderActiveScheduleView(); }
+    function renderSchedulesListTable(list) {
+      document.getElementById('schedules-list').innerHTML = list.length === 0 ? `<tr><td colspan="7" class="py-6 text-center text-slate-400">無紀錄</td></tr>` : list.map(s => `<tr class="hover:bg-slate-50"><td class="py-3 px-3 font-mono font-bold">${s.date}</td><td class="py-3 px-3 font-mono">${s.worker_id}</td><td class="py-3 px-3 font-bold">${s.worker_name}</td><td class="py-3 px-3">${s.shift}</td><td class="py-3 px-3 text-xs text-slate-500">${s.job_desc||''}</td><td class="py-3 px-3 font-bold text-indigo-700">${s.hours}h</td><td class="py-3 px-3 text-center"><button onclick="deleteSchedule(${s.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
+    }
+
+    // =============================================================
+    // 2. AI 臉部辨識核心模組 (嚴謹防誤判 0.48 門檻)
+    // =============================================================
+    async function loadFaceApiModels() {
+      if (isFaceModelsLoaded) return true;
+      try {
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+        isFaceModelsLoaded = true; document.getElementById('face-loading-msg')?.classList.add('hidden'); return true;
+      } catch (e) { return false; }
+    }
+
+    async function buildFaceMatcher() {
+      const faceStatus = document.getElementById('face-status-text');
+      try {
+        const { data: users, error } = await db.from('users').select('*');
+        if (!error && users) allUsers = users;
+      } catch (err) {
+        console.warn("特徵庫同步失敗:", err);
+      }
+
+      labeledFaceDescriptors = [];
+      let enrolledCount = 0;
+
+      (allUsers || []).forEach(u => {
+        let desc = u.face_descriptor;
+        if (typeof desc === 'string') {
+          try { 
+            desc = JSON.parse(desc); 
+            if (typeof desc === 'string') desc = JSON.parse(desc);
+          } catch(e) { desc = null; }
+        }
+
+        if (Array.isArray(desc) && desc.length === 128) {
+          const descriptor = new Float32Array(desc);
+          labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(u.id, [descriptor]));
+          enrolledCount++;
+        }
+      });
+
+      if (labeledFaceDescriptors.length > 0) {
+        faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.48);
+        if (faceStatus) {
+          faceStatus.className = "text-emerald-300 font-bold";
+          faceStatus.textContent = `✅ 已載入 ${enrolledCount} 位特徵，請正面直視鏡頭`;
+        }
+      } else {
+        faceMatcher = null;
+        if (faceStatus) {
+          faceStatus.className = "text-amber-300 font-bold";
+          faceStatus.textContent = "⚠️ 資料庫尚無有效特徵，請先拍照建檔！";
+        }
+      }
+    }
+
+    async function toggleFaceRecognition() { if (isFaceDetecting) stopFaceRecognition(); else startFaceRecognition(); }
+    async function startFaceRecognition() {
+      if (isCameraScanning) stopCameraScanner();
+      document.getElementById('face-recognition-container').classList.remove('hidden');
+      document.getElementById('btn-face-text').textContent = "關閉相機";
+      faceVideoEl = document.getElementById('face-video'); faceCanvasEl = document.getElementById('face-canvas');
+      if (await loadFaceApiModels()) await buildFaceMatcher();
+      try {
+        faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 }, audio: false });
+        faceVideoEl.srcObject = faceStream; isFaceDetecting = true;
+        faceVideoEl.onloadedmetadata = () => { faceVideoEl.play(); startFaceDetectionLoop(); };
+      } catch (e) { stopFaceRecognition(); }
+    }
+    function stopFaceRecognition() {
+      isFaceDetecting = false; if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
+      if (faceVideoEl) faceVideoEl.srcObject = null; document.getElementById('face-recognition-container').classList.add('hidden'); document.getElementById('btn-face-text').textContent = "👤 開啟人臉相機";
+    }
+
+    async function startFaceDetectionLoop() {
+      if (!isFaceDetecting || !faceVideoEl) return;
+      const size = { width: faceVideoEl.videoWidth, height: faceVideoEl.videoHeight };
+      faceapi.matchDimensions(faceCanvasEl, size);
+
+      const timer = setInterval(async () => {
+        if (!isFaceDetecting) { clearInterval(timer); return; }
+        try {
+          const dets = await faceapi.detectAllFaces(faceVideoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.55 })).withFaceLandmarks(true).withFaceDescriptors();
+          const resized = faceapi.resizeResults(dets, size);
+          const ctx = faceCanvasEl.getContext('2d'); ctx.clearRect(0, 0, faceCanvasEl.width, faceCanvasEl.height);
+
+          resized.forEach(d => {
+            const box = d.detection.box;
+            let name = "比對中...";
+            let color = "#38bdf8";
+
+            if (faceMatcher) {
+              const bestMatch = faceMatcher.findBestMatch(d.descriptor);
+              if (bestMatch.label !== 'unknown' && bestMatch.distance <= 0.48) {
+                const u = allUsers.find(x => x.id === bestMatch.label);
+                const confidence = Math.round((1 - bestMatch.distance) * 100);
+                name = u ? `${u.name} (${confidence}%)` : bestMatch.label;
+                color = "#10b981";
+
+                const now = Date.now();
+                if (!lastFaceMatchTime[bestMatch.label] || now - lastFaceMatchTime[bestMatch.label] > 8000) {
+                  lastFaceMatchTime[bestMatch.label] = now;
+                  if (navigator.vibrate) navigator.vibrate(100);
+                  processScanCode(bestMatch.label);
+                }
+              } else {
+                name = "未比對出特徵 (請對準或重採)";
+                color = "#f59e0b";
+              }
+            }
+            ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.fillStyle = color; ctx.font = "bold 13px sans-serif"; ctx.fillText(name, box.x + 4, box.y > 20 ? box.y - 6 : box.y + 16);
+          });
+        } catch (e) {}
+      }, 250);
+    }
+
+    // =============================================================
+    // 3. 現場拍照與 QR 掃描
+    // =============================================================
+    async function startCameraSnapForFace() {
+      await loadFaceApiModels(); document.getElementById('camera-snap-box').classList.remove('hidden');
+      try { snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 480, height: 480 } }); document.getElementById('snap-video').srcObject = snapStream; } catch (e) { stopCameraSnap(); }
+    }
+    function stopCameraSnap() { if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; } document.getElementById('camera-snap-box').classList.add('hidden'); }
+    async function captureAndExtractFace() {
+      const v = document.getElementById('snap-video'), tip = document.getElementById('face-extract-tip');
+      const uid = document.getElementById('form-id').value.trim().toUpperCase() || 'TEMP_' + Date.now();
+      tip.textContent = "AI 分析並上傳中...";
+      const canvas = document.createElement('canvas'); canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+      canvas.getContext('2d').drawImage(v, 0, 0);
+      const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })).withFaceLandmarks(true).withFaceDescriptor();
+      if (!det) { alert("未偵測到人臉！"); tip.textContent = "失敗"; return; }
+      document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor));
+      document.getElementById('face-enrolled-badge').classList.remove('hidden');
+      canvas.toBlob(async (blob) => {
+        const path = `students/${uid}_${Date.now()}.jpg`;
+        const { error } = await db.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+        if (!error) {
+          const { data } = db.storage.from('avatars').getPublicUrl(path);
+          document.getElementById('preview-avatar').src = data.publicUrl; document.getElementById('form-avatar').value = data.publicUrl;
+          tip.textContent = "✅ 建檔成功！";
+        }
+        stopCameraSnap();
+      }, 'image/jpeg', 0.85);
+    }
+    async function autoExtractFaceFromUrl() {
+      const url = document.getElementById('form-avatar').value.trim(); if (!url) return;
+      document.getElementById('preview-avatar').src = url; await loadFaceApiModels();
+      try {
+        const img = await faceapi.fetchImage(url);
+        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceDescriptor();
+        if (det) { document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor)); document.getElementById('face-enrolled-badge').classList.remove('hidden'); }
+      } catch (e) {}
+    }
+
+    function toggleCameraScanner() { if (isCameraScanning) stopCameraScanner(); else startCameraScanner(); }
+    function startCameraScanner() {
+      if (isFaceDetecting) stopFaceRecognition();
+      document.getElementById('camera-scanner-container').classList.remove('hidden');
+      document.getElementById('btn-cam-text').textContent = "關閉";
+      html5QrScanner = new Html5Qrcode("qr-reader");
+      html5QrScanner.start({ facingMode: "environment" }, { fps: 12, qrbox: 220 }, (txt) => {
+        if (Date.now() - lastScanTime < 3000) return; lastScanTime = Date.now(); processScanCode(txt.trim());
+      }, () => {}).then(() => { isCameraScanning = true; }).catch(() => { stopCameraScanner(); });
+    }
+    function stopCameraScanner() {
+      if (html5QrScanner) {
+        html5QrScanner.stop().then(() => { html5QrScanner.clear(); html5QrScanner = null; isCameraScanning = false; document.getElementById('camera-scanner-container').classList.add('hidden'); document.getElementById('btn-cam-text').textContent = "📷 QR 掃描"; }).catch(() => { isCameraScanning = false; });
+      } else { isCameraScanning = false; document.getElementById('camera-scanner-container').classList.add('hidden'); }
+    }
+
+    // =============================================================
+    // 智慧打卡核心 (防覆蓋管理員登入身分)
+    // =============================================================
+    async function handleScan(e) { e.preventDefault(); const inp = document.getElementById('scan-code-input'); const val = inp.value.trim().toUpperCase(); if (!val) return; processScanCode(val); inp.value = ""; }
+    async function processScanCode(val) {
+      try {
+        const { data: user } = await db.from('users').select('*').eq('id', val).maybeSingle();
+        if (!user) return;
+
+        const isStaff = user.id.includes('M') || user.id.includes('T') || user.id.includes('P') || (user.role_type && user.role_type !== '學生');
+        const nowObj = new Date(); const nowIso = nowObj.toISOString();
+        const startOfTodayIso = new Date(`${nowObj.toLocaleDateString('en-CA')}T00:00:00+08:00`).toISOString();
+        const { data: todayLogs } = await db.from('check_in_logs').select('*').eq('target_id', user.id).gte('check_time', startOfTodayIso);
+
+        if (!isStaff) {
+          if (todayLogs && todayLogs.length > 0) { showQuickNotice(`⚠️【${user.name}】今日已簽到過！`); return; }
+          const newPts = (user.points || 0) + 1;
+          await db.from('users').update({ points: newPts }).eq('id', user.id);
+          await db.from('points_logs').insert([{ change_time: nowIso, target_id: user.id, target_name: user.name, points_delta: 1, reason: "準時簽到" }]);
+          await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: '學生', action_text: "+1 點 (到班)" }]);
+          if (window.confetti) confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+          showPunchSuccessModal(`🎉 ${user.name} 簽到成功！`, `點數 +1！`); loadLogs(); return;
+        }
+
+        if (todayLogs && todayLogs.length > 0) {
+          if (Date.now() - new Date(todayLogs[todayLogs.length - 1].check_time).getTime() < 60000) { showQuickNotice(`⚠️ 剛打過卡！`); return; }
+        }
+        const cnt = todayLogs ? todayLogs.length : 0;
+        const action = cnt === 0 ? "上班簽到" : "下班簽退";
+        await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: user.role_type || '教職員', action_text: action }]);
+        
+        if (window.confetti) confetti({ particleCount: 50, spread: 50, origin: { y: 0.65 } });
+        showPunchSuccessModal(cnt === 0 ? `💼 ${user.name} 上班簽到成功！` : `🌙 ${user.name} 下班簽退成功！`, `出勤已登記`); loadLogs();
+      } catch (e) {}
+    }
+
+    function showPunchSuccessModal(title, sub) {
+      document.getElementById('verse-title').textContent = title; document.getElementById('verse-sub').textContent = sub;
+      document.getElementById('verse-quote').textContent = verses[Math.floor(Math.random() * verses.length)];
+      document.getElementById('modal-verse-box').classList.remove('hidden');
+      if (verseAutoCloseTimer) clearTimeout(verseAutoCloseTimer); verseAutoCloseTimer = setTimeout(closeVerseModal, 2200);
+    }
+    function showQuickNotice(msg) {
+      const tip = document.getElementById('scan-tip'); tip.className = "mt-3 text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 block";
+      tip.textContent = msg; setTimeout(() => tip.classList.add('hidden'), 3500);
+    }
+    function closeVerseModal() {
+      if (verseAutoCloseTimer) { clearTimeout(verseAutoCloseTimer); verseAutoCloseTimer = null; }
+      document.getElementById('modal-verse-box').classList.add('hidden'); document.getElementById('scan-code-input').focus();
+    }
+
+    async function loadLogs() {
+      const tbody = document.getElementById('logs-list'), mobileCards = document.getElementById('logs-cards-mobile');
+      const { data } = await db.from('check_in_logs').select('*').order('check_time', { ascending: false }).limit(10);
+      if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">尚無動態</td></tr>`; mobileCards.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">尚無動態</p>`; return; }
+      let stuC = 0, staffC = 0;
+      mobileCards.innerHTML = data.map(r => {
+        const role = r.role || (r.target_id.includes('S') ? '學生' : '教職員');
+        return `<div class="p-3 bg-white border rounded-xl flex items-center justify-between"><div><span class="font-bold text-sm">${r.target_name}</span> <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${role==='學生'?'bg-indigo-50 text-indigo-700':'bg-amber-50 text-amber-800'}">${role}</span><p class="text-[11px] font-mono text-slate-400">${r.target_id}</p></div><div class="text-right"><span class="text-xs font-mono font-bold">${new Date(r.check_time).toLocaleTimeString('zh-TW', {hour12:false})}</span><span class="text-[11px] text-emerald-600 font-bold block">${r.action_text}</span></div></div>`;
+      }).join('');
+      tbody.innerHTML = data.map(r => {
+        const role = r.role || (r.target_id.includes('S') ? '學生' : '教職員');
+        if (role === '學生') stuC++; else staffC++;
+        return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-4 font-mono">${new Date(r.check_time).toLocaleTimeString('zh-TW', {hour12:false})}</td><td class="py-2.5 px-4 font-mono font-bold">${r.target_id}</td><td class="py-2.5 px-4 font-bold">${r.target_name}</td><td class="py-2.5 px-4">${role}</td><td class="py-2.5 px-4 text-emerald-600 font-bold">${r.action_text}</td></tr>`;
+      }).join('');
+      document.getElementById('stat-stu-count').textContent = stuC; document.getElementById('stat-staff-count').textContent = staffC;
+    }
+
+    // =============================================================
+    // 4. 點名簿
+    // =============================================================
+    async function initRollCallTab() { document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0]; loadRollCallsForDate(); }
     async function loadRollCallsForDate() {
       const dt = document.getElementById('rollcall-date-picker').value;
       if (allUsers.length === 0) { const { data } = await db.from('users').select('*'); if (data) allUsers = data; }
