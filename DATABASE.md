@@ -1,31 +1,47 @@
 # Database Baseline — Supabase
 
-## Status
-Production Supabase 已被現行系統使用。本文件目前只是接管基準，不授權任何 schema 變更。
+## Production protection
+Production Supabase is actively used. This inventory does NOT authorize schema or policy changes.
 
-## Tables observed from application code
-已確認程式直接使用的資料表至少包含：
-- users
-- schedules
+## Data sources observed in current index.html
 
-其他資料表需由下一階段 code inventory / Supabase schema inventory 確認後補入，禁止猜測。
+| Source | Current observed purpose | Risk |
+|---|---|---|
+| users | students + staff roster, profile/contact/family/health data, points, avatar, face descriptor, role/status | CRITICAL |
+| schedules | staff scheduling, shifts, hours, job description | HIGH |
+| check_in_logs | student/staff check-in history | HIGH |
+| points_logs | student points transaction history | MEDIUM |
+| roll_calls | classroom attendance, homework/contact-book status | HIGH |
+| counseling_logs | counseling/care records | CRITICAL |
+| parent_messages | parent messages and staff replies | HIGH |
+| storage: avatars | student/person photos used by roster/face enrollment | CRITICAL |
 
-## Safety policy
-在完整 schema、foreign keys、indexes、RLS policies、triggers、functions 與資料量盤點完成以前：
-- 不刪 table
-- 不刪/改 column
-- 不修改 production RLS
-- 不大量 update/delete production data
-- 不以新 schema 強制取代舊 schema
+## Important observations
+- The browser currently performs direct Supabase reads/writes.
+- Multiple code paths use users.select('*').
+- users is overloaded: student/staff identity plus sensitive personal/care-related fields and face_descriptor.
+- Face descriptors and avatar images require special privacy/security treatment.
+- Current staff login looks up a users record and persists the returned object in localStorage.
+- Some UI authorization is inferred from ID patterns such as an ID containing M. This must not be treated as a security boundary.
 
-## Required inventory
-Codex 接管下一階段必須建立：
-1. table / column inventory
-2. app function -> table mapping
-3. RLS policy inventory
-4. sensitive personal data classification
-5. backup/recovery procedure
-6. migration + rollback procedure
+## Do not change yet
+Until schema/RLS inventory and recovery procedures are verified:
+- no table deletion/rename;
+- no column deletion/rename/type change;
+- no production RLS modification;
+- no bulk production update/delete;
+- no moving face descriptors/photos;
+- no forced authentication migration.
 
-## Authentication note
-目前程式碼存在 client-side user lookup/session behavior。真正的 authentication 與 RBAC 必須另外設計並漸進導入，不得直接造成現場同工無法登入。
+## Required next inventory
+1. Obtain actual Supabase schema for all 7 tables plus avatars bucket.
+2. Record columns, types, defaults, PK/FK, indexes.
+3. Record RLS enabled/disabled and every policy.
+4. Record triggers/functions.
+5. Map every application write path.
+6. Classify sensitive fields.
+7. Establish backup/recovery and tested migration rollback.
+
+## First safe refactor candidate
+Do NOT begin with authentication, face recognition, users schema, or attendance writes.
+First create a non-behavior-changing data-access boundary on the takeover branch, beginning with a read-heavy low-risk area, with regression verification before any production merge.
