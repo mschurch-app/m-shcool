@@ -25,3 +25,9 @@ M+ School 是目前正式使用中的課輔行政系統。
 6. 驗證後才合併 main
 
 詳細規則請先閱讀 AGENTS.md。
+
+## Codex takeover references
+- `PHASE1_AUDIT.md` — production/source audit and Phase 1 checklist
+- `DATABASE.md` — Supabase schema, grants, RLS, Storage, and write paths
+- `TESTING.md` — offline tests and safe synthetic test plan
+- `ACCESS_RECOVERY.md` — observed access gates, backup snapshot, and recovery decisions
