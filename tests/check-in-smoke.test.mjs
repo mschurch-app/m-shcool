@@ -15,6 +15,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [] } = 
   const elements = new Map();
   const storage = new Map();
   const alerts = [];
+  const blockedRequests = [];
   const listeners = new Map();
   const getElement = (id) => {
     if (!elements.has(id)) {
@@ -72,6 +73,13 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [] } = 
       setItem(key, value) { storage.set(key, String(value)); },
       removeItem(key) { storage.delete(key); },
     },
+    fetch(input) {
+      blockedRequests.push(String(input));
+      return Promise.reject(new Error('Blocked outbound request in offline test harness'));
+    },
+    XMLHttpRequest: class {
+      constructor() { throw new Error('Blocked XMLHttpRequest in offline test harness'); }
+    },
     setInterval: () => 0,
     clearInterval() {},
     setTimeout: () => 0,
@@ -81,7 +89,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [] } = 
     prompt: () => null,
   });
   new vm.Script(appScript, { filename: 'index.html:inline-app' }).runInContext(context);
-  return { context, writes, elements, storage, alerts, listeners };
+  return { context, writes, elements, storage, alerts, listeners, blockedRequests };
 }
 
 test('student first scan adds one point and writes both attendance ledgers through the mock', async () => {
@@ -208,4 +216,15 @@ test('logout clears the locally stored profile', () => {
 
   assert.equal(storage.has('mplus_current_user'), false);
   assert.deepEqual(switchedTabs, ['checkin']);
+});
+
+test('offline harness blocks fetch and XMLHttpRequest before any request can leave', async () => {
+  const { context, blockedRequests } = createHarness();
+
+  await assert.rejects(
+    vm.runInContext("fetch('https://othgvewffvkkafbezejy.supabase.co/rest/v1/users')", context),
+    /Blocked outbound request in offline test harness/,
+  );
+  assert.throws(() => vm.runInContext('new XMLHttpRequest()', context), /Blocked XMLHttpRequest in offline test harness/);
+  assert.deepEqual(blockedRequests, ['https://othgvewffvkkafbezejy.supabase.co/rest/v1/users']);
 });

@@ -6,7 +6,7 @@
 - Add a network guard that rejects every request to `*.supabase.co`; assert the test run makes zero requests to the production host.
 - Keep fixtures in memory or under `tests/fixtures/`. Do not import them to any connected database.
 - Use generated placeholder images only. Do not use student or staff photographs, face templates, names, contact details, or notes.
-- `node --test` includes an in-memory app harness for check-in/login/role-gate behavior and static source validation. It does not load CDNs or connect to Supabase.
+- `node --test` includes an in-memory app harness for check-in/login/role-gate behavior and static source validation. The harness injects an in-memory Supabase client, rejects `fetch` and `XMLHttpRequest`, and does not load CDNs or connect to Supabase.
 
 ## Synthetic records for future mocked UI tests
 
@@ -29,7 +29,7 @@ Create in-memory records with IDs `S-QA-001` and `M-QA-001`, names `Synthetic St
 
 ## Rollout gate for behavior tests
 
-The current Node VM harness extracts the inline app script and injects a mock `createClient`, so no Supabase or CDN library executes. It characterizes six check-in cases and four login/role-gate cases with synthetic values. Before a browser smoke suite runs, add a deterministic local harness that replaces face/QR/camera dependencies with controlled stubs and blocks external requests. Review the harness to ensure the app's live Supabase URL cannot receive a request even if the mock is misconfigured. Run the suite on `codex-takeover` and any focused feature branch before considering merge. No application extraction or production deployment is part of this test-plan change.
+The current Node VM harness extracts the inline app script and injects a mock `createClient`, so no Supabase or CDN library executes. It blocks `fetch` and `XMLHttpRequest`, and characterizes six check-in cases and four login/role-gate cases with synthetic values. Before a browser smoke suite runs, add a deterministic local harness that replaces face/QR/camera dependencies with controlled stubs and blocks external requests. Review the harness to ensure the app's live Supabase URL cannot receive a request even if the mock is misconfigured. Run the suite on `codex-takeover` and any focused feature branch before considering merge. No application extraction or production deployment is part of this test-plan change.
 
 ## CI
 
