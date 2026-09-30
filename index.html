@@ -937,12 +937,18 @@
       const filterWorker = document.getElementById('schedule-worker-filter')?.value || "";
       const monthStr = `${currentCalYear}-${String(currentCalMonth).padStart(2, '0')}`;
       const filtered = (rawSchedules || []).filter(s => (!filterWorker || s.worker_id === filterWorker) && s.date && s.date.startsWith(monthStr));
-      let sumHrs = 0, workersSet = new Set();
-      filtered.forEach(s => { sumHrs += Number(s.hours || 0); workersSet.add(s.worker_id); });
+      let sumHrs = 0, sumWage = 0, workersSet = new Set();
+      filtered.forEach(s => {
+        const hours = Number(s.hours) || 0;
+        const hourlyWage = Number(s.hourly_wage) || 190;
+        sumHrs += hours;
+        sumWage += hours * hourlyWage;
+        workersSet.add(s.worker_id);
+      });
       document.getElementById('total-count-badge').textContent = `${filtered.length} 班`;
       document.getElementById('total-shift-badge').textContent = `${sumHrs} 小時`;
       document.getElementById('total-workers-badge').textContent = `${workersSet.size} 人`;
-      document.getElementById('total-wage-badge').textContent = `$${(sumHrs * 190).toLocaleString()}`;
+      document.getElementById('total-wage-badge').textContent = `$${sumWage.toLocaleString()}`;
       if (activeScheduleView === 'calendar') renderCalendarGrid(filtered); else renderSchedulesListTable(filtered);
     }
 
@@ -2082,9 +2088,12 @@
         const shifts = monthSchedules || [];
         const summary = {};
         shifts.forEach(s => {
-          if (!summary[s.worker_id]) summary[s.worker_id] = { id: s.worker_id, name: s.worker_name, hours: 0, shifts: [] };
-          summary[s.worker_id].hours += Number(s.hours || 0);
-          summary[s.worker_id].shifts.push(s);
+          const hours = Number(s.hours) || 0;
+          const hourlyWage = Number(s.hourly_wage) || 190;
+          if (!summary[s.worker_id]) summary[s.worker_id] = { id: s.worker_id, name: s.worker_name, hours: 0, wage: 0, shifts: [] };
+          summary[s.worker_id].hours += hours;
+          summary[s.worker_id].wage += hours * hourlyWage;
+          summary[s.worker_id].shifts.push({ ...s, hourly_wage: hourlyWage });
         });
 
         const workers = Object.values(summary);
@@ -2122,8 +2131,8 @@
                         <td class="border p-2 font-bold">${w.name}</td>
                         <td class="border p-2">${w.shifts.length} 班</td>
                         <td class="border p-2 font-mono font-bold">${w.hours} 小時</td>
-                        <td class="border p-2 font-mono">$190 /h</td>
-                        <td class="border p-2 font-mono font-black text-indigo-900">$${(w.hours * 190).toLocaleString()}</td>
+                        <td class="border p-2 font-mono">$${(w.hours ? w.wage / w.hours : 0).toLocaleString()} /h 平均</td>
+                        <td class="border p-2 font-mono font-black text-indigo-900">$${w.wage.toLocaleString()}</td>
                         <td class="border p-2"></td>
                       </tr>`).join('')}
                 </tbody>
@@ -2139,17 +2148,21 @@
                     <th class="border p-1.5 w-24">同工</th>
                     <th class="border p-1.5 w-32">時段</th>
                     <th class="border p-1.5 w-16">時數</th>
+                    <th class="border p-1.5 w-20">時薪</th>
+                    <th class="border p-1.5 w-24">預估金額</th>
                     <th class="border p-1.5">負責工作事項</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${shifts.length === 0 ? `<tr><td colspan="5" class="py-4 text-slate-400">無明細</td></tr>` :
+                  ${shifts.length === 0 ? `<tr><td colspan="7" class="py-4 text-slate-400">無明細</td></tr>` :
                     shifts.map(s => `
                       <tr>
                         <td class="border p-1.5 font-mono">${s.date}</td>
                         <td class="border p-1.5 font-bold">${s.worker_name}</td>
                         <td class="border p-1.5 font-mono">${s.shift}</td>
                         <td class="border p-1.5 font-mono">${s.hours}h</td>
+                        <td class="border p-1.5 font-mono">$${Number(s.hourly_wage || 190).toLocaleString()}/h</td>
+                        <td class="border p-1.5 font-mono">$${((Number(s.hours) || 0) * (Number(s.hourly_wage) || 190)).toLocaleString()}</td>
                         <td class="border p-1.5 text-left">${s.job_desc || '課輔陪伴'}</td>
                       </tr>`).join('')}
                 </tbody>

@@ -405,6 +405,26 @@ test('schedule single-day create, edit, delete, and role permissions use the exi
   assert.match(alerts.at(-1), /查看排班的權限/u);
 });
 
+test('schedule wage totals and monthly payroll report use each shift hourly wage', async () => {
+  const schedules = [
+    { id: 51, date: '2026-09-10', worker_id: 'T-QA-001', worker_name: 'Synthetic Teacher', shift: '16:00 - 18:00', hours: 2, hourly_wage: 190, job_desc: '課輔' },
+    { id: 52, date: '2026-09-17', worker_id: 'T-QA-001', worker_name: 'Synthetic Teacher', shift: '16:00 - 17:00', hours: 1, hourly_wage: 250, job_desc: '代班' },
+  ];
+  const { context, elements } = createHarness({ schedules });
+  vm.runInContext("rawSchedules = JSON.parse(testSchedules); currentCalYear = 2026; currentCalMonth = 9; activeScheduleView = 'calendar'; allUsers = [];", Object.assign(context, { testSchedules: JSON.stringify(schedules) }));
+  vm.runInContext('renderActiveScheduleView()', context);
+  assert.equal(elements.get('total-wage-badge').textContent, '$630');
+
+  context.document.getElementById('print-report-type').value = 'workhours';
+  context.document.getElementById('print-month-filter').value = '2026-09';
+  await vm.runInContext('renderSelectedReport()', context);
+  const report = context.document.getElementById('print-paper-content').innerHTML;
+  assert.match(report, /\$210 \/h 平均/u);
+  assert.match(report, /\$630/u);
+  assert.match(report, /\$250\/h/u);
+  assert.match(report, /\$250/u);
+});
+
 test('saving the same roll call day twice updates its rows without duplicates', async () => {
   const { context, writes, rollCallRows, elements } = createHarness({ users: [
     { id: '2026S0001', name: 'Synthetic Student', role_type: '學生', status: '在班', school: 'Test School', grade: '4' },
