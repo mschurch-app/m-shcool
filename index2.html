@@ -1847,10 +1847,35 @@
     document.getElementById('counseling-list').addEventListener('click', handleCounselingAction);
 
     async function loadMessages() {
-      const { data } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
-      document.getElementById('messages-list').innerHTML = (data||[]).map(m => `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 text-xs">${new Date(m.created_at).toLocaleDateString()}</td><td class="py-2.5 px-3 font-bold">${m.student_name}</td><td class="py-2.5 px-3 text-xs">${m.parent_message}</td><td class="py-2.5 px-3 text-xs">${m.reply_content||'未回覆'}</td><td class="py-2.5 px-3 text-center"><button onclick="replyParentMsg(${m.id})" class="text-indigo-600 font-bold text-xs">回覆</button></td></tr>`).join('');
+      const list = document.getElementById('messages-list');
+      try {
+        const { data, error } = await db.from('parent_messages').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        const canReply = ['M', 'T'].includes(counselingAccessRole());
+        list.innerHTML = (data || []).map(message => {
+          const date = new Date(message.created_at);
+          const displayDate = Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' });
+          const action = canReply ? `<button type="button" onclick="replyParentMsg(${Number(message.id)})" class="text-indigo-600 font-bold text-xs">回覆</button>` : '<span class="text-slate-300">—</span>';
+          return `<tr class="hover:bg-slate-50"><td class="py-2.5 px-3 text-xs">${displayDate}</td><td class="py-2.5 px-3 font-bold">${escapeCounselingHtml(message.student_name)}</td><td class="py-2.5 px-3 text-xs">${escapeCounselingHtml(message.parent_message)}</td><td class="py-2.5 px-3 text-xs">${escapeCounselingHtml(message.reply_content || '未回覆')}</td><td class="py-2.5 px-3 text-center">${action}</td></tr>`;
+        }).join('') || '<tr><td colspan="5" class="py-6 text-center text-slate-400">目前沒有家長留言。</td></tr>';
+      } catch (error) {
+        list.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-rose-600">家長留言載入失敗，請重新載入。</td></tr>';
+        alert(`載入家長留言失敗：${error?.message || '未知錯誤'}`);
+      }
     }
-    async function replyParentMsg(id) { const txt = prompt("回覆："); if (!txt) return; await db.from('parent_messages').update({ reply_content: txt }).eq('id', id); loadMessages(); }
+    async function replyParentMsg(id) {
+      if (!['M', 'T'].includes(counselingAccessRole())) { alert('目前帳號只有查閱家長留言的權限。'); return; }
+      const txt = prompt('回覆：');
+      if (txt === null || !txt.trim()) return;
+      try {
+        const { error } = await db.from('parent_messages').update({ reply_content: txt.trim(), reply_time: new Date().toISOString() }).eq('id', id);
+        if (error) throw error;
+        await loadMessages();
+        alert('✅ 家長留言已回覆。');
+      } catch (error) {
+        alert(`回覆家長留言失敗：${error?.message || '未知錯誤'}`);
+      }
+    }
 
     // =============================================================
     // 🌟 列印報表中心 (完整還原 5 大報表：專案核銷、QR卡、現場點名、工時、總名冊)

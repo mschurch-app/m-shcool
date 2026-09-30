@@ -86,7 +86,7 @@ The app uses these columns as observed in `index.html`; this inventory is not a 
 | `points_logs` | student scan inserts a point transaction; roster point buttons do not write this log |
 | `roll_calls` | daily load and batch upsert on the existing primary key `id`, so saving the same roster updates its prior rows rather than inserting duplicates; M/T can edit and P is read-only in the UI. No schema change is required; role checks are not enforced by current database policies. |
 | `counseling_logs` | `feature/counseling-records` adds reads/inserts/updates and keeps delete visible to M-role UI only; database RLS remains disabled and does not enforce these frontend role controls |
-| `parent_messages` | list and reply update |
+| `parent_messages` | list and reply update (`M`/`T`); `P` read-only in the UI. Read/write failures are surfaced to the user, and rendered message text is HTML-escaped. `reply_time` is recorded when a reply succeeds. These are frontend controls only; RLS remains disabled and does not enforce role permissions. |
 | `avatars` Storage | browser uploads JPEG to `students/<id>_<timestamp>.jpg` with `upsert: true`, then obtains a public URL |
 
 The form captures a face descriptor in a hidden input, but `handleUserSubmit` omits it from the `users` payload. Face matching reads `face_descriptor` from `users`, so the current UI capture/persistence path appears inconsistent and requires a separate, privacy-reviewed verification.
