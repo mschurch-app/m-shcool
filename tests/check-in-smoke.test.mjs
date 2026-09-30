@@ -247,7 +247,7 @@ test('counseling form keeps unsaved input on database failure and reports read e
   assert.equal(elements.get('modal-counseling-add').classList.contains('hidden'), false);
 });
 
-test('new student forms generate the next Taipei-year ID and insert without upserting', async () => {
+test('new person forms generate the next Taipei-year role ID and insert without upserting', async () => {
   const { context, writes } = createHarness({ users: [
     { id: '2026S0001', name: 'Old Student', role_type: '學生', status: '退班' },
     { id: '2026S0007', name: 'Current Student', role_type: '學生', status: '在班' },
@@ -264,8 +264,8 @@ test('new student forms generate the next Taipei-year ID and insert without upse
 
   field('form-role').value = '老師';
   vm.runInContext('handleUserRoleChange()', context);
-  assert.equal(field('form-id').value, '');
-  assert.equal(field('form-id-label').textContent, '人員編號 *');
+  assert.equal(field('form-id').value, `${currentYear}T0001`);
+  assert.equal(field('form-id-label').textContent, '人員編號（自動編號）*');
   field('form-role').value = '學生';
   vm.runInContext('handleUserRoleChange()', context);
   field('form-name').value = 'Synthetic New Student';
@@ -276,6 +276,25 @@ test('new student forms generate the next Taipei-year ID and insert without upse
   assert.equal(insert.payload[0].id, `${currentYear}S0008`);
   assert.equal(insert.payload[0].role_type, '學生');
   assert.equal(writes.some((write) => write.table === 'users' && write.method === 'upsert'), false);
+});
+
+test('staff role IDs use independent M, T, and P sequences', async () => {
+  const { context } = createHarness({ users: [
+    { id: '2026M0004', name: 'Existing Coworker', role_type: '同工', status: '在職' },
+    { id: '2026T0002', name: 'Existing Teacher', role_type: '老師', status: '在職' },
+    { id: '2026P0011', name: 'Existing Part-time', role_type: '工讀生', status: '在職' },
+  ] });
+  await vm.runInContext('loadUsers()', context);
+  const field = (id) => context.document.getElementById(id);
+  vm.runInContext("openUserModal('add')", context);
+  const currentYear = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Taipei', year: 'numeric' }).format(new Date());
+
+  for (const [role, prefix, nextNumber] of [['同工', 'M', 5], ['老師', 'T', 3], ['工讀生', 'P', 12]]) {
+    field('form-role').value = role;
+    vm.runInContext('handleUserRoleChange()', context);
+    assert.equal(field('form-id').value, `${currentYear}${prefix}${String(nextNumber).padStart(4, '0')}`);
+    assert.equal(field('form-id-label').textContent, '人員編號（自動編號）*');
+  }
 });
 
 test('student first scan adds one point and writes both attendance ledgers through the mock', async () => {
