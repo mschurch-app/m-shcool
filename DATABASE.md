@@ -81,7 +81,7 @@ The app uses these columns as observed in `index.html`; this inventory is not a 
 | Source | Observed writes |
 |---|---|
 | `users` | scan updates student points; roster insert/update/delete; point buttons update points; CSV import upsert. New person forms generate the next `YYYY` + role prefix + four-digit sequence (`S` student, `M` coworker, `T` teacher, `P` part-time) using the loaded roster; creation uses `insert` so a duplicate primary key cannot overwrite an existing person. |
-| `schedules` | list/calendar reads; batch and single-day insert; single-day update/delete. UI gates writes by role type: M full management, T add/edit, P read-only. Error results are shown to the user. These checks are frontend behavior and are not enforced by the current permissive RLS policies. |
+| `schedules` | list/calendar reads; batch and single-day insert; single-day update/delete. UI gates writes by role type: M full management, T add/edit, P read-only. Wage summaries and monthly payroll use each row's `hourly_wage` (legacy null values fall back to the existing 190 default). Error results are shown to the user. These checks are frontend behavior and are not enforced by the current permissive RLS policies. |
 | `check_in_logs` | student/staff scan inserts; check-in activity reads |
 | `points_logs` | student scan inserts a point transaction; roster point buttons do not write this log |
 | `roll_calls` | daily load and batch upsert on the existing primary key `id`, so saving the same roster updates its prior rows rather than inserting duplicates; M/T can edit and P is read-only in the UI. No schema change is required; role checks are not enforced by current database policies. |
