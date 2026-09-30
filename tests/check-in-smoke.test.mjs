@@ -52,6 +52,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     eq(column, value) { this.filters.push([column, value]); return this; }
     gte(column, value) { this.filters.push({ operator: 'gte', column, value }); return this; }
     lte(column, value) { this.filters.push({ operator: 'lte', column, value }); return this; }
+    lt(column, value) { this.filters.push({ operator: 'lt', column, value }); return this; }
     order() { return this; }
     limit() { return this; }
     or() { return this; }
@@ -404,6 +405,27 @@ test('schedule single-day create, edit, delete, and role permissions use the exi
   assert.equal(field('btn-add-schedule').classList.contains('hidden'), true);
   await vm.runInContext("openScheduleModal('add')", context);
   assert.match(alerts.at(-1), /查看排班的權限/u);
+});
+
+test('monthly attendance report uses Taipei month boundaries and local attendance dates', async () => {
+  const { context, queries } = createHarness({
+    users: [{ id: '2026S0010', name: 'Synthetic Student', role_type: '學生', status: '在班', school: 'Test School', grade: '4' }],
+    logs: [
+      { target_id: '2026S0010', check_time: '2026-08-31T16:05:00.000Z' },
+      { target_id: '2026S0010', check_time: '2026-09-30T15:59:00.000Z' },
+    ],
+  });
+  context.document.getElementById('print-report-type').value = 'month_rollcall';
+  context.document.getElementById('print-month-filter').value = '2026-09';
+  context.document.getElementById('print-class-filter').value = 'elementary';
+
+  await vm.runInContext('renderSelectedReport()', context);
+
+  const logQuery = queries.find(query => query.table === 'check_in_logs');
+  assert.ok(logQuery.filters.some(filter => filter.operator === 'gte' && filter.column === 'check_time' && filter.value === '2026-08-31T16:00:00.000Z'));
+  assert.ok(logQuery.filters.some(filter => filter.operator === 'lt' && filter.column === 'check_time' && filter.value === '2026-09-30T16:00:00.000Z'));
+  const report = context.document.getElementById('print-paper-content').innerHTML;
+  assert.equal((report.match(/✔/gu) || []).length, 2, 'Taipei Sep 1 and Sep 30 check-ins should be counted in the September report');
 });
 
 test('schedule wage totals and monthly payroll report use each shift hourly wage', async () => {
