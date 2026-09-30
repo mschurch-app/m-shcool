@@ -9,10 +9,10 @@ const databaseNotes = await readFile(new URL('../DATABASE.md', import.meta.url),
 test('Supabase business table access matches the documented baseline', () => {
   const expected = {
     users: ['delete', 'insert', 'select', 'update', 'upsert'],
-    schedules: ['insert', 'select'],
+    schedules: ['delete', 'insert', 'select', 'update'],
     check_in_logs: ['insert', 'select'],
     points_logs: ['insert'],
-    roll_calls: ['insert', 'select'],
+    roll_calls: ['select', 'upsert'],
     counseling_logs: ['delete', 'insert', 'select', 'update'],
     parent_messages: ['select', 'update'],
   };

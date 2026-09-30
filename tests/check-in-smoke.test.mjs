@@ -10,7 +10,7 @@ const appScriptEnd = html.indexOf('</script>', appMarker);
 assert.ok(appMarker >= 0 && appScriptStart >= 0 && appScriptEnd > appMarker, 'could not locate inline application script');
 const appScript = html.slice(html.indexOf('>', appScriptStart) + 1, appScriptEnd);
 
-function createHarness({ user = null, users = user ? [user] : [], logs = [], counseling = [], failures = {} } = {}) {
+function createHarness({ user = null, users = user ? [user] : [], logs = [], counseling = [], schedules = [], rollCalls = [], failures = {} } = {}) {
   const writes = [];
   const elements = new Map();
   const storage = new Map();
@@ -18,6 +18,8 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
   const blockedRequests = [];
   const listeners = new Map();
   const counselingRows = counseling.map((record) => ({ ...record }));
+  const scheduleRows = schedules.map((record) => ({ ...record }));
+  const rollCallRows = rollCalls.map((record) => ({ ...record }));
   const getElement = (id) => {
     if (!elements.has(id)) {
       const classes = new Set();
@@ -30,11 +32,12 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
         classList: {
           add(...names) { names.forEach((name) => classes.add(name)); },
           remove(...names) { names.forEach((name) => classes.delete(name)); },
-          toggle(name) { if (classes.has(name)) classes.delete(name); else classes.add(name); },
+          toggle(name, force) { if (force === true) classes.add(name); else if (force === false) classes.delete(name); else if (classes.has(name)) classes.delete(name); else classes.add(name); return classes.has(name); },
           contains(name) { return classes.has(name); },
         },
         focus() {},
         reset() {},
+        appendChild() {},
         addEventListener(event, callback) { this[`on${event}`] = callback; },
       });
     }
@@ -56,23 +59,35 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
       const error = failures[`${this.table}.insert`];
       if (!error && this.table === 'users') (Array.isArray(payload) ? payload : [payload]).forEach((row) => users.push({ ...row }));
       if (!error && this.table === 'counseling_logs') counselingRows.push({ ...payload, id: Math.max(0, ...counselingRows.map((record) => Number(record.id) || 0)) + 1 });
+      if (!error && this.table === 'schedules') (Array.isArray(payload) ? payload : [payload]).forEach((row) => scheduleRows.push({ ...row, id: Math.max(0, ...scheduleRows.map((record) => Number(record.id) || 0)) + 1 }));
       return Promise.resolve({ data: null, error: error ? { message: error } : null });
     }
     update(payload) { this.action = { method: 'update', payload }; writes.push({ table: this.table, method: 'update', payload }); return this; }
-    upsert(payload) { writes.push({ table: this.table, method: 'upsert', payload }); return Promise.resolve({ data: null, error: null }); }
+    upsert(payload, options) {
+      writes.push({ table: this.table, method: 'upsert', payload, options });
+      const error = failures[`${this.table}.upsert`];
+      if (!error && this.table === 'roll_calls') {
+        for (const row of payload) {
+          const existing = row.id == null ? null : rollCallRows.find(record => String(record.id) === String(row.id));
+          if (existing) Object.assign(existing, row);
+          else rollCallRows.push({ ...row, id: Math.max(0, ...rollCallRows.map(record => Number(record.id) || 0)) + 1 });
+        }
+      }
+      return Promise.resolve({ data: null, error: error ? { message: error } : null });
+    }
     delete() { this.action = { method: 'delete' }; writes.push({ table: this.table, method: 'delete' }); return this; }
     then(resolve, reject) {
       const error = failures[`${this.table}.${this.action?.method || 'select'}`];
-      if (!error && this.table === 'counseling_logs' && this.action) {
-        const [column, value] = this.filters.at(-1) || [];
+      if (!error && this.action) {
+        const targetRows = this.table === 'users' ? users : this.table === 'counseling_logs' ? counselingRows : this.table === 'schedules' ? scheduleRows : this.table === 'roll_calls' ? rollCallRows : [];
+        const matches = (record) => this.filters.every(([column, value]) => String(record[column]) === String(value));
         if (this.action.method === 'update') {
-          const targetRows = this.table === 'users' ? users : counselingRows;
-          targetRows.forEach((record) => { if (String(record[column]) === String(value)) Object.assign(record, this.action.payload); });
+          targetRows.forEach((record) => { if (matches(record)) Object.assign(record, this.action.payload); });
         } else if (this.action.method === 'delete') {
-          for (let i = counselingRows.length - 1; i >= 0; i--) if (String(counselingRows[i][column]) === String(value)) counselingRows.splice(i, 1);
+          for (let i = targetRows.length - 1; i >= 0; i--) if (matches(targetRows[i])) targetRows.splice(i, 1);
         }
       }
-      const data = this.table === 'check_in_logs' ? logs : (this.table === 'users' ? users : (this.table === 'counseling_logs' ? counselingRows : []));
+      const data = this.table === 'check_in_logs' ? logs : this.table === 'users' ? users : this.table === 'counseling_logs' ? counselingRows : this.table === 'schedules' ? scheduleRows : this.table === 'roll_calls' ? rollCallRows : [];
       return Promise.resolve({ data, error: error ? { message: error } : null }).then(resolve, reject);
     }
   }
@@ -84,6 +99,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
       getElementById: getElement,
       querySelector: getElement,
       querySelectorAll: () => [],
+      createElement: (tag) => ({ tagName: tag, className: '', innerHTML: '', appendChild() {} }),
       addEventListener(event, callback) { listeners.set(event, callback); },
     },
     window: {},
@@ -108,7 +124,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     prompt: () => null,
   });
   new vm.Script(appScript, { filename: 'index.html:inline-app' }).runInContext(context);
-  return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows };
+  return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows, scheduleRows, rollCallRows };
 }
 
 test('counseling list renders all fields safely, filters records, and calculates the visible totals', async () => {
@@ -295,6 +311,96 @@ test('staff role IDs use independent M, T, and P sequences', async () => {
     assert.equal(field('form-id').value, `${currentYear}${prefix}${String(nextNumber).padStart(4, '0')}`);
     assert.equal(field('form-id-label').textContent, '人員編號（自動編號）*');
   }
+});
+
+test('schedule single-day create, edit, delete, and role permissions use the existing table', async () => {
+  const { context, writes, scheduleRows, elements, alerts } = createHarness({
+    users: [
+      { id: 'M-QA-001', name: 'Synthetic Coworker', role_type: '同工', status: '在職' },
+      { id: 'T-QA-001', name: 'Synthetic Teacher', role_type: '老師', status: '在職' },
+      { id: 'P-QA-001', name: 'Synthetic Part-time', role_type: '工讀生', status: '在職' },
+    ],
+    schedules: [{ id: 41, date: '2026-09-30', worker_id: 'T-QA-001', worker_name: 'Synthetic Teacher', shift: '16:00 - 18:00', hours: 2, job_desc: '課輔陪伴', hourly_wage: 190 }],
+  });
+  vm.runInContext("currentUser = { id: 'M-QA-001', name: 'Synthetic Coworker', role_type: '同工' }", context);
+  await vm.runInContext('loadSchedules()', context);
+  await vm.runInContext("openScheduleModal('add')", context);
+  const field = (id) => context.document.getElementById(id);
+  for (const [id, value] of [['sch-date', '2026-10-01'], ['sch-worker-select', 'T-QA-001'], ['sch-start-time', '16:00'], ['sch-end-time', '18:00'], ['sch-job', '合成測試排班']]) field(id).value = value;
+  vm.runInContext('autoCalcHours()', context);
+  await vm.runInContext('handleScheduleSubmit({ preventDefault() {} })', context);
+  assert.equal(writes.find(write => write.table === 'schedules' && write.method === 'insert').payload[0].worker_id, 'T-QA-001');
+  assert.equal(scheduleRows.length, 2);
+
+  await vm.runInContext("openScheduleModal('edit', 41)", context);
+  field('sch-job').value = '修改後的工作';
+  await vm.runInContext('handleScheduleSubmit({ preventDefault() {} })', context);
+  assert.equal(scheduleRows.find(row => row.id === 41).job_desc, '修改後的工作');
+  assert.ok(writes.some(write => write.table === 'schedules' && write.method === 'update'));
+
+  await vm.runInContext('deleteSchedule(41)', context);
+  assert.equal(scheduleRows.some(row => row.id === 41), false);
+  assert.ok(writes.some(write => write.table === 'schedules' && write.method === 'delete'));
+
+  vm.runInContext("currentUser = { id: 'T-QA-001', name: 'Synthetic Teacher', role_type: '老師' }; currentCalMonth = 10; activeScheduleView = 'list'; renderActiveScheduleView()", context);
+  assert.match(field('schedules-list').innerHTML, /編輯/u);
+  assert.doesNotMatch(field('schedules-list').innerHTML, /刪除/u);
+  await vm.runInContext('deleteSchedule(42)', context);
+  assert.equal(writes.filter(write => write.table === 'schedules' && write.method === 'delete').length, 1);
+
+  vm.runInContext("currentUser = { id: 'P-QA-001', name: 'Synthetic Part-time', role_type: '工讀生' }; updateScheduleActionUI()", context);
+  assert.equal(field('btn-add-schedule').classList.contains('hidden'), true);
+  await vm.runInContext("openScheduleModal('add')", context);
+  assert.match(alerts.at(-1), /查看排班的權限/u);
+});
+
+test('saving the same roll call day twice updates its rows without duplicates', async () => {
+  const { context, writes, rollCallRows, elements } = createHarness({ users: [
+    { id: '2026S0001', name: 'Synthetic Student', role_type: '學生', status: '在班', school: 'Test School', grade: '4' },
+  ] });
+  vm.runInContext("currentUser = { id: 'T-QA-001', role_type: '老師' }", context);
+  context.document.getElementById('rollcall-date-picker').value = '2026-09-30';
+  await vm.runInContext('loadRollCallsForDate()', context);
+  vm.runInContext("activeRollCallList[0].attendance = '請假'", context);
+  await vm.runInContext('saveRollCallSheet()', context);
+  assert.equal(rollCallRows.length, 1);
+  const firstId = rollCallRows[0].id;
+  assert.equal(rollCallRows[0].attendance_status, '請假');
+  vm.runInContext("activeRollCallList[0].attendance = '出席'", context);
+  await vm.runInContext('saveRollCallSheet()', context);
+  assert.equal(rollCallRows.length, 1);
+  assert.equal(rollCallRows[0].id, firstId);
+  assert.equal(rollCallRows[0].attendance_status, '出席');
+  assert.equal(writes.filter(write => write.table === 'roll_calls' && write.method === 'upsert').length, 2);
+  assert.equal(writes[0].options.onConflict, 'id');
+});
+
+test('failed roll call writes report failure without claiming success', async () => {
+  const { context, elements, alerts } = createHarness({
+    users: [{ id: '2026S0001', name: 'Synthetic Student', role_type: '學生', status: '在班' }],
+    failures: { 'roll_calls.upsert': 'synthetic write denied' },
+  });
+  vm.runInContext("currentUser = { id: 'T-QA-001', role_type: '老師' }", context);
+  context.document.getElementById('rollcall-date-picker').value = '2026-09-30';
+  await vm.runInContext('loadRollCallsForDate()', context);
+  await vm.runInContext('saveRollCallSheet()', context);
+  assert.match(alerts.at(-1), /儲存點名失敗.*synthetic write denied/u);
+  assert.doesNotMatch(alerts.at(-1), /儲存成功/u);
+});
+
+test('part-time staff can view roll call but cannot edit or save it', async () => {
+  const { context, writes, elements, alerts } = createHarness({ users: [
+    { id: '2026S0001', name: 'Synthetic Student', role_type: '學生', status: '在班' },
+  ] });
+  vm.runInContext("currentUser = { id: 'P-QA-001', role_type: '工讀生' }", context);
+  context.document.getElementById('rollcall-date-picker').value = '2026-09-30';
+  vm.runInContext('updateRollCallActionUI()', context);
+  await vm.runInContext('loadRollCallsForDate()', context);
+  assert.match(elements.get('rollcall-table-body').innerHTML, /<select disabled/u);
+  assert.equal(elements.get('rollcall-save').classList.contains('hidden'), true);
+  await vm.runInContext('saveRollCallSheet()', context);
+  assert.equal(writes.some(write => write.table === 'roll_calls' && write.method === 'upsert'), false);
+  assert.match(alerts.at(-1), /查看點名紀錄的權限/u);
 });
 
 test('student first scan adds one point and writes both attendance ledgers through the mock', async () => {
