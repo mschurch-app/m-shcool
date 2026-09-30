@@ -34,6 +34,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
           contains(name) { return classes.has(name); },
         },
         focus() {},
+        reset() {},
         addEventListener(event, callback) { this[`on${event}`] = callback; },
       });
     }
@@ -53,6 +54,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     insert(payload) {
       writes.push({ table: this.table, method: 'insert', payload });
       const error = failures[`${this.table}.insert`];
+      if (!error && this.table === 'users') (Array.isArray(payload) ? payload : [payload]).forEach((row) => users.push({ ...row }));
       if (!error && this.table === 'counseling_logs') counselingRows.push({ ...payload, id: Math.max(0, ...counselingRows.map((record) => Number(record.id) || 0)) + 1 });
       return Promise.resolve({ data: null, error: error ? { message: error } : null });
     }
@@ -64,7 +66,8 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
       if (!error && this.table === 'counseling_logs' && this.action) {
         const [column, value] = this.filters.at(-1) || [];
         if (this.action.method === 'update') {
-          counselingRows.forEach((record) => { if (String(record[column]) === String(value)) Object.assign(record, this.action.payload); });
+          const targetRows = this.table === 'users' ? users : counselingRows;
+          targetRows.forEach((record) => { if (String(record[column]) === String(value)) Object.assign(record, this.action.payload); });
         } else if (this.action.method === 'delete') {
           for (let i = counselingRows.length - 1; i >= 0; i--) if (String(counselingRows[i][column]) === String(value)) counselingRows.splice(i, 1);
         }
@@ -242,6 +245,37 @@ test('counseling form keeps unsaved input on database failure and reports read e
   assert.equal(elements.get('counsel-content').value, '保留輸入的合成文字');
   assert.match(alerts.at(-1), /mock insert denied/u);
   assert.equal(elements.get('modal-counseling-add').classList.contains('hidden'), false);
+});
+
+test('new student forms generate the next Taipei-year ID and insert without upserting', async () => {
+  const { context, writes } = createHarness({ users: [
+    { id: '2026S0001', name: 'Old Student', role_type: '學生', status: '退班' },
+    { id: '2026S0007', name: 'Current Student', role_type: '學生', status: '在班' },
+    { id: '2025S9999', name: 'Prior Year Student', role_type: '學生', status: '畢業' },
+    { id: 'M-QA-001', name: 'Synthetic Staff', role_type: '同工', status: '在職' },
+  ] });
+  await vm.runInContext('loadUsers()', context);
+  const field = (id) => context.document.getElementById(id);
+  field('form-role').value = '學生';
+  vm.runInContext("openUserModal('add')", context);
+  const currentYear = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Taipei', year: 'numeric' }).format(new Date());
+  assert.equal(field('form-id').value, `${currentYear}S0008`);
+  assert.match(field('form-id-label').textContent, /自動編號/u);
+
+  field('form-role').value = '老師';
+  vm.runInContext('handleUserRoleChange()', context);
+  assert.equal(field('form-id').value, '');
+  assert.equal(field('form-id-label').textContent, '人員編號 *');
+  field('form-role').value = '學生';
+  vm.runInContext('handleUserRoleChange()', context);
+  field('form-name').value = 'Synthetic New Student';
+  await vm.runInContext('handleUserSubmit({ preventDefault() {} })', context);
+
+  const insert = writes.find((write) => write.table === 'users' && write.method === 'insert');
+  assert.ok(insert);
+  assert.equal(insert.payload[0].id, `${currentYear}S0008`);
+  assert.equal(insert.payload[0].role_type, '學生');
+  assert.equal(writes.some((write) => write.table === 'users' && write.method === 'upsert'), false);
 });
 
 test('student first scan adds one point and writes both attendance ledgers through the mock', async () => {
