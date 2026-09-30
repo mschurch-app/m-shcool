@@ -10,7 +10,7 @@ const appScriptEnd = html.indexOf('</script>', appMarker);
 assert.ok(appMarker >= 0 && appScriptStart >= 0 && appScriptEnd > appMarker, 'could not locate inline application script');
 const appScript = html.slice(html.indexOf('>', appScriptStart) + 1, appScriptEnd);
 
-function createHarness({ user = null, users = user ? [user] : [], logs = [], counseling = [], schedules = [], rollCalls = [], failures = {} } = {}) {
+function createHarness({ user = null, users = user ? [user] : [], logs = [], counseling = [], schedules = [], rollCalls = [], parentMessages = [], failures = {} } = {}) {
   const writes = [];
   const elements = new Map();
   const storage = new Map();
@@ -20,6 +20,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
   const counselingRows = counseling.map((record) => ({ ...record }));
   const scheduleRows = schedules.map((record) => ({ ...record }));
   const rollCallRows = rollCalls.map((record) => ({ ...record }));
+  const parentMessageRows = parentMessages.map((record) => ({ ...record }));
   const getElement = (id) => {
     if (!elements.has(id)) {
       const classes = new Set();
@@ -79,7 +80,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     then(resolve, reject) {
       const error = failures[`${this.table}.${this.action?.method || 'select'}`];
       if (!error && this.action) {
-        const targetRows = this.table === 'users' ? users : this.table === 'counseling_logs' ? counselingRows : this.table === 'schedules' ? scheduleRows : this.table === 'roll_calls' ? rollCallRows : [];
+        const targetRows = this.table === 'users' ? users : this.table === 'counseling_logs' ? counselingRows : this.table === 'schedules' ? scheduleRows : this.table === 'roll_calls' ? rollCallRows : this.table === 'parent_messages' ? parentMessageRows : [];
         const matches = (record) => this.filters.every(([column, value]) => String(record[column]) === String(value));
         if (this.action.method === 'update') {
           targetRows.forEach((record) => { if (matches(record)) Object.assign(record, this.action.payload); });
@@ -87,7 +88,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
           for (let i = targetRows.length - 1; i >= 0; i--) if (matches(targetRows[i])) targetRows.splice(i, 1);
         }
       }
-      const data = this.table === 'check_in_logs' ? logs : this.table === 'users' ? users : this.table === 'counseling_logs' ? counselingRows : this.table === 'schedules' ? scheduleRows : this.table === 'roll_calls' ? rollCallRows : [];
+      const data = this.table === 'check_in_logs' ? logs : this.table === 'users' ? users : this.table === 'counseling_logs' ? counselingRows : this.table === 'schedules' ? scheduleRows : this.table === 'roll_calls' ? rollCallRows : this.table === 'parent_messages' ? parentMessageRows : [];
       return Promise.resolve({ data, error: error ? { message: error } : null }).then(resolve, reject);
     }
   }
@@ -124,8 +125,58 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     prompt: () => null,
   });
   new vm.Script(appScript, { filename: 'index.html:inline-app' }).runInContext(context);
-  return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows, scheduleRows, rollCallRows };
+  return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows, scheduleRows, rollCallRows, parentMessageRows };
 }
+
+test('parent messages escape stored content and allow teachers to reply with a confirmed update', async () => {
+  const { context, writes, elements, alerts, parentMessageRows } = createHarness({
+    user: { id: 'T-QA-001', name: 'Synthetic Teacher', role_type: '老師' },
+    parentMessages: [{ id: 42, created_at: '2026-09-30T02:00:00.000Z', student_name: '<img src=x>', parent_message: '<script>unsafe()</script>', reply_content: null }],
+  });
+  vm.runInContext("currentUser = { id: 'T-QA-001', name: 'Synthetic Teacher', role_type: '老師' }; prompt = () => ' 已收到，謝謝。 '", context);
+
+  await vm.runInContext('loadMessages()', context);
+  assert.match(elements.get('messages-list').innerHTML, /&lt;img src=x&gt;/u);
+  assert.match(elements.get('messages-list').innerHTML, /&lt;script&gt;unsafe\(\)&lt;\/script&gt;/u);
+  assert.match(elements.get('messages-list').innerHTML, /replyParentMsg\(42\)/u);
+
+  await vm.runInContext('replyParentMsg(42)', context);
+  assert.equal(parentMessageRows[0].reply_content, '已收到，謝謝。');
+  assert.ok(parentMessageRows[0].reply_time);
+  assert.deepEqual(writes.filter(write => write.table === 'parent_messages').map(write => write.method), ['update']);
+  assert.ok(alerts.some(message => message.includes('已回覆')));
+});
+
+test('part-time staff can view parent messages but cannot reply through the UI or handler', async () => {
+  const { context, writes, elements, alerts } = createHarness({
+    user: { id: 'P-QA-001', name: 'Synthetic Part-time Staff', role_type: '工讀生' },
+    parentMessages: [{ id: 8, created_at: '2026-09-30T02:00:00.000Z', student_name: 'Synthetic Student', parent_message: '請假', reply_content: null }],
+  });
+
+  await vm.runInContext('loadMessages()', context);
+  assert.match(elements.get('messages-list').innerHTML, /請假/u);
+  assert.doesNotMatch(elements.get('messages-list').innerHTML, /replyParentMsg\(8\)/u);
+  await vm.runInContext('replyParentMsg(8)', context);
+  assert.equal(writes.some(write => write.table === 'parent_messages'), false);
+  assert.ok(alerts.some(message => message.includes('只有查閱')));
+});
+
+test('parent message read and reply errors are shown instead of reported as success', async () => {
+  const readHarness = createHarness({ failures: { 'parent_messages.select': 'read denied' } });
+  await vm.runInContext('loadMessages()', readHarness.context);
+  assert.match(readHarness.elements.get('messages-list').innerHTML, /載入失敗/u);
+  assert.ok(readHarness.alerts.some(message => message.includes('read denied')));
+
+  const writeHarness = createHarness({
+    user: { id: 'M-QA-001', name: 'Synthetic Staff', role_type: '同工' },
+    parentMessages: [{ id: 9, created_at: '2026-09-30T02:00:00.000Z', student_name: 'Synthetic Student', parent_message: '請假', reply_content: null }],
+    failures: { 'parent_messages.update': 'write denied' },
+  });
+  vm.runInContext("currentUser = { id: 'M-QA-001', name: 'Synthetic Staff', role_type: '同工' }; prompt = () => '收到'", writeHarness.context);
+  await vm.runInContext('replyParentMsg(9)', writeHarness.context);
+  assert.ok(writeHarness.alerts.some(message => message.includes('write denied')));
+  assert.equal(writeHarness.alerts.some(message => message.includes('已回覆')), false);
+});
 
 test('counseling list renders all fields safely, filters records, and calculates the visible totals', async () => {
   const { context, elements } = createHarness({
