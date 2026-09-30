@@ -1411,21 +1411,24 @@
       document.getElementById('modal-user').classList.remove('hidden');
     }
 
-    function generateStudentId() {
+    function generatePersonId(role) {
+      const rolePrefix = { '學生': 'S', '同工': 'M', '老師': 'T', '工讀生': 'P' }[role];
+      if (!rolePrefix) return '';
       const year = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Taipei', year: 'numeric' }).format(new Date());
-      const pattern = new RegExp(`^${year}S(\\d+)$`, 'i');
+      const pattern = new RegExp(`^${year}${rolePrefix}(\\d+)$`, 'i');
       const highestNumber = allUsers.reduce((highest, person) => {
         const match = String(person.id || '').match(pattern);
         return match ? Math.max(highest, Number(match[1]) || 0) : highest;
       }, 0);
-      return `${year}S${String(highestNumber + 1).padStart(4, '0')}`;
+      return `${year}${rolePrefix}${String(highestNumber + 1).padStart(4, '0')}`;
     }
 
     function handleUserRoleChange() {
       if (document.getElementById('form-user-mode').value === 'edit') return;
-      const isStudent = document.getElementById('form-role').value === '學生';
-      document.getElementById('form-id').value = isStudent ? generateStudentId() : '';
-      document.getElementById('form-id-label').textContent = isStudent ? '學號（自動編號）*' : '人員編號 *';
+      const role = document.getElementById('form-role').value;
+      const isStudent = role === '學生';
+      document.getElementById('form-id').value = generatePersonId(role);
+      document.getElementById('form-id-label').textContent = isStudent ? '學號（自動編號）*' : '人員編號（自動編號）*';
     }
 
     function closeUserModal() {
@@ -1467,9 +1470,9 @@
         : await db.from('users').insert([payload]);
       if (result.error) {
         const conflict = result.error.code === '23505';
-        if (conflict && !isEdit && payload.role_type === '學生') {
+        if (conflict && !isEdit) {
           await loadUsers();
-          const nextId = generateStudentId();
+          const nextId = generatePersonId(payload.role_type);
           document.getElementById('form-id').value = nextId;
           alert(`剛好有另一筆資料使用了此編號，已更新為 ${nextId}；請確認後再次儲存。`);
         } else alert(conflict ? `編號 ${payload.id} 已存在，請重新開啟新增表單取得新編號。` : `儲存失敗：${result.error.message}`);

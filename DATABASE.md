@@ -80,7 +80,7 @@ The app uses these columns as observed in `index.html`; this inventory is not a 
 
 | Source | Observed writes |
 |---|---|
-| `users` | scan updates student points; roster insert/update/delete; point buttons update points; CSV import upsert. New student forms generate the next `YYYYS####` id using the loaded roster; creation uses `insert` so a duplicate primary key cannot overwrite an existing person. |
+| `users` | scan updates student points; roster insert/update/delete; point buttons update points; CSV import upsert. New person forms generate the next `YYYY` + role prefix + four-digit sequence (`S` student, `M` coworker, `T` teacher, `P` part-time) using the loaded roster; creation uses `insert` so a duplicate primary key cannot overwrite an existing person. |
 | `schedules` | batch insert; current list/calendar reads schedules; UI exposes edit/delete affordances, but this source snapshot contains no matching Supabase update/delete implementation |
 | `check_in_logs` | student/staff scan inserts; check-in activity reads |
 | `points_logs` | student scan inserts a point transaction; roster point buttons do not write this log |
