@@ -17,6 +17,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
   const alerts = [];
   const blockedRequests = [];
   const listeners = new Map();
+  const queries = [];
   const counselingRows = counseling.map((record) => ({ ...record }));
   const scheduleRows = schedules.map((record) => ({ ...record }));
   const rollCallRows = rollCalls.map((record) => ({ ...record }));
@@ -46,11 +47,11 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
   };
 
   class Query {
-    constructor(table) { this.table = table; this.filters = []; this.action = null; }
+    constructor(table) { this.table = table; this.filters = []; this.action = null; queries.push(this); }
     select() { return this; }
     eq(column, value) { this.filters.push([column, value]); return this; }
-    gte() { return this; }
-    lte() { return this; }
+    gte(column, value) { this.filters.push({ operator: 'gte', column, value }); return this; }
+    lte(column, value) { this.filters.push({ operator: 'lte', column, value }); return this; }
     order() { return this; }
     limit() { return this; }
     or() { return this; }
@@ -125,7 +126,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     prompt: () => null,
   });
   new vm.Script(appScript, { filename: 'index.html:inline-app' }).runInContext(context);
-  return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows, scheduleRows, rollCallRows, parentMessageRows };
+  return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows, scheduleRows, rollCallRows, parentMessageRows, queries };
 }
 
 test('parent messages escape stored content and allow teachers to reply with a confirmed update', async () => {
@@ -423,6 +424,19 @@ test('schedule wage totals and monthly payroll report use each shift hourly wage
   assert.match(report, /\$630/u);
   assert.match(report, /\$250\/h/u);
   assert.match(report, /\$250/u);
+});
+
+test('monthly payroll report queries the actual last day of each month', async () => {
+  const { context, queries } = createHarness();
+  context.document.getElementById('print-report-type').value = 'workhours';
+
+  for (const [month, lastDate] of [['2026-02', '2026-02-28'], ['2028-02', '2028-02-29'], ['2026-09', '2026-09-30']]) {
+    context.document.getElementById('print-month-filter').value = month;
+    await vm.runInContext('renderSelectedReport()', context);
+    const scheduleQuery = queries.filter(query => query.table === 'schedules').at(-1);
+    assert.ok(scheduleQuery, `expected a schedules query for ${month}`);
+    assert.ok(scheduleQuery.filters.some(filter => filter.operator === 'lte' && filter.column === 'date' && filter.value === lastDate), `expected ${month} report to end on ${lastDate}`);
+  }
 });
 
 test('saving the same roll call day twice updates its rows without duplicates', async () => {

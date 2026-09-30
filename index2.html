@@ -2080,9 +2080,11 @@
         const [y, m] = targetMonth.split('-').map(Number);
         const rocY = y - 1911;
 
+        const lastDayOfMonth = new Date(y, m, 0).getDate();
+        const lastDate = `${targetMonth}-${String(lastDayOfMonth).padStart(2, '0')}`;
         const { data: monthSchedules } = await db.from('schedules').select('*')
           .gte('date', `${targetMonth}-01`)
-          .lte('date', `${targetMonth}-31`)
+          .lte('date', lastDate)
           .order('date', { ascending: true });
 
         const shifts = monthSchedules || [];
