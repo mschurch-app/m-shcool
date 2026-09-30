@@ -193,6 +193,7 @@
 
     <!-- 2. 排班行事曆 -->
     <div id="tab-schedules" class="hidden space-y-4">
+      <div id="schedule-status" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700" role="status" aria-live="polite"></div>
       <div class="clean-card rounded-3xl p-4 sm:p-7">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
           <div>
@@ -205,8 +206,8 @@
               <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
             </div>
             <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
-            <button onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-calendar-plus"></i><span>每週週期批次排班</span></button>
-            <button onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-plus"></i><span>單日排班</span></button>
+            <button id="btn-batch-schedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-calendar-plus"></i><span>每週週期批次排班</span></button>
+            <button id="btn-add-schedule" onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-plus"></i><span>單日排班</span></button>
           </div>
         </div>
 
@@ -255,10 +256,10 @@
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <input type="date" id="rollcall-date-picker" onchange="loadRollCallsForDate()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold font-mono">
-            <button onclick="batchSetAll('attendance', '出席')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席</button>
-            <button onclick="batchSetAll('homework', '已完成')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-book mr-1 text-blue-600"></i>作業完成</button>
-            <button onclick="batchSetAll('signed', '是')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體核章</button>
-            <button onclick="saveRollCallSheet()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1 ml-auto sm:ml-0 transition active:scale-95"><i class="fa-solid fa-floppy-disk"></i><span>儲存紀錄</span></button>
+            <button id="rollcall-batch-attendance" onclick="batchSetAll('attendance', '出席')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-check-double mr-1 text-emerald-600"></i>全體出席</button>
+            <button id="rollcall-batch-homework" onclick="batchSetAll('homework', '已完成')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-book mr-1 text-blue-600"></i>作業完成</button>
+            <button id="rollcall-batch-signed" onclick="batchSetAll('signed', '是')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-stamp mr-1 text-purple-600"></i>全體核章</button>
+            <button id="rollcall-save" onclick="saveRollCallSheet()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm flex items-center space-x-1 ml-auto sm:ml-0 transition active:scale-95"><i class="fa-solid fa-floppy-disk"></i><span>儲存紀錄</span></button>
           </div>
         </div>
 
@@ -803,15 +804,42 @@
     // =============================================================
     // 1. 排班管理與動態互動排班
     // =============================================================
+    function scheduleAccessRole() { return currentUser?.role_type || ''; }
+    function canManageSchedules() { return ['同工', '老師'].includes(scheduleAccessRole()); }
+    function canDeleteSchedules() { return scheduleAccessRole() === '同工'; }
+    function setScheduleStatus(message = '') {
+      const status = document.getElementById('schedule-status');
+      if (!status) return;
+      status.textContent = message;
+      status.classList.toggle('hidden', !message);
+    }
+    function updateScheduleActionUI() {
+      const canManage = canManageSchedules();
+      document.getElementById('btn-batch-schedule')?.classList.toggle('hidden', !canManage);
+      document.getElementById('btn-add-schedule')?.classList.toggle('hidden', !canManage);
+    }
+    function populateScheduleStaffOptions() {
+      const options = `<option value="">請選擇同工...</option>` + staffList.map(s => `<option value="${s.id}" data-name="${s.name}" data-role="${s.role_type || ''}">${s.name} (${s.id})</option>`).join('');
+      document.getElementById('batch-worker-select').innerHTML = options;
+      document.getElementById('sch-worker-select').innerHTML = options;
+      document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工</option>` + staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    }
+    async function loadScheduleStaffOptions() {
+      const { data, error } = await db.from('users').select('id,name,role_type,status').order('id');
+      if (error) throw error;
+      staffList = (data || []).filter(u => (['同工', '老師', '工讀生'].includes(u.role_type) || ['M', 'T', 'P'].some(prefix => String(u.id || '').includes(prefix)) || u.role_type !== '學生') && u.status !== '離職');
+      populateScheduleStaffOptions();
+      return staffList;
+    }
     async function openBatchScheduleModal() {
-      if (staffList.length === 0) {
-        const { data } = await db.from('users').select('*');
-        if (data) staffList = data.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-      }
-      document.getElementById('batch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` +
-        staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name} (${s.id})</option>`).join('');
-      document.getElementById('modal-batch-schedule').classList.remove('hidden');
-      previewBatchDates();
+      if (!canManageSchedules()) { alert('目前帳號只有查看排班的權限。'); return; }
+      try {
+        if (staffList.length === 0) await loadScheduleStaffOptions();
+        if (staffList.length === 0) { alert('目前沒有可排班的人員。'); return; }
+        populateScheduleStaffOptions();
+        document.getElementById('modal-batch-schedule').classList.remove('hidden');
+        previewBatchDates();
+      } catch (error) { alert(`載入排班人員失敗：${error?.message || '未知錯誤'}`); }
     }
     function closeBatchScheduleModal() { document.getElementById('modal-batch-schedule').classList.add('hidden'); }
 
@@ -846,6 +874,7 @@
     function removeBatchDate(idx) { activeBatchDates.splice(idx, 1); renderBatchChips(); }
 
     async function executeBatchSchedule() {
+      if (!canManageSchedules()) { alert('目前帳號沒有新增排班的權限。'); return; }
       if (activeBatchDates.length === 0) { alert("沒有日期可建立！"); return; }
       const sel = document.getElementById('batch-worker-select');
       const workerId = sel.value; const workerName = sel.selectedOptions[0]?.getAttribute('data-name');
@@ -856,24 +885,33 @@
       let diff = (eH * 60 + eM) - (sH * 60 + sM); if (diff < 0) diff += 1440;
       const hours = Math.round((diff / 60) * 10) / 10;
       const payload = activeBatchDates.map(i => ({ date: i.date, worker_id: workerId, worker_name: workerName, shift: `${start} - ${end}`, hours: hours, job_desc: document.getElementById('batch-job').value.trim() }));
-      await db.from('schedules').insert(payload);
-      alert(`✅ 成功批次建立 ${activeBatchDates.length} 筆排班！`);
-      closeBatchScheduleModal(); loadSchedules();
+      try {
+        const { error } = await db.from('schedules').insert(payload);
+        if (error) throw error;
+        alert(`✅ 成功批次建立 ${activeBatchDates.length} 筆排班！`);
+        closeBatchScheduleModal(); await loadSchedules();
+      } catch (error) { alert(`批次建立排班失敗：${error?.message || '未知錯誤'}`); }
     }
 
     async function loadSchedules() {
-      renderActiveScheduleView();
-      if (staffList.length === 0) {
-        const { data } = await db.from('users').select('*');
-        if (data) {
-          staffList = data.filter(u => u.id.includes('M') || u.id.includes('T') || u.id.includes('P') || u.role_type !== '學生');
-          document.getElementById('schedule-worker-filter').innerHTML = `<option value="">全部同工</option>` + staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-          document.getElementById('sch-worker-select').innerHTML = `<option value="">請選擇同工...</option>` + staffList.map(s => `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`).join('');
-        }
+      updateScheduleActionUI();
+      setScheduleStatus('載入排班中…');
+      let staffLoadMessage = '';
+      try {
+        if (staffList.length === 0) await loadScheduleStaffOptions();
+        else populateScheduleStaffOptions();
+      } catch (error) { staffLoadMessage = `排班人員載入失敗：${error?.message || '未知錯誤'}`; setScheduleStatus(staffLoadMessage); }
+      try {
+        const { data, error } = await db.from('schedules').select('*').order('date', { ascending: false });
+        if (error) throw error;
+        rawSchedules = data || [];
+        setScheduleStatus(staffLoadMessage);
+        renderActiveScheduleView();
+      } catch (error) {
+        rawSchedules = [];
+        renderActiveScheduleView();
+        setScheduleStatus(`排班資料載入失敗：${error?.message || '未知錯誤'}`);
       }
-      const { data } = await db.from('schedules').select('*').order('date', { ascending: false });
-      rawSchedules = data || [];
-      renderActiveScheduleView();
     }
 
     function autoCalcHours() {
@@ -927,12 +965,85 @@
         grid.appendChild(cell);
       }
     }
-    function quickAddScheduleOnDate(dt) { document.getElementById('sch-edit-id').value = ""; document.getElementById('modal-sch-title').textContent = `新增排班 (${dt})`; document.getElementById('sch-date').value = dt; document.getElementById('modal-schedule').classList.remove('hidden'); }
+    async function openScheduleModal(mode = 'add', scheduleId = null) {
+      if (!canManageSchedules()) { alert('目前帳號只有查看排班的權限。'); return; }
+      try {
+        if (staffList.length === 0) await loadScheduleStaffOptions();
+        else populateScheduleStaffOptions();
+        if (staffList.length === 0) { alert('目前沒有可排班的人員。'); return; }
+        const schedule = mode === 'edit' ? rawSchedules.find(item => String(item.id) === String(scheduleId)) : null;
+        if (mode === 'edit' && !schedule) { alert('找不到這筆排班，請重新載入清單。'); return; }
+        const form = document.querySelector('#modal-schedule form');
+        if (form) form.reset();
+        document.getElementById('sch-edit-id').value = schedule ? String(schedule.id) : '';
+        document.getElementById('modal-sch-title').textContent = schedule ? '修改排班' : '新增排班';
+        document.getElementById('sch-date').value = schedule?.date || '';
+        document.getElementById('sch-worker-select').value = schedule?.worker_id || '';
+        const [start = '16:00', end = '18:00'] = String(schedule?.shift || '').split(/\s*-\s*/);
+        document.getElementById('sch-start-time').value = start || '16:00';
+        document.getElementById('sch-end-time').value = end || '18:00';
+        document.getElementById('sch-job').value = schedule?.job_desc || '課輔陪伴';
+        if (schedule?.hours != null) {
+          document.getElementById('sch-hours-val').value = Number(schedule.hours);
+          document.getElementById('sch-hours-display').textContent = `${Number(schedule.hours)} 小時`;
+        } else autoCalcHours();
+        document.getElementById('modal-schedule').classList.remove('hidden');
+      } catch (error) { alert(`開啟排班表單失敗：${error?.message || '未知錯誤'}`); }
+    }
+    function closeScheduleModal() { document.getElementById('modal-schedule').classList.add('hidden'); }
+    function quickAddScheduleOnDate(dt) {
+      if (!canManageSchedules()) { alert('目前帳號只有查看排班的權限。'); return; }
+      openScheduleModal('add').then(() => {
+        if (!document.getElementById('modal-schedule').classList.contains('hidden')) document.getElementById('sch-date').value = dt;
+      });
+    }
+    async function handleScheduleSubmit(event) {
+      event.preventDefault();
+      if (!canManageSchedules()) { alert('目前帳號沒有新增或修改排班的權限。'); return; }
+      const date = document.getElementById('sch-date').value;
+      const workerId = document.getElementById('sch-worker-select').value;
+      const worker = staffList.find(person => String(person.id) === String(workerId));
+      const start = document.getElementById('sch-start-time').value;
+      const end = document.getElementById('sch-end-time').value;
+      const hours = Number(document.getElementById('sch-hours-val').value);
+      if (!date || !worker || !start || !end || !Number.isFinite(hours) || hours <= 0) { alert('請選擇排班日期、人員與有效時段。'); return; }
+      const editId = document.getElementById('sch-edit-id').value;
+      const payload = {
+        date, worker_id: String(worker.id), worker_name: worker.name,
+        shift: `${start} - ${end}`, hours,
+        job_desc: document.getElementById('sch-job').value.trim() || '課輔陪伴',
+        role_type: worker.role_type || null,
+        hourly_wage: rawSchedules.find(item => String(item.id) === editId)?.hourly_wage ?? 190
+      };
+      try {
+        const result = editId
+          ? await db.from('schedules').update(payload).eq('id', editId)
+          : await db.from('schedules').insert([payload]);
+        if (result.error) throw result.error;
+        closeScheduleModal();
+        await loadSchedules();
+        alert(editId ? '✅ 排班修改成功！' : '✅ 排班新增成功！');
+      } catch (error) { alert(`儲存排班失敗：${error?.message || '未知錯誤'}`); }
+    }
+    async function deleteSchedule(scheduleId) {
+      if (!canDeleteSchedules()) { alert('只有同工可以刪除排班。'); return; }
+      if (!confirm('確定刪除這筆排班？')) return;
+      try {
+        const { error } = await db.from('schedules').delete().eq('id', scheduleId);
+        if (error) throw error;
+        await loadSchedules();
+        alert('✅ 排班已刪除。');
+      } catch (error) { alert(`刪除排班失敗：${error?.message || '未知錯誤'}`); }
+    }
     function prevMonth() { currentCalMonth--; if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; } renderActiveScheduleView(); }
     function nextMonth() { currentCalMonth++; if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } renderActiveScheduleView(); }
     function goToCurrentMonth() { const n = new Date(); currentCalYear = n.getFullYear(); currentCalMonth = n.getMonth() + 1; renderActiveScheduleView(); }
     function renderSchedulesListTable(list) {
-      document.getElementById('schedules-list').innerHTML = list.length === 0 ? `<tr><td colspan="7" class="py-6 text-center text-slate-400">無紀錄</td></tr>` : list.map(s => `<tr class="hover:bg-slate-50"><td class="py-3 px-3 font-mono font-bold">${s.date}</td><td class="py-3 px-3 font-mono">${s.worker_id}</td><td class="py-3 px-3 font-bold">${s.worker_name}</td><td class="py-3 px-3">${s.shift}</td><td class="py-3 px-3 text-xs text-slate-500">${s.job_desc||''}</td><td class="py-3 px-3 font-bold text-indigo-700">${s.hours}h</td><td class="py-3 px-3 text-center"><button onclick="deleteSchedule(${s.id})" class="text-rose-600 font-bold text-xs">刪除</button></td></tr>`).join('');
+      document.getElementById('schedules-list').innerHTML = list.length === 0 ? `<tr><td colspan="7" class="py-6 text-center text-slate-400">無紀錄</td></tr>` : list.map(s => {
+        const editButton = canManageSchedules() ? `<button onclick="openScheduleModal('edit', ${Number(s.id)})" class="text-indigo-600 font-bold text-xs mr-2">編輯</button>` : '';
+        const deleteButton = canDeleteSchedules() ? `<button onclick="deleteSchedule(${Number(s.id)})" class="text-rose-600 font-bold text-xs">刪除</button>` : '';
+        return `<tr class="hover:bg-slate-50"><td class="py-3 px-3 font-mono font-bold">${s.date}</td><td class="py-3 px-3 font-mono">${s.worker_id}</td><td class="py-3 px-3 font-bold">${s.worker_name}</td><td class="py-3 px-3">${s.shift}</td><td class="py-3 px-3 text-xs text-slate-500">${s.job_desc||''}</td><td class="py-3 px-3 font-bold text-indigo-700">${s.hours}h</td><td class="py-3 px-3 text-center">${editButton}${deleteButton || '<span class="text-slate-300">—</span>'}</td></tr>`;
+      }).join('');
     }
 
     // =============================================================
@@ -1177,30 +1288,48 @@
     // =============================================================
     // 4. 點名簿
     // =============================================================
-    async function initRollCallTab() { document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0]; loadRollCallsForDate(); }
+    function canManageRollCalls() { return ['同工', '老師'].includes(currentUser?.role_type || ''); }
+    function updateRollCallActionUI() {
+      const canEdit = canManageRollCalls();
+      ['rollcall-batch-attendance', 'rollcall-batch-homework', 'rollcall-batch-signed', 'rollcall-save'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', !canEdit));
+    }
+    async function initRollCallTab() { updateRollCallActionUI(); document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0]; await loadRollCallsForDate(); }
     async function loadRollCallsForDate() {
       const dt = document.getElementById('rollcall-date-picker').value;
-      if (allUsers.length === 0) { const { data } = await db.from('users').select('*'); if (data) allUsers = data; }
+      if (allUsers.length === 0) {
+        const { data, error } = await db.from('users').select('*');
+        if (error) { alert(`載入學員名冊失敗：${error.message}`); return; }
+        if (data) allUsers = data;
+      }
       const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
-      const { data: saved } = await db.from('roll_calls').select('*').gte('created_at', `${dt}T00:00:00.000Z`).lte('created_at', `${dt}T23:59:59.999Z`);
+      const { data: saved, error } = await db.from('roll_calls').select('*').gte('created_at', `${dt}T00:00:00.000Z`).lte('created_at', `${dt}T23:59:59.999Z`).order('id', { ascending: false });
+      if (error) { alert(`載入點名紀錄失敗：${error.message}`); return; }
       const map = {}; (saved || []).forEach(r => map[r.student_id] = r);
       activeRollCallList = students.map(s => {
         const r = map[s.id];
-        return { student_id: s.id, student_name: s.name, school: s.school||'', grade: s.grade||'', attendance: r?.attendance_status||'出席', homework: r?.homework_status||'已完成', signed: r?.contact_book_signed||'是', note: r?.note||'' };
+        return { record_id: r?.id ?? null, student_id: s.id, student_name: s.name, school: s.school||'', grade: s.grade||'', attendance: r?.attendance_status||'出席', homework: r?.homework_status||'已完成', signed: r?.contact_book_signed||'是', note: r?.note||'' };
       });
       renderRollCallRows(); updateRollCallStats();
     }
     function renderRollCallRows() {
-      document.getElementById('rollcall-cards-mobile').innerHTML = activeRollCallList.map((r, i) => `<div class="bg-white border rounded-2xl p-4 space-y-2"><div class="flex justify-between"><b>${r.student_name} (${r.student_id})</b><select onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs font-bold"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></div></div>`).join('');
-      document.getElementById('rollcall-table-body').innerHTML = activeRollCallList.map((r, i) => `<tr><td class="py-3 px-3 font-mono font-bold">${r.student_id}</td><td class="py-3 px-3 font-bold">${r.student_name}</td><td class="py-3 px-3 text-xs">${r.school} ${r.grade}</td><td class="py-3 px-3"><select onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></td><td class="py-3 px-3"><select onchange="activeRollCallList[${i}].homework=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="已完成" ${r.homework==='已完成'?'selected':''}>已完成</option><option value="未完成">未完成</option></select></td><td class="py-3 px-3"><select onchange="activeRollCallList[${i}].signed=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="是" ${r.signed==='是'?'selected':''}>已核章</option><option value="未簽">未簽</option></select></td><td class="py-3 px-3"><input type="text" value="${r.note}" onchange="activeRollCallList[${i}].note=this.value" class="border rounded px-2 py-1 text-xs w-full"></td></tr>`).join('');
+      const disabled = canManageRollCalls() ? '' : 'disabled';
+      document.getElementById('rollcall-cards-mobile').innerHTML = activeRollCallList.map((r, i) => `<div class="bg-white border rounded-2xl p-4 space-y-2"><div class="flex justify-between"><b>${r.student_name} (${r.student_id})</b><select ${disabled} onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs font-bold"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></div></div>`).join('');
+      document.getElementById('rollcall-table-body').innerHTML = activeRollCallList.map((r, i) => `<tr><td class="py-3 px-3 font-mono font-bold">${r.student_id}</td><td class="py-3 px-3 font-bold">${r.student_name}</td><td class="py-3 px-3 text-xs">${r.school} ${r.grade}</td><td class="py-3 px-3"><select ${disabled} onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></td><td class="py-3 px-3"><select ${disabled} onchange="activeRollCallList[${i}].homework=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="已完成" ${r.homework==='已完成'?'selected':''}>已完成</option><option value="未完成">未完成</option></select></td><td class="py-3 px-3"><select ${disabled} onchange="activeRollCallList[${i}].signed=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="是" ${r.signed==='是'?'selected':''}>已核章</option><option value="未簽">未簽</option></select></td><td class="py-3 px-3"><input ${disabled} type="text" value="${r.note}" onchange="activeRollCallList[${i}].note=this.value" class="border rounded px-2 py-1 text-xs w-full"></td></tr>`).join('');
     }
     function updateRollCallStats() { document.getElementById('rc-stat-total').textContent = `${activeRollCallList.length} 人`; document.getElementById('rc-stat-attend').textContent = `${activeRollCallList.filter(x=>x.attendance==='出席').length} 人`; }
     async function saveRollCallSheet() {
+      if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; }
       const dt = document.getElementById('rollcall-date-picker').value;
-      const payload = activeRollCallList.map(r => ({ created_at: `${dt}T16:00:00.000Z`, course_name: "課後輔導", student_id: r.student_id, student_name: r.student_name, attendance_status: r.attendance, homework_status: r.homework, contact_book_signed: r.signed, note: r.note }));
-      await db.from('roll_calls').insert(payload); alert("✅ 點名儲存成功！");
+      if (!dt || activeRollCallList.length === 0) { alert('沒有可儲存的點名資料。'); return; }
+      const payload = activeRollCallList.map(r => ({ ...(r.record_id != null ? { id: r.record_id } : {}), created_at: `${dt}T16:00:00.000Z`, course_name: "課後輔導", student_id: r.student_id, student_name: r.student_name, attendance_status: r.attendance, homework_status: r.homework, contact_book_signed: r.signed, note: r.note }));
+      try {
+        const { error } = await db.from('roll_calls').upsert(payload, { onConflict: 'id' });
+        if (error) throw error;
+        await loadRollCallsForDate();
+        alert("✅ 點名儲存成功！");
+      } catch (error) { alert(`儲存點名失敗：${error?.message || '未知錯誤'}`); }
     }
-    function batchSetAll(f, v) { activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
+    function batchSetAll(f, v) { if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; } activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
 
     // =============================================================
     // 5. 人員名冊管理 (精準對齊 SQL 16 個欄位)
