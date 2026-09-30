@@ -543,14 +543,14 @@
             </div>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div><label class="block font-bold text-slate-600 mb-1">學號/編號 *</label><input type="text" id="form-id" required class="w-full uppercase font-mono font-bold px-3 py-2 bg-white border rounded-xl"></div>
+            <div><label id="form-id-label" class="block font-bold text-slate-600 mb-1">學號/編號 *</label><input type="text" id="form-id" required class="w-full uppercase font-mono font-bold px-3 py-2 bg-white border rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">姓名 *</label><input type="text" id="form-name" required class="w-full font-bold px-3 py-2 bg-white border rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">性別</label><select id="form-gender" class="w-full px-3 py-2 bg-white border rounded-xl font-bold"><option value="男">男</option><option value="女">女</option></select></div>
             <div><label class="block font-bold text-slate-600 mb-1">出生日期</label><input type="date" id="form-birth" class="w-full px-3 py-2 bg-white border rounded-xl font-mono"></div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">身分證字號</label><input type="text" id="form-id-card" class="w-full uppercase font-mono px-3 py-2 bg-white border rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">身分類別</label><select id="form-role" class="w-full px-3 py-2 bg-white border rounded-xl font-bold"><option value="學生">學生</option><option value="同工">同工</option><option value="老師">老師</option><option value="工讀生">工讀生</option></select></div>
+            <div><label class="block font-bold text-slate-600 mb-1">身分類別</label><select id="form-role" onchange="handleUserRoleChange()" class="w-full px-3 py-2 bg-white border rounded-xl font-bold"><option value="學生">學生</option><option value="同工">同工</option><option value="老師">老師</option><option value="工讀生">工讀生</option></select></div>
             <div><label class="block font-bold text-slate-600 mb-1">狀態 *</label><select id="form-status" class="w-full px-3 py-2 bg-amber-50 font-bold border border-amber-300 rounded-xl text-amber-900"><option value="在班">在班</option><option value="退班">退班</option><option value="畢業">畢業</option><option value="在職">在職</option><option value="離職">離職</option></select></div>
           </div>
         </div>
@@ -1332,6 +1332,7 @@
       document.getElementById('form-family-status').value = "";
       document.getElementById('form-health-notes').value = "";
       document.getElementById('form-health-extra').value = "";
+      document.getElementById('form-id-label').textContent = '學號/編號 *';
       document.getElementById('preview-avatar').src = "https://ui-avatars.com/api/?name=User&background=cbd5e1";
       document.getElementById('face-enrolled-badge').classList.add('hidden');
       const tip = document.getElementById('face-extract-tip');
@@ -1344,13 +1345,14 @@
     }
 
     // 🌟 打開人員編輯彈窗（完整讀取 SQL 16 個欄位 + 標籤陣列還原）
-    function openUserModal(mode, uid = null) {
+    async function openUserModal(mode, uid = null) {
       resetUserForm();
 
       if (mode === 'add') {
+        if (allUsers.length === 0) await loadUsers();
         document.getElementById('modal-user-title').textContent = "新增學員 / 人員建檔";
         document.getElementById('form-id').disabled = false;
-        document.getElementById('form-id').value = "";
+        handleUserRoleChange();
       } else {
         document.getElementById('modal-user-title').textContent = "編輯學員詳細資料";
         document.getElementById('form-user-mode').value = "edit";
@@ -1365,6 +1367,7 @@
         document.getElementById('form-id-card').value = u.id_card || "";
         document.getElementById('form-role').value = u.role_type || (u.id.includes('S') ? "學生" : "同工");
         document.getElementById('form-status').value = u.status || "在班";
+        document.getElementById('form-id-label').textContent = document.getElementById('form-role').value === '學生' ? '學號/編號 *' : '人員編號 *';
         document.getElementById('form-school').value = u.school || "";
         document.getElementById('form-grade').value = u.grade || "";
         document.getElementById('form-address').value = u.address || "";
@@ -1408,6 +1411,23 @@
       document.getElementById('modal-user').classList.remove('hidden');
     }
 
+    function generateStudentId() {
+      const year = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Taipei', year: 'numeric' }).format(new Date());
+      const pattern = new RegExp(`^${year}S(\\d+)$`, 'i');
+      const highestNumber = allUsers.reduce((highest, person) => {
+        const match = String(person.id || '').match(pattern);
+        return match ? Math.max(highest, Number(match[1]) || 0) : highest;
+      }, 0);
+      return `${year}S${String(highestNumber + 1).padStart(4, '0')}`;
+    }
+
+    function handleUserRoleChange() {
+      if (document.getElementById('form-user-mode').value === 'edit') return;
+      const isStudent = document.getElementById('form-role').value === '學生';
+      document.getElementById('form-id').value = isStudent ? generateStudentId() : '';
+      document.getElementById('form-id-label').textContent = isStudent ? '學號（自動編號）*' : '人員編號 *';
+    }
+
     function closeUserModal() {
       resetUserForm();
       document.getElementById('modal-user').classList.add('hidden');
@@ -1441,8 +1461,20 @@
         avatar_url: document.getElementById('form-avatar').value.trim() || null
       };
 
-      const { error } = await db.from('users').upsert([payload]); 
-      if (error) { alert("儲存失敗：" + error.message); return; }
+      const isEdit = document.getElementById('form-user-mode').value === 'edit';
+      const result = isEdit
+        ? await db.from('users').update(payload).eq('id', payload.id)
+        : await db.from('users').insert([payload]);
+      if (result.error) {
+        const conflict = result.error.code === '23505';
+        if (conflict && !isEdit && payload.role_type === '學生') {
+          await loadUsers();
+          const nextId = generateStudentId();
+          document.getElementById('form-id').value = nextId;
+          alert(`剛好有另一筆資料使用了此編號，已更新為 ${nextId}；請確認後再次儲存。`);
+        } else alert(conflict ? `編號 ${payload.id} 已存在，請重新開啟新增表單取得新編號。` : `儲存失敗：${result.error.message}`);
+        return;
+      }
       alert("✅ 儲存成功！");
       closeUserModal(); loadUsers(); buildFaceMatcher();
     }
