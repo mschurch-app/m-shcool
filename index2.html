@@ -1901,6 +1901,11 @@
       return g.includes('七') || g.includes('八') || g.includes('九') || g.includes('7') || g.includes('8') || g.includes('9') || g.includes('國一') || g.includes('國二') || g.includes('國三') || s.includes('國中');
     }
 
+    function taipeiDateKey(value) {
+      const parts = Object.fromEntries(new Intl.DateTimeFormat('en', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(value)).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+      return `${parts.year}-${parts.month}-${parts.day}`;
+    }
+
     async function renderSelectedReport() {
       const type = document.getElementById('print-report-type').value;
       const targetMonth = document.getElementById('print-month-filter').value || '2026-09';
@@ -1928,14 +1933,16 @@
           }
         }
 
+        const monthStartIso = new Date(Date.UTC(y, m - 1, 1) - 8 * 60 * 60 * 1000).toISOString();
+        const nextMonthStartIso = new Date(Date.UTC(y, m, 1) - 8 * 60 * 60 * 1000).toISOString();
         const { data: mLogs } = await db.from('check_in_logs').select('*')
-          .gte('check_time', `${targetMonth}-01T00:00:00.000Z`)
-          .lte('check_time', `${targetMonth}-${daysInM}T23:59:59.999Z`);
+          .gte('check_time', monthStartIso)
+          .lt('check_time', nextMonthStartIso);
 
         const map = {};
         (mLogs || []).forEach(l => {
           if (!map[l.target_id]) map[l.target_id] = {};
-          map[l.target_id][new Date(l.check_time).toLocaleDateString('en-CA')] = true;
+          map[l.target_id][taipeiDateKey(l.check_time)] = true;
         });
 
         const elem = activeStudents.filter(s => !isJuniorHighStudent(s));
