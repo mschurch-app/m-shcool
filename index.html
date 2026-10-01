@@ -160,8 +160,7 @@
       th, td { border: 1px solid #000000 !important; }
       .monthly-attendance-print { width: 100% !important; table-layout: fixed !important; font-size: 7px !important; }
       .monthly-attendance-print th, .monthly-attendance-print td { padding: .7mm .35mm !important; white-space: nowrap !important; }
-      .monthly-attendance-print .student-id-col { width: 18mm !important; }
-      .monthly-attendance-print .student-name-col { width: 15mm !important; }
+      .monthly-attendance-print .student-name-col { width: 20mm !important; }
       .monthly-attendance-print .rate-col { width: 11mm !important; }
       .monthly-attendance-print .signature-col { width: 14mm !important; }
     }
@@ -2090,7 +2089,6 @@
               <thead>
                 <tr class="bg-slate-100 font-bold border-b-2 border-slate-900">
                   <th class="border p-1 w-7">序</th>
-                  <th class="student-id-col border p-1 w-20">學號</th>
                   <th class="student-name-col border p-1 w-16">姓名</th>
                   ${schoolDays.map(sd => `<th class="border p-0.5">${sd.day}</th>`).join('')}
                   <th class="rate-col border p-1 w-12">出席率</th>
@@ -2109,7 +2107,6 @@
                   return `
                     <tr>
                       <td class="border p-1">${i + 1}</td>
-                      <td class="border p-1 font-mono">${s.id}</td>
                       <td class="border p-1 font-bold">${s.name}</td>
                       ${days}
                       <td class="border p-1 font-bold ${rate >= 80 ? 'text-emerald-800' : 'text-rose-700'}">${rate}%</td>
