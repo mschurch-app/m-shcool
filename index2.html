@@ -163,6 +163,28 @@
       .monthly-attendance-print .student-name-col { width: 20mm !important; }
       .monthly-attendance-print .rate-col { width: 11mm !important; }
       .monthly-attendance-print .signature-col { width: 14mm !important; }
+      .qr-print-sheet { width: 100% !important; }
+      .qr-print-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 3mm !important;
+        align-items: start !important;
+      }
+      .qr-print-card {
+        box-sizing: border-box !important;
+        height: 31mm !important;
+        padding: 2mm !important;
+        gap: 2mm !important;
+        border: .35mm dashed #64748b !important;
+        border-radius: 2mm !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .qr-print-code { width: 26mm !important; height: 26mm !important; padding: 1mm !important; }
+      .qr-print-code canvas, .qr-print-code img { width: 24mm !important; height: 24mm !important; max-width: none !important; }
+      .qr-print-info { min-width: 0 !important; overflow: hidden !important; }
+      .qr-print-info h3, .qr-print-info p { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
     }
   </style>
 </head>
@@ -2128,19 +2150,19 @@
       // -------------------------------------------------------------
       else if (type === 'qrcode') {
         container.innerHTML = `
-          <div class="space-y-4">
+          <div class="qr-print-sheet space-y-4">
             <div class="text-center border-b pb-2">
               <h2 class="text-lg font-black tracking-wide">M+ 大雅教會 課輔班 學生識別 QR Code 裁切名片卡</h2>
               <p class="text-xs text-slate-500">建議以厚紙彩色列印後裁切護貝，可供學生每日到班快速感應刷卡</p>
             </div>
-            <div id="qrcode-cards-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+            <div id="qrcode-cards-grid" class="qr-print-grid grid grid-cols-2 md:grid-cols-3 gap-4"></div>
           </div>`;
 
         const grid = document.getElementById('qrcode-cards-grid');
         grid.innerHTML = activeStudents.map((s, idx) => `
-          <div class="border-2 border-dashed border-slate-300 p-4 rounded-2xl flex items-center space-x-3 bg-white">
-            <div id="qr-box-${idx}" class="shrink-0 w-24 h-24 bg-slate-50 border p-1 rounded-xl flex items-center justify-center"></div>
-            <div class="min-w-0 flex-1">
+          <div class="qr-print-card border-2 border-dashed border-slate-300 p-4 rounded-2xl flex items-center space-x-3 bg-white">
+            <div id="qr-box-${idx}" class="qr-print-code shrink-0 w-24 h-24 bg-slate-50 border p-1 rounded-xl flex items-center justify-center"></div>
+            <div class="qr-print-info min-w-0 flex-1">
               <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">M+ 大雅課輔</span>
               <h3 class="text-base font-black text-slate-900 mt-1 truncate">${s.name}</h3>
               <p class="text-xs font-mono font-bold text-indigo-700 mt-0.5">${s.id}</p>
