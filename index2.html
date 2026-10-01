@@ -2070,30 +2070,46 @@
         const rocY = y - 1911;
         const monthStartIso = new Date(Date.UTC(y, m - 1, 1) - 8 * 60 * 60 * 1000).toISOString();
         const nextMonthStartIso = new Date(Date.UTC(y, m, 1) - 8 * 60 * 60 * 1000).toISOString();
+        const rollCallNextMonthIso = new Date(Date.UTC(y, m, 1)).toISOString();
         const { data: mLogs } = await db.from('check_in_logs').select('*')
           .gte('check_time', monthStartIso)
           .lt('check_time', nextMonthStartIso);
+        const { data: monthlyRollCalls } = await db.from('roll_calls').select('*')
+          .gte('created_at', `${targetMonth}-01T00:00:00.000Z`)
+          .lt('created_at', rollCallNextMonthIso);
 
         const map = {};
         (mLogs || []).forEach(l => {
           if (!map[l.target_id]) map[l.target_id] = {};
-          map[l.target_id][taipeiDateKey(l.check_time)] = true;
+          map[l.target_id][taipeiDateKey(l.check_time)] = '出席';
+        });
+        (monthlyRollCalls || []).forEach(record => {
+          if (!map[record.student_id]) map[record.student_id] = {};
+          // Existing roll-call records store the selected class date in the UTC date portion.
+          const dateKey = String(record.created_at || '').slice(0, 10);
+          if (dateKey) map[record.student_id][dateKey] = record.attendance_status || '出席';
         });
 
         const elem = activeStudents.filter(s => !isJuniorHighStudent(s));
         const jun = activeStudents.filter(s => isJuniorHighStudent(s));
 
-        // Only dates with at least one active student's check-in are class days.
+        // A saved roll call is the authoritative class-day signal. Check-ins are
+        // retained as a fallback for older dates that have no saved roll call.
         const activeStudentIds = new Set(activeStudents.map(student => student.id));
-        const schoolDays = [...new Set((mLogs || [])
+        const rollCallDates = (monthlyRollCalls || [])
+          .filter(record => activeStudentIds.has(record.student_id))
+          .map(record => String(record.created_at || '').slice(0, 10))
+          .filter(Boolean);
+        const checkInDates = (mLogs || [])
           .filter(log => activeStudentIds.has(log.target_id))
-          .map(log => taipeiDateKey(log.check_time)))]
+          .map(log => taipeiDateKey(log.check_time));
+        const schoolDays = [...new Set([...rollCallDates, ...checkInDates])]
           .sort()
           .map(dateStr => ({ dateStr, day: Number(dateStr.slice(-2)) }));
 
         const renderTbl = (title, list) => {
           const totalPossible = list.length * schoolDays.length;
-          const totalPresent = list.reduce((sum, student) => sum + schoolDays.filter(day => map[student.id]?.[day.dateStr]).length, 0);
+          const totalPresent = list.reduce((sum, student) => sum + schoolDays.filter(day => map[student.id]?.[day.dateStr] === '出席').length, 0);
           const overallRate = totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0;
           return `
           <div class="space-y-3">
@@ -2121,9 +2137,11 @@
                 ${list.map((s, i) => {
                   let p = 0;
                   const days = schoolDays.map(sd => {
-                    const ok = map[s.id]?.[sd.dateStr];
+                    const status = map[s.id]?.[sd.dateStr] || '缺席';
+                    const ok = status === '出席';
                     if (ok) p++;
-                    return `<td class="border p-0.5 ${ok ? 'text-emerald-700 font-black' : 'text-rose-600 font-bold'}">${ok ? '出' : '缺'}</td>`;
+                    const mark = ok ? '出' : status === '請假' ? '假' : status === '留言' ? '留' : '缺';
+                    return `<td class="border p-0.5 ${ok ? 'text-emerald-700 font-black' : 'text-rose-600 font-bold'}">${mark}</td>`;
                   }).join('');
                   const rate = schoolDays.length > 0 ? Math.round((p / schoolDays.length) * 100) : 0;
                   return `
