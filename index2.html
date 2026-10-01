@@ -645,18 +645,18 @@
       </div>
       <form onsubmit="handleCounselingSubmit(event)" class="space-y-3.5 text-xs sm:text-sm">
         <input type="hidden" id="counsel-edit-id" value="">
-        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-3"><label class="block font-bold text-rose-800 mb-2">心理層面（可複選）</label><div id="counsel-psychology-tags" class="flex flex-wrap gap-1.5"></div></div>
-        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3"><label class="block font-bold text-amber-800 mb-2">家庭層面（可複選）</label><div id="counsel-family-tags" class="flex flex-wrap gap-1.5"></div></div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div><label class="block font-bold text-slate-600 mb-1">輔導對象 *</label><select id="counsel-student-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
           <div><label id="counsel-teacher-label" class="block font-bold text-slate-600 mb-1">輔導老師 *</label><select id="counsel-teacher-select" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"></select></div>
         </div>
-        <div class="grid grid-cols-3 gap-2">
-          <div><label class="block font-bold text-slate-600 mb-1">日期 *</label><input type="date" id="counsel-date" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div><label class="block font-bold text-slate-600 mb-1">日期 *</label><input type="date" id="counsel-date" required class="w-full min-w-0 px-2.5 py-2 bg-slate-50 border rounded-xl font-mono font-bold text-xs"></div>
           <div><label class="block font-bold text-slate-600 mb-1">向度</label><select id="counsel-category" onchange="switchCounselTags()" class="w-full px-2 py-2 bg-slate-50 border rounded-xl font-bold text-xs"><option value="課業輔導">課業輔導</option><option value="情緒行為">情緒行為</option><option value="家庭關懷">家庭關懷</option><option value="品格引導">品格引導</option></select></div>
           <div><label class="block font-bold text-slate-600 mb-1">時長(分)</label><input type="number" id="counsel-duration" value="30" step="5" required class="w-full px-2.5 py-2 bg-slate-50 border rounded-xl font-bold text-xs"></div>
         </div>
         <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">本次觀察與協助（可複選）</label><div id="counsel-quick-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-3"><label class="block font-bold text-rose-800 mb-2">心理層面（可複選）</label><div id="counsel-psychology-tags" class="flex flex-wrap gap-1.5"></div></div>
+        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3"><label class="block font-bold text-amber-800 mb-2">家庭層面（可複選）</label><div id="counsel-family-tags" class="flex flex-wrap gap-1.5"></div></div>
         <div class="bg-slate-50 border rounded-2xl p-3"><label class="block font-bold text-slate-600 mb-2">後續處理與追蹤（可複選）</label><div id="counsel-followup-tags" class="flex flex-wrap gap-1.5"></div></div>
         <div><label class="block font-bold text-slate-600 mb-1">補充描述（選填）</label><textarea id="counsel-content" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl" placeholder="可補充勾選項目未涵蓋的內容"></textarea></div>
         <div><label class="block font-bold text-slate-600 mb-1">其他追蹤說明（選填）</label><textarea id="counsel-followup" rows="2" class="w-full px-3 py-2 bg-white border rounded-xl"></textarea></div>

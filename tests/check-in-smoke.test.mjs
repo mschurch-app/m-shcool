@@ -234,7 +234,9 @@ test('counseling teachers can create/update, while only M can delete', async () 
   assert.match(elements.get('counsel-quick-tags').innerHTML, /type="checkbox"/u);
   assert.match(elements.get('counsel-psychology-tags').innerHTML, /願意表達感受/u);
   assert.match(elements.get('counsel-family-tags').innerHTML, /關心家庭近況/u);
-  assert.ok(html.indexOf('counsel-psychology-tags') < html.indexOf('counsel-student-select'), 'psychology and family checklists should appear at the top of the form');
+  assert.ok(html.indexOf('counsel-quick-tags') < html.indexOf('counsel-psychology-tags'), 'psychology checklist should follow the main counseling fields');
+  assert.ok(html.indexOf('counsel-psychology-tags') < html.indexOf('counsel-family-tags'), 'psychology checklist should appear before family checklist');
+  assert.ok(html.indexOf('counsel-family-tags') < html.indexOf('counsel-followup-tags'), 'dimension checklists should appear before follow-up options');
 
   const field = (id, value) => { context.document.getElementById(id).value = value; };
   field('counsel-student-select', 'S-QA-001');
