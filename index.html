@@ -158,6 +158,12 @@
       .print-page-break { page-break-after: always; break-after: page; }
       table { border-collapse: collapse !important; width: 100% !important; }
       th, td { border: 1px solid #000000 !important; }
+      .monthly-attendance-print { width: 100% !important; table-layout: fixed !important; font-size: 7px !important; }
+      .monthly-attendance-print th, .monthly-attendance-print td { padding: .7mm .35mm !important; white-space: nowrap !important; }
+      .monthly-attendance-print .student-id-col { width: 18mm !important; }
+      .monthly-attendance-print .student-name-col { width: 15mm !important; }
+      .monthly-attendance-print .rate-col { width: 11mm !important; }
+      .monthly-attendance-print .signature-col { width: 14mm !important; }
     }
   </style>
 </head>
@@ -385,6 +391,7 @@
               <option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班學員</option><option value="畢業">畢業學員</option><option value="在職">在職教職</option><option value="離職">離職同工</option>
             </select>
             <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/狀況..." class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            <button onclick="openStudentRosterPrint()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-file-export"></i><span>輸出學生名冊</span></button>
             <button onclick="openUserModal('add')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-user-plus"></i><span>新增建檔</span></button>
           </div>
         </div>
@@ -858,6 +865,13 @@
     function requireStaffPrintTab() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
       if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
+      switchTab('print-center');
+    }
+    async function openStudentRosterPrint() {
+      if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
+      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：學生名冊含個人資料，僅限同工 (M) 輸出！"); return; }
+      document.getElementById('print-report-type').value = 'roster';
+      onReportTypeChange();
       switchTab('print-center');
     }
     function requireImportTab() {
@@ -2023,7 +2037,9 @@
         const { data } = await db.from('users').select('*').order('id');
         if (data) allUsers = data;
       }
-      const activeStudents = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
+      const activeStudents = allUsers
+        .filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業')
+        .sort(userRosterSort);
 
       // -------------------------------------------------------------
       // 1. 專案核銷：當月學生出席點名總表
@@ -2070,15 +2086,15 @@
                 <span>整體出席率：${overallRate}%</span>
               </div>
             </div>
-            <table class="w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
+            <table class="monthly-attendance-print w-full text-center border-collapse border-2 border-slate-900 text-[10px]">
               <thead>
                 <tr class="bg-slate-100 font-bold border-b-2 border-slate-900">
                   <th class="border p-1 w-7">序</th>
-                  <th class="border p-1 w-20">學號</th>
-                  <th class="border p-1 w-16">姓名</th>
+                  <th class="student-id-col border p-1 w-20">學號</th>
+                  <th class="student-name-col border p-1 w-16">姓名</th>
                   ${schoolDays.map(sd => `<th class="border p-0.5">${sd.day}</th>`).join('')}
-                  <th class="border p-1 w-12">出席率</th>
-                  <th class="border p-1 w-14">簽核</th>
+                  <th class="rate-col border p-1 w-12">出席率</th>
+                  <th class="signature-col border p-1 w-14">簽核</th>
                 </tr>
               </thead>
               <tbody>
