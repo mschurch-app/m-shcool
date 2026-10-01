@@ -201,7 +201,7 @@
         <button onclick="requireTab('students')" id="nav-students" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-address-book text-xs"></i><span>人員名冊</span></button>
         <button onclick="requireTab('counseling')" id="nav-counseling" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-hand-holding-heart text-xs"></i><span>個別輔導</span></button>
         <button onclick="requireTab('messages')" id="nav-messages" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-comments text-xs"></i><span>家長留言</span></button>
-        <button onclick="requireStaffPrintTab()" id="nav-print" class="hidden px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-amber-400/30"><i class="fa-solid fa-print text-xs"></i><span>列印報表中心(同工M)</span></button>
+        <button onclick="requireStaffPrintTab()" id="nav-print" class="hidden px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-amber-400/30"><i class="fa-solid fa-file-export text-xs"></i><span>報表輸出</span></button>
         <button onclick="requireImportTab()" id="nav-import" class="hidden px-3 py-1.5 rounded-lg bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-emerald-400/30"><i class="fa-solid fa-file-csv text-xs"></i><span>舊資料匯入精靈</span></button>
       </nav>
     </div>
@@ -490,7 +490,7 @@
 
           <input type="month" id="print-month-filter" value="2026-09" onchange="renderSelectedReport()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black font-mono">
           <button onclick="window.print()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-black shadow-sm flex items-center space-x-1.5 transition active:scale-95">
-            <i class="fa-solid fa-print"></i><span>列印 A4</span>
+            <i class="fa-solid fa-file-export"></i><span>輸出 PDF／列印</span>
           </button>
         </div>
       </div>
@@ -530,6 +530,7 @@
     <button onclick="requireTab('rollcall')" id="m-nav-rollcall" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-clipboard-check text-base mb-0.5"></i><span>點名</span></button>
     <button onclick="requireTab('students')" id="m-nav-students" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-address-book text-base mb-0.5"></i><span>名冊</span></button>
     <button onclick="requireTab('counseling')" id="m-nav-counseling" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-hand-holding-heart text-base mb-0.5"></i><span>輔導</span></button>
+    <button onclick="requireStaffPrintTab()" id="m-nav-print-center" class="flex flex-col items-center py-1 hover:text-white"><i class="fa-solid fa-file-export text-base mb-0.5"></i><span>報表</span></button>
   </nav>
 
   <!-- ======================== 彈窗區域 ======================== -->
