@@ -427,7 +427,9 @@ test('monthly attendance report uses Taipei month boundaries and local attendanc
   assert.ok(logQuery.filters.some(filter => filter.operator === 'gte' && filter.column === 'check_time' && filter.value === '2026-08-31T16:00:00.000Z'));
   assert.ok(logQuery.filters.some(filter => filter.operator === 'lt' && filter.column === 'check_time' && filter.value === '2026-09-30T16:00:00.000Z'));
   const report = context.document.getElementById('print-paper-content').innerHTML;
-  assert.equal((report.match(/✔/gu) || []).length, 2, 'Taipei Sep 1 and Sep 30 check-ins should be counted in the September report');
+  assert.equal((report.match(/>出</gu) || []).length, 2, 'Taipei Sep 1 and Sep 30 check-ins should be counted as class days');
+  assert.match(report, /應上課日：2 天/u);
+  assert.match(report, /整體出席率：100%/u);
 });
 
 test('schedule wage totals and monthly payroll report use each shift hourly wage', async () => {
