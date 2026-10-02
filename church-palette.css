@@ -1,0 +1,71 @@
+:root{
+  --church-green-950:#123630;
+  --church-green-900:#173f39;
+  --church-green-800:#24554d;
+  --church-green-700:#286659;
+  --church-green-600:#2f7668;
+  --church-green-300:#9fc4ba;
+  --church-green-100:#e7f2ee;
+  --church-green-050:#f3f8f6;
+  --church-canvas:#eef3f1;
+  --surface:rgba(255,255,255,.94);
+  --line:#d9e6e1;
+  --ink:#203b39;
+  --muted:#6f817d;
+  --brand:var(--church-green-600);
+  --brand-soft:var(--church-green-100);
+  accent-color:var(--church-green-600);
+}
+
+body{
+  color:var(--church-ink);
+  background:
+    radial-gradient(circle at 8% -4%,rgba(159,196,186,.22),transparent 30rem),
+    radial-gradient(circle at 94% 8%,rgba(231,242,238,.82),transparent 26rem),
+    linear-gradient(180deg,#f9fbfa 0%,var(--church-canvas) 58%,#f7faf8 100%);
+}
+.glass-header{
+  background:linear-gradient(112deg,rgba(18,54,48,.99),rgba(23,63,57,.98),rgba(36,85,77,.97));
+  box-shadow:0 10px 34px rgba(23,63,57,.18);
+}
+.tab-btn-active{
+  color:#fff!important;
+  border-bottom-color:var(--church-green-300);
+  background:rgba(255,255,255,.14);
+}
+.clean-card{
+  border-color:var(--church-line);
+  background:var(--church-surface);
+  box-shadow:0 12px 34px rgba(23,63,57,.055),0 1px 2px rgba(23,63,57,.04);
+}
+input,select,textarea{border-color:#cfdfda!important;background:#fbfdfc}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--church-green-600)!important;
+  box-shadow:0 0 0 4px rgba(47,118,104,.13);
+}
+#mobile-bottom-dock{background:rgba(18,54,48,.98)!important;box-shadow:0 20px 48px rgba(18,54,48,.30)}
+.hud-corner{border-color:var(--church-green-300)}
+.hud-tl{border-top-color:var(--church-green-300);border-left-color:var(--church-green-300)}
+.hud-tr{border-top-color:var(--church-green-300);border-right-color:var(--church-green-300)}
+.hud-bl{border-bottom-color:var(--church-green-300);border-left-color:var(--church-green-300)}
+.hud-br{border-bottom-color:var(--church-green-300);border-right-color:var(--church-green-300)}
+.scanner-line{background:linear-gradient(90deg,transparent,rgba(47,118,104,.9),transparent)}
+
+/* Main actions share the Church OS green. Destructive and warning actions keep semantic colours. */
+button.bg-indigo-600,button.bg-blue-600,button.bg-sky-600,
+a.bg-indigo-600,a.bg-blue-600,a.bg-sky-600{
+  background-color:var(--church-green-600)!important;
+}
+button.bg-indigo-600:hover,button.bg-blue-600:hover,button.bg-sky-600:hover,
+a.bg-indigo-600:hover,a.bg-blue-600:hover,a.bg-sky-600:hover{
+  background-color:var(--church-green-800)!important;
+}
+.text-indigo-600,.text-blue-600,.text-sky-600{color:var(--church-green-700)!important}
+.bg-indigo-50,.bg-blue-50,.bg-sky-50{background-color:var(--church-green-100)!important}
+.border-indigo-200,.border-blue-200,.border-sky-200{border-color:#c9e0d9!important}
+
+@media(max-width:767px){body{background:var(--church-green-050)}}
+
+@media print{
+  body{background:#fff!important;color:#000!important}
+}
