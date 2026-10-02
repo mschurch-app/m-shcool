@@ -862,6 +862,32 @@
     let currentCounselingTags = [];
     let currentCounselingFollowupTags = [];
     let currentUser = null;
+    function entryParameter(source, key) {
+      for (const item of String(source || '').replace(/^[?#]/, '').split('&')) {
+        const parts = item.split('=');
+        if (decodeURIComponent(parts.shift() || '') === key) return decodeURIComponent(parts.join('=') || '');
+      }
+      return '';
+    }
+    const requestedEntryTab = (() => {
+      const value = entryParameter(typeof location === 'object' ? location.search : '', 'tab');
+      return ['checkin', 'schedules', 'rollcall', 'students', 'counseling', 'messages', 'print-center'].includes(value) ? value : 'checkin';
+    })();
+
+    function consumeChurchSession() {
+      const token = entryParameter(typeof location === 'object' ? location.hash : '', 'church_session');
+      if (!/^[0-9a-f]{64}$/i.test(token)) return;
+      mschoolSessionToken = token;
+      localStorage.setItem('mplus_mschool_session', token);
+      if (typeof history === 'object' && history.replaceState) history.replaceState(null, '', location.pathname + location.search);
+    }
+
+    function openRequestedEntryTab() {
+      if (requestedEntryTab === 'checkin') { switchTab('checkin'); return; }
+      if (!currentUser) { switchTab('checkin'); openLoginModal(); return; }
+      if (requestedEntryTab === 'print-center') { requireStaffPrintTab(); return; }
+      requireTab(requestedEntryTab);
+    }
 
     let currentCalYear = 2026;
     let currentCalMonth = 9;
@@ -2525,19 +2551,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      consumeChurchSession();
       localStorage.removeItem('mplus_current_user');
-      const fragment = new URLSearchParams(location.hash.slice(1));
-      const churchSession = fragment.get('church_session');
-      if (churchSession && /^[0-9a-f]{64}$/i.test(churchSession)) {
-        mschoolSessionToken = churchSession;
-        localStorage.setItem('mplus_mschool_session', mschoolSessionToken);
-        history.replaceState(null, '', location.pathname + location.search);
-      }
       if (mschoolSessionToken) {
         try { currentUser = (await callMschoolApi('/session')).user; }
         catch (e) { mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); }
       }
-      updateAuthUI(); switchTab('checkin');
+      updateAuthUI(); openRequestedEntryTab();
     });
   </script>
 </body>

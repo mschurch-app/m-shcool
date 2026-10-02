@@ -800,6 +800,7 @@
           <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">確認登入</button>
         </div>
       </form>
+      <div class="mt-4 pt-4 border-t text-center"><p class="text-xs text-slate-400 mb-2">或使用教會 OS 帳號</p><a href="https://mscos.mchurch.online/admin-dashboard.html" class="block w-full py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold">回到教會 OS 开启课辅系统</a><p class="text-[10px] text-slate-400 mt-2">从教会 OS 进入时会自动登录；原本登录方式仍可使用。</p></div>
     </div>
   </div>
 
@@ -861,6 +862,32 @@
     let currentCounselingTags = [];
     let currentCounselingFollowupTags = [];
     let currentUser = null;
+    function entryParameter(source, key) {
+      for (const item of String(source || '').replace(/^[?#]/, '').split('&')) {
+        const parts = item.split('=');
+        if (decodeURIComponent(parts.shift() || '') === key) return decodeURIComponent(parts.join('=') || '');
+      }
+      return '';
+    }
+    const requestedEntryTab = (() => {
+      const value = entryParameter(typeof location === 'object' ? location.search : '', 'tab');
+      return ['checkin', 'schedules', 'rollcall', 'students', 'counseling', 'messages', 'print-center'].includes(value) ? value : 'checkin';
+    })();
+
+    function consumeChurchSession() {
+      const token = entryParameter(typeof location === 'object' ? location.hash : '', 'church_session');
+      if (!/^[0-9a-f]{64}$/i.test(token)) return;
+      mschoolSessionToken = token;
+      localStorage.setItem('mplus_mschool_session', token);
+      if (typeof history === 'object' && history.replaceState) history.replaceState(null, '', location.pathname + location.search);
+    }
+
+    function openRequestedEntryTab() {
+      if (requestedEntryTab === 'checkin') { switchTab('checkin'); return; }
+      if (!currentUser) { switchTab('checkin'); openLoginModal(); return; }
+      if (requestedEntryTab === 'print-center') { requireStaffPrintTab(); return; }
+      requireTab(requestedEntryTab);
+    }
 
     let currentCalYear = 2026;
     let currentCalMonth = 9;
@@ -2524,12 +2551,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      consumeChurchSession();
       localStorage.removeItem('mplus_current_user');
       if (mschoolSessionToken) {
         try { currentUser = (await callMschoolApi('/session')).user; }
         catch (e) { mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); }
       }
-      updateAuthUI(); switchTab('checkin');
+      updateAuthUI(); openRequestedEntryTab();
     });
   </script>
 </body>
