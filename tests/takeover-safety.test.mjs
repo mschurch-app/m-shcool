@@ -4,35 +4,18 @@ import test from 'node:test';
 
 const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const duplicateIndex = await readFile(new URL('../index2.html', import.meta.url), 'utf8');
-const databaseNotes = await readFile(new URL('../DATABASE.md', import.meta.url), 'utf8');
-
-test('Supabase business table access matches the documented baseline', () => {
-  const expected = {
-    users: ['delete', 'insert', 'select', 'update', 'upsert'],
-    schedules: ['delete', 'insert', 'select', 'update'],
-    check_in_logs: ['insert', 'select'],
-    points_logs: ['insert'],
-    roll_calls: ['select', 'upsert'],
-    counseling_logs: ['delete', 'insert', 'select', 'update'],
-    parent_messages: ['select', 'update'],
-  };
-
-  const observed = {};
-  for (const [, table, method] of index.matchAll(/db\.from\(\s*['"]([^'"]+)['"]\s*\)\s*\.([a-z][a-z\d_]*)/gi)) {
-    (observed[table] ??= new Set()).add(method);
-  }
-
-  assert.deepEqual(Object.keys(observed).sort(), Object.keys(expected).sort());
-  for (const [table, methods] of Object.entries(expected)) {
-    assert.deepEqual([...observed[table]].sort(), methods, `${table} access changed; update the audit and review write paths`);
-    assert.ok(databaseNotes.includes(`\`${table}\``), `${table} is missing from DATABASE.md`);
-  }
+test('browser uses the unified school API and no longer names the retired project', () => {
+  assert.match(index, /const MSCHOOL_API_URL\s*=\s*`\$\{SUPABASE_URL\}\/functions\/v1\/mschool-api`/u);
+  assert.match(index, /aqanuwilmvdtlzuqlrau\.supabase\.co/u);
+  assert.doesNotMatch(index, /othgvewffvkkafbezejy/u);
+  assert.match(index, /callMschoolApi\(['"]\/manual-login['"]/u);
+  assert.match(index, /callMschoolApi\(['"]\/kiosk\/check-in['"]/u);
 });
 
-test('avatar access remains explicit in the documented baseline', () => {
-  assert.match(index, /db\.storage\.from\(['"]avatars['"]\)\.upload\(/);
-  assert.match(index, /db\.storage\.from\(['"]avatars['"]\)\.getPublicUrl\(/);
-  assert.match(databaseNotes, /Storage bucket `avatars`/);
+test('avatar uploads use the authenticated private media endpoint', () => {
+  assert.doesNotMatch(index, /db\.storage\.from\(['"]avatars['"]\)/u);
+  assert.match(index, /callMschoolApi\(['"]\/upload['"]/u);
+  assert.match(index, /\)\.storageRef/u);
 });
 
 test('browser source contains no privileged Supabase secret key', () => {

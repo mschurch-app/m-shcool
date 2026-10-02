@@ -111,8 +111,35 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
       setItem(key, value) { storage.set(key, String(value)); },
       removeItem(key) { storage.delete(key); },
     },
-    fetch(input) {
+    fetch(input, options = {}) {
       blockedRequests.push(String(input));
+      const url = String(input);
+      const response = (status, body) => Promise.resolve({ ok: status >= 200 && status < 300, status, json: async () => body });
+      if (url.endsWith('/kiosk/check-in')) {
+        const request = JSON.parse(String(options.body || '{}'));
+        const target = users.find((entry) => String(entry.id) === String(request.id));
+        if (!target) return response(200, { ok: false, code: 'not_found' });
+        const todayLogs = logs.filter((entry) => String(entry.target_id) === String(target.id));
+        const isStaff = target.role_type && target.role_type !== '學生';
+        if (!isStaff && todayLogs.length) return response(200, { ok: false, code: 'already', name: target.name });
+        if (isStaff && todayLogs.length && Date.now() - new Date(todayLogs.at(-1).check_time).getTime() < 60000) return response(200, { ok: false, code: 'too_soon', name: target.name });
+        if (!isStaff) {
+          writes.push({ table: 'users', method: 'update', payload: { points: (target.points || 0) + 1 } });
+          writes.push({ table: 'points_logs', method: 'insert', payload: [{ target_id: target.id, points_delta: 1 }] });
+          writes.push({ table: 'check_in_logs', method: 'insert', payload: [{ target_id: target.id, action_text: '+1 點 (到班)' }] });
+          return response(200, { ok: true, kind: 'student', title: `🎉 ${target.name} 簽到成功！`, subtitle: '點數 +1！' });
+        }
+        const actionText = todayLogs.length ? '下班簽退' : '上班簽到';
+        writes.push({ table: 'check_in_logs', method: 'insert', payload: [{ target_id: target.id, action_text: actionText }] });
+        return response(200, { ok: true, kind: 'staff', title: `💼 ${target.name} ${actionText}成功！`, subtitle: '出勤已登記' });
+      }
+      if (url.endsWith('/manual-login')) {
+        const request = JSON.parse(String(options.body || '{}'));
+        const target = users.find((entry) => entry.id === request.identity || entry.name === request.identity);
+        const normalized = (value) => String(value || '').replace(/\D/g, '');
+        if (!target || normalized(target.phone) !== normalized(request.password)) return response(401, { error: '帳號或手機號碼不正確' });
+        return response(200, { user: target, session: 'synthetic-session-token' });
+      }
       return Promise.reject(new Error('Blocked outbound request in offline test harness'));
     },
     XMLHttpRequest: class {
@@ -126,6 +153,15 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     confirm: () => true,
     prompt: () => null,
   });
+  context.window.fetch = context.fetch;
+  context.Request = class Request {};
+  context.Headers = class Headers {
+    constructor() { this.values = new Map(); }
+    set(key, value) { this.values.set(String(key).toLowerCase(), String(value)); }
+    get(key) { return this.values.get(String(key).toLowerCase()) ?? null; }
+    forEach(callback) { this.values.forEach((value, key) => callback(value, key)); }
+  };
+  context.URL = URL;
   new vm.Script(appScript, { filename: 'index.html:inline-app' }).runInContext(context);
   return { context, writes, elements, storage, alerts, listeners, blockedRequests, counselingRows, scheduleRows, rollCallRows, parentMessageRows, queries };
 }
@@ -532,7 +568,7 @@ test('student first scan adds one point and writes both attendance ledgers throu
 test('duplicate student scan makes no writes through the mock', async () => {
   const { context, writes } = createHarness({
     user: { id: 'S-QA-001', name: 'Synthetic Student', role_type: '學生', points: 4 },
-    logs: [{ check_time: new Date().toISOString() }],
+    logs: [{ check_time: new Date().toISOString(), target_id: 'S-QA-001' }],
   });
 
   await vm.runInContext("processScanCode('S-QA-001')", context);
@@ -560,7 +596,7 @@ test('unknown code makes no writes through the mock', async () => {
 test('staff rescan inside the one-minute cooldown makes no writes', async () => {
   const { context, writes } = createHarness({
     user: { id: 'M-QA-001', name: 'Synthetic Staff', role_type: '同工', points: 0 },
-    logs: [{ check_time: new Date().toISOString() }],
+    logs: [{ check_time: new Date().toISOString(), target_id: 'M-QA-001' }],
   });
 
   await vm.runInContext("processScanCode('M-QA-001')", context);
@@ -581,7 +617,7 @@ test('staff rescan after cooldown writes checkout attendance', async () => {
   assert.equal(writes[0].payload[0].action_text, '下班簽退');
 });
 
-test('login accepts an arbitrary password value and stores the complete user row', async () => {
+test('login verifies the phone number and stores only an opaque session token', async () => {
   const user = {
     id: 'M-QA-001',
     name: 'Synthetic Staff',
@@ -597,8 +633,14 @@ test('login accepts an arbitrary password value and stores the complete user row
   context.document.getElementById('login-pwd').value = 'definitely-not-the-phone-number';
 
   await vm.runInContext('handleLoginSubmit({ preventDefault() {} })', context);
+  assert.equal(storage.has('mplus_mschool_session'), false);
+  assert.equal(switchedTabs.length, 0);
 
-  assert.deepEqual(JSON.parse(storage.get('mplus_current_user')), user);
+  context.document.getElementById('login-pwd').value = '00000000';
+  await vm.runInContext('handleLoginSubmit({ preventDefault() {} })', context);
+
+  assert.equal(storage.get('mplus_mschool_session'), 'synthetic-session-token');
+  assert.equal(storage.has('mplus_current_user'), false);
   assert.deepEqual(switchedTabs, ['schedules']);
   assert.equal(elements.get('nav-print').classList.contains('hidden'), false);
   assert.equal(elements.get('nav-import').classList.contains('hidden'), false);

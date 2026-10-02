@@ -648,7 +648,7 @@
               <span id="face-enrolled-badge" class="hidden absolute -bottom-1.5 -right-1.5 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">AI已建檔</span>
             </div>
             <div class="flex-1 w-full space-y-2">
-              <div><label class="block font-bold text-slate-600 mb-1">大頭照網址</label><input type="url" id="form-avatar" onchange="autoExtractFaceFromUrl()" placeholder="https://..." class="w-full px-3.5 py-2 bg-white border rounded-xl text-xs"></div>
+              <div><label class="block font-bold text-slate-600 mb-1">大頭照網址</label><input type="text" id="form-avatar" onchange="autoExtractFaceFromUrl()" placeholder="照片網址或系統私人照片" class="w-full px-3.5 py-2 bg-white border rounded-xl text-xs"></div>
               <div class="flex items-center space-x-2">
                 <button type="button" onclick="startCameraSnapForFace()" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i><span>用手機現場拍照建檔</span></button>
                 <span id="face-extract-tip" class="text-[11px] font-bold text-slate-400"></span>
@@ -819,9 +819,34 @@
 
   <!-- 核心 JavaScript 程式碼 -->
   <script>
-    const SUPABASE_URL = "https://othgvewffvkkafbezejy.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_ZtVYBHHxANOqLhi-l-sAFQ_ojUhO2dX";
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = "https://aqanuwilmvdtlzuqlrau.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_-on9uPxVvSaERBEpkoc_xg_CYuANexJ";
+    const MSCHOOL_API_URL = `${SUPABASE_URL}/functions/v1/mschool-api`;
+    const nativeFetch = window.fetch.bind(window);
+    let mschoolSessionToken = localStorage.getItem('mplus_mschool_session') || null;
+
+    async function mschoolApiFetch(input, init = {}) {
+      const sourceRequest = input instanceof Request ? input : null;
+      const sourceUrl = new URL(sourceRequest ? sourceRequest.url : String(input));
+      if (!sourceUrl.pathname.startsWith('/rest/v1/')) return nativeFetch(input, init);
+      const headers = new Headers(sourceRequest ? sourceRequest.headers : undefined);
+      new Headers(init.headers || {}).forEach((value, key) => headers.set(key, value));
+      headers.set('x-proxy-path', sourceUrl.pathname.slice('/rest/v1'.length) + sourceUrl.search);
+      if (mschoolSessionToken) headers.set('x-mschool-session', mschoolSessionToken);
+      return nativeFetch(MSCHOOL_API_URL, { ...init, method: init.method || sourceRequest?.method || 'GET', headers, body: init.body ?? sourceRequest?.body });
+    }
+    async function callMschoolApi(path, options = {}) {
+      const headers = new Headers(options.headers || {});
+      if (mschoolSessionToken) headers.set('x-mschool-session', mschoolSessionToken);
+      const response = await nativeFetch(`${MSCHOOL_API_URL}${path}`, { ...options, headers });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '系統連線失敗');
+      return result;
+    }
+    async function uploadMschoolAvatar(blob, fileName = 'avatar.jpg') {
+      return (await callMschoolApi('/upload', { method: 'POST', headers: { 'content-type': blob.type || 'image/jpeg', 'x-file-name': fileName }, body: blob })).storageRef;
+    }
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch: mschoolApiFetch } });
 
     let allUsers = [];
     let staffList = [];
@@ -841,7 +866,7 @@
     let isFaceModelsLoaded = false;
     let isFaceDetecting = false;
     let faceVideoEl = null, faceCanvasEl = null, faceStream = null;
-    let labeledFaceDescriptors = [], faceMatcher = null, lastFaceMatchTime = {};
+    let labeledFaceDescriptors = [], faceMatcher = null, lastFaceMatchTime = {}, faceMatchRequestPending = false;
     let html5QrScanner = null, isCameraScanning = false, lastScanTime = 0;
     let snapStream = null;
     let activeBatchDates = [];
@@ -1192,45 +1217,18 @@
 
     async function buildFaceMatcher() {
       const faceStatus = document.getElementById('face-status-text');
-      try {
-        const { data: users, error } = await db.from('users').select('*');
-        if (!error && users) allUsers = users;
-      } catch (err) {
-        console.warn("特徵庫同步失敗:", err);
+      faceMatcher = null;
+      if (faceStatus) {
+        faceStatus.className = "text-emerald-300 font-bold";
+        faceStatus.textContent = "✅ 安全辨識服務已就緒，請正面直視鏡頭";
       }
+    }
 
-      labeledFaceDescriptors = [];
-      let enrolledCount = 0;
-
-      (allUsers || []).forEach(u => {
-        let desc = u.face_descriptor;
-        if (typeof desc === 'string') {
-          try { 
-            desc = JSON.parse(desc); 
-            if (typeof desc === 'string') desc = JSON.parse(desc);
-          } catch(e) { desc = null; }
-        }
-
-        if (Array.isArray(desc) && desc.length === 128) {
-          const descriptor = new Float32Array(desc);
-          labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(u.id, [descriptor]));
-          enrolledCount++;
-        }
+    async function matchFaceDescriptor(descriptor) {
+      return callMschoolApi('/kiosk/face-match', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ descriptor: Array.from(descriptor) })
       });
-
-      if (labeledFaceDescriptors.length > 0) {
-        faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.48);
-        if (faceStatus) {
-          faceStatus.className = "text-emerald-300 font-bold";
-          faceStatus.textContent = `✅ 已載入 ${enrolledCount} 位特徵，請正面直視鏡頭`;
-        }
-      } else {
-        faceMatcher = null;
-        if (faceStatus) {
-          faceStatus.className = "text-amber-300 font-bold";
-          faceStatus.textContent = "⚠️ 資料庫尚無有效特徵，請先拍照建檔！";
-        }
-      }
     }
 
     async function toggleFaceRecognition() { if (isFaceDetecting) stopFaceRecognition(); else startFaceRecognition(); }
@@ -1263,34 +1261,33 @@
           const resized = faceapi.resizeResults(dets, size);
           const ctx = faceCanvasEl.getContext('2d'); ctx.clearRect(0, 0, faceCanvasEl.width, faceCanvasEl.height);
 
-          resized.forEach(d => {
+          if (faceMatchRequestPending) return;
+          faceMatchRequestPending = true;
+          for (const d of resized) {
             const box = d.detection.box;
             let name = "比對中...";
             let color = "#38bdf8";
 
-            if (faceMatcher) {
-              const bestMatch = faceMatcher.findBestMatch(d.descriptor);
-              if (bestMatch.label !== 'unknown' && bestMatch.distance <= 0.48) {
-                const u = allUsers.find(x => x.id === bestMatch.label);
-                const confidence = Math.round((1 - bestMatch.distance) * 100);
-                name = u ? `${u.name} (${confidence}%)` : bestMatch.label;
+            const result = await matchFaceDescriptor(d.descriptor);
+            if (result.match) {
+                const confidence = Math.round((1 - result.match.distance) * 100);
+                name = `${result.match.name} (${confidence}%)`;
                 color = "#10b981";
 
                 const now = Date.now();
-                if (!lastFaceMatchTime[bestMatch.label] || now - lastFaceMatchTime[bestMatch.label] > 8000) {
-                  lastFaceMatchTime[bestMatch.label] = now;
+                if (!lastFaceMatchTime[result.match.id] || now - lastFaceMatchTime[result.match.id] > 8000) {
+                  lastFaceMatchTime[result.match.id] = now;
                   if (navigator.vibrate) navigator.vibrate(100);
-                  processScanCode(bestMatch.label);
+                  processScanCode(result.match.id);
                 }
-              } else {
+            } else {
                 name = "未比對出特徵 (請對準或重採)";
                 color = "#f59e0b";
-              }
             }
             ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(box.x, box.y, box.width, box.height);
             ctx.fillStyle = color; ctx.font = "bold 13px sans-serif"; ctx.fillText(name, box.x + 4, box.y > 20 ? box.y - 6 : box.y + 16);
-          });
-        } catch (e) {}
+          }
+        } catch (e) {} finally { faceMatchRequestPending = false; }
       }, 250);
     }
 
@@ -1313,13 +1310,11 @@
       document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor));
       document.getElementById('face-enrolled-badge').classList.remove('hidden');
       canvas.toBlob(async (blob) => {
-        const path = `students/${uid}_${Date.now()}.jpg`;
-        const { error } = await db.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-        if (!error) {
-          const { data } = db.storage.from('avatars').getPublicUrl(path);
-          document.getElementById('preview-avatar').src = data.publicUrl; document.getElementById('form-avatar').value = data.publicUrl;
+        try {
+          const storageRef = await uploadMschoolAvatar(blob, `${uid}_${Date.now()}.jpg`);
+          document.getElementById('preview-avatar').src = URL.createObjectURL(blob); document.getElementById('form-avatar').value = storageRef;
           tip.textContent = "✅ 建檔成功！";
-        }
+        } catch (error) { tip.textContent = "照片上傳失敗"; alert(error.message); }
         stopCameraSnap();
       }, 'image/jpeg', 0.85);
     }
@@ -1355,34 +1350,15 @@
     async function handleScan(e) { e.preventDefault(); const inp = document.getElementById('scan-code-input'); const val = inp.value.trim().toUpperCase(); if (!val) return; processScanCode(val); inp.value = ""; }
     async function processScanCode(val) {
       try {
-        const { data: user } = await db.from('users').select('*').eq('id', val).maybeSingle();
-        if (!user) return;
-
-        const isStaff = user.id.includes('M') || user.id.includes('T') || user.id.includes('P') || (user.role_type && user.role_type !== '學生');
-        const nowObj = new Date(); const nowIso = nowObj.toISOString();
-        const startOfTodayIso = new Date(`${nowObj.toLocaleDateString('en-CA')}T00:00:00+08:00`).toISOString();
-        const { data: todayLogs } = await db.from('check_in_logs').select('*').eq('target_id', user.id).gte('check_time', startOfTodayIso);
-
-        if (!isStaff) {
-          if (todayLogs && todayLogs.length > 0) { showQuickNotice(`⚠️【${user.name}】今日已簽到過！`); return; }
-          const newPts = (user.points || 0) + 1;
-          await db.from('users').update({ points: newPts }).eq('id', user.id);
-          await db.from('points_logs').insert([{ change_time: nowIso, target_id: user.id, target_name: user.name, points_delta: 1, reason: "準時簽到" }]);
-          await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: '學生', action_text: "+1 點 (到班)" }]);
-          if (window.confetti) confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-          showPunchSuccessModal(`🎉 ${user.name} 簽到成功！`, `點數 +1！`); loadLogs(); return;
+        const result = await callMschoolApi('/kiosk/check-in', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: val }) });
+        if (!result.ok) {
+          if (result.code === 'already') showQuickNotice(`⚠️【${result.name}】今日已簽到過！`);
+          else if (result.code === 'too_soon') showQuickNotice('⚠️ 剛打過卡！');
+          return;
         }
-
-        if (todayLogs && todayLogs.length > 0) {
-          if (Date.now() - new Date(todayLogs[todayLogs.length - 1].check_time).getTime() < 60000) { showQuickNotice(`⚠️ 剛打過卡！`); return; }
-        }
-        const cnt = todayLogs ? todayLogs.length : 0;
-        const action = cnt === 0 ? "上班簽到" : "下班簽退";
-        await db.from('check_in_logs').insert([{ check_time: nowIso, target_id: user.id, target_name: user.name, role: user.role_type || '教職員', action_text: action }]);
-        
-        if (window.confetti) confetti({ particleCount: 50, spread: 50, origin: { y: 0.65 } });
-        showPunchSuccessModal(cnt === 0 ? `💼 ${user.name} 上班簽到成功！` : `🌙 ${user.name} 下班簽退成功！`, `出勤已登記`); loadLogs();
-      } catch (e) {}
+        if (window.confetti) confetti({ particleCount: result.kind === 'student' ? 70 : 50, spread: 60, origin: { y: 0.6 } });
+        showPunchSuccessModal(result.title, result.subtitle); loadLogs();
+      } catch (e) { showQuickNotice(`⚠️ ${e.message}`); }
     }
 
     function showPunchSuccessModal(title, sub) {
@@ -1402,7 +1378,8 @@
 
     async function loadLogs() {
       const tbody = document.getElementById('logs-list'), mobileCards = document.getElementById('logs-cards-mobile');
-      const { data } = await db.from('check_in_logs').select('*').order('check_time', { ascending: false }).limit(10);
+      let data = [];
+      try { data = await callMschoolApi('/kiosk/logs'); } catch (e) { console.warn(e); }
       if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">尚無動態</td></tr>`; mobileCards.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">尚無動態</p>`; return; }
       let stuC = 0, staffC = 0;
       mobileCards.innerHTML = data.map(r => {
@@ -2493,12 +2470,19 @@
     async function handleLoginSubmit(e) {
       e.preventDefault();
       const r = document.getElementById('login-uid').value.trim();
-      const { data } = await db.from('users').select('*').or(`id.ilike.${r},name.eq.${r}`).limit(1);
-      if (!data || data.length === 0) { document.getElementById('login-err').textContent = "查無此人"; document.getElementById('login-err').classList.remove('hidden'); return; }
-      currentUser = data[0]; localStorage.setItem('mplus_current_user', JSON.stringify(currentUser));
-      updateAuthUI(); closeLoginModal(); switchTab('schedules');
+      const password = document.getElementById('login-pwd').value.trim();
+      try {
+        const result = await callMschoolApi('/manual-login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ identity: r, password }) });
+        mschoolSessionToken = result.session;
+        localStorage.setItem('mplus_mschool_session', mschoolSessionToken);
+        currentUser = result.user;
+        updateAuthUI(); closeLoginModal(); switchTab('schedules');
+      } catch (error) {
+        document.getElementById('login-err').textContent = error.message;
+        document.getElementById('login-err').classList.remove('hidden');
+      }
     }
-    function doLogout() { currentUser = null; localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); }
+    function doLogout() { currentUser = null; mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); }
     function updateAuthUI() {
       const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock');
       if (currentUser) {
@@ -2515,9 +2499,12 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('mplus_current_user');
-      if (saved) { try { currentUser = JSON.parse(saved); } catch(e){} }
+    document.addEventListener('DOMContentLoaded', async () => {
+      localStorage.removeItem('mplus_current_user');
+      if (mschoolSessionToken) {
+        try { currentUser = (await callMschoolApi('/session')).user; }
+        catch (e) { mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); }
+      }
       updateAuthUI(); switchTab('checkin');
     });
   </script>
