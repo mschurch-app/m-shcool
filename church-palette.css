@@ -69,3 +69,66 @@ a.bg-indigo-600:hover,a.bg-blue-600:hover,a.bg-sky-600:hover{
 @media print{
   body{background:#fff!important;color:#000!important}
 }
+
+/* Shared app typography, controls and safe mobile sizing */
+html{
+  max-width:100%;
+  overflow-x:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  font-synthesis:none;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+body,button,input,select,textarea{font-family:inherit!important}
+body{max-width:100%;overflow-x:hidden}
+button,[role="button"]{
+  max-width:100%;
+  min-height:44px;
+  border-radius:13px;
+  font-weight:700;
+  line-height:1.25;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+input:not([type="checkbox"]):not([type="radio"]),select,textarea{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-height:46px;
+  border-radius:12px!important;
+  font-size:16px!important;
+  line-height:1.45;
+}
+textarea{min-height:112px;resize:vertical;overflow:auto}
+label,fieldset,form>* ,.grid>* ,.flex>*{min-width:0}
+fieldset,[id^="modal-"]>div,.clean-card{max-width:100%}
+table{max-width:100%}
+.overflow-x-auto,.custom-scroll{max-width:100%;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+.glass-header nav{
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-inline:contain;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.glass-header nav::-webkit-scrollbar{display:none}
+.glass-header nav button{flex:0 0 auto;min-height:40px;white-space:nowrap;font-size:13px}
+#mobile-bottom-dock{
+  left:max(8px,env(safe-area-inset-left))!important;
+  right:max(8px,env(safe-area-inset-right))!important;
+  width:auto!important;
+  max-width:calc(100vw - 16px)!important;
+  overflow:hidden;
+}
+#mobile-bottom-dock button{min-width:0!important;max-width:100%;padding-inline:6px;white-space:normal;line-height:1.15}
+
+@media(max-width:767px){
+  main{max-width:100%;overflow-x:hidden}
+  [id^="modal-"]{max-width:100vw;overflow-x:hidden}
+  [id^="modal-"]>div{width:100%;max-width:100%;overflow-x:hidden}
+  form .grid{grid-template-columns:minmax(0,1fr)!important}
+  form .grid.grid-cols-2>*,form .grid.grid-cols-3>*{grid-column:auto!important}
+  button,[role="button"]{min-height:46px}
+}
