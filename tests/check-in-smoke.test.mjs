@@ -404,6 +404,29 @@ test('staff role IDs use independent M, T, and P sequences', async () => {
   }
 });
 
+test('roster load failures stay visible and provide a retry action', async () => {
+  const { context, elements } = createHarness({ failures: { 'users.select': 'mock roster unavailable' } });
+
+  await vm.runInContext('loadUsers()', context);
+
+  assert.match(elements.get('students-cards-mobile').innerHTML, /mock roster unavailable/u);
+  assert.match(elements.get('students-cards-mobile').innerHTML, /loadUsers\(\)/u);
+  assert.match(elements.get('students-table').innerHTML, /mock roster unavailable/u);
+});
+
+test('roster delete and point update failures are reported without claiming success', async () => {
+  const person = { id: 'S-QA-001', name: 'Synthetic Student', role_type: '學生', status: '在班', points: 2 };
+  const deleteHarness = createHarness({ users: [{ ...person }], failures: { 'users.delete': 'mock delete denied' } });
+  await vm.runInContext("allUsers = [{ id: 'S-QA-001', name: 'Synthetic Student', points: 2 }]", deleteHarness.context);
+  await vm.runInContext("deleteUser('S-QA-001')", deleteHarness.context);
+  assert.match(deleteHarness.alerts.at(-1), /mock delete denied/u);
+
+  const updateHarness = createHarness({ users: [{ ...person }], failures: { 'users.update': 'mock point update denied' } });
+  await vm.runInContext("allUsers = [{ id: 'S-QA-001', name: 'Synthetic Student', points: 2 }]", updateHarness.context);
+  await vm.runInContext("changePoints('S-QA-001', 1)", updateHarness.context);
+  assert.match(updateHarness.alerts.at(-1), /mock point update denied/u);
+});
+
 test('schedule single-day create, edit, delete, and role permissions use the existing table', async () => {
   const { context, writes, scheduleRows, elements, alerts } = createHarness({
     users: [
