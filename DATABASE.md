@@ -3,6 +3,13 @@
 ## Production protection
 Production Supabase is actively used. This inventory does NOT authorize schema or policy changes.
 
+## Current production reference verified 2026-10-07
+
+- The active `main` frontend uses Supabase project `aqanuwilmvdtlzuqlrau` and sends school data requests through the `mschool-api` Edge Function using an opaque school session.
+- Use the `mschool` schema in that project for current tutoring-system operations. Do not query or write to the historical project `othgvewffvkkafbezejy` for current school data.
+- The production `mschool.users.face_descriptor` field is used by face matching. This task changed no production rows, schema, RLS, or functions.
+- The 2026-09-29 inventory below describes the previous project/source snapshot only. It is historical and must not be treated as the current production connection or authorization model.
+
 ## Data sources observed in current index.html
 
 | Source | Current observed purpose | Risk |
@@ -89,7 +96,7 @@ The app uses these columns as observed in `index.html`; this inventory is not a 
 | `parent_messages` | list and reply update (`M`/`T`); `P` read-only in the UI. Read/write failures are surfaced to the user, and rendered message text is HTML-escaped. `reply_time` is recorded when a reply succeeds. These are frontend controls only; RLS remains disabled and does not enforce role permissions. |
 | `avatars` Storage | browser uploads JPEG to `students/<id>_<timestamp>.jpg` with `upsert: true`, then obtains a public URL |
 
-The form captures a face descriptor in a hidden input, but `handleUserSubmit` omits it from the `users` payload. Face matching reads `face_descriptor` from `users`, so the current UI capture/persistence path appears inconsistent and requires a separate, privacy-reviewed verification.
+At the 2026-09-29 source snapshot, the form captured a face descriptor but `handleUserSubmit` omitted it from the `users` payload. A proposed fix is under review in branch `fix/face-descriptor-persistence`; it has not been deployed to production. Face matching reads `face_descriptor` from `users`.
 
 ## First safe refactor candidate
 Do NOT begin with authentication, face recognition, users schema, or attendance writes.

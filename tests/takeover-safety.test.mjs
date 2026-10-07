@@ -23,6 +23,11 @@ test('browser source contains no privileged Supabase secret key', () => {
   assert.doesNotMatch(index, /service_role/i);
 });
 
-test('duplicate HTML entry files stay byte-identical until hosting source is confirmed', () => {
-  assert.equal(index, duplicateIndex);
+test('all HTML entry files use the active school API project', () => {
+  for (const [name, source] of [['index.html', index], ['index2.html', duplicateIndex]]) {
+    assert.match(source, /const MSCHOOL_API_URL\s*=\s*`\$\{SUPABASE_URL\}\/functions\/v1\/mschool-api`/u, name);
+    assert.match(source, /aqanuwilmvdtlzuqlrau\.supabase\.co/u, name);
+    assert.doesNotMatch(source, /othgvewffvkkafbezejy/u, name);
+    assert.doesNotMatch(source, /sb_secret_[A-Za-z0-9_-]+|service_role/i, name);
+  }
 });
