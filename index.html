@@ -417,9 +417,11 @@
             <input type="text" id="user-filter" oninput="filterUsersList()" placeholder="搜尋姓名/學號/狀況..." class="flex-1 sm:flex-none px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
             <button onclick="openStudentRosterPrint()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-file-export"></i><span>輸出學生名冊</span></button>
             <button onclick="openUserModal('add')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-user-plus"></i><span>新增建檔</span></button>
+            <button id="face-backfill-button" type="button" onclick="backfillStudentFaceDescriptors()" class="hidden px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-face-smile"></i><span>補建學生人臉特徵</span></button>
           </div>
         </div>
 
+        <div id="face-backfill-status" class="hidden rounded-2xl border border-violet-200 bg-violet-50 p-3 text-xs text-violet-950 whitespace-pre-wrap" role="status" aria-live="polite"></div>
         <div class="block md:hidden space-y-2.5" id="students-cards-mobile"><p class="text-center text-xs text-slate-400 py-6">載入名冊中...</p></div>
         <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
@@ -825,6 +827,7 @@
   <!-- 核心 JavaScript 程式碼 -->
   <script>
     const SUPABASE_URL = "https://aqanuwilmvdtlzuqlrau.supabase.co";
+    const FACE_BACKFILL_TARGET_PROJECT_REF = "aqanuwilmvdtlzuqlrau";
     const SUPABASE_KEY = "sb_publishable_-on9uPxVvSaERBEpkoc_xg_CYuANexJ";
     const MSCHOOL_API_URL = `${SUPABASE_URL}/functions/v1/mschool-api`;
     const nativeFetch = window.fetch.bind(window);
@@ -1585,6 +1588,112 @@
     function filterUsersList() {
       const q = document.getElementById('user-filter').value.toLowerCase(), st = document.getElementById('user-status-filter').value;
       renderUsers(allUsers.filter(u => (!q || (u.name&&u.name.toLowerCase().includes(q)) || (u.id&&u.id.toLowerCase().includes(q)) || (u.family_status&&u.family_status.toLowerCase().includes(q))) && (st === '全部' || u.status === st)));
+    }
+
+    let isFaceBackfillRunning = false;
+    async function backfillStudentFaceDescriptors() {
+      const statusBox = document.getElementById('face-backfill-status');
+      const button = document.getElementById('face-backfill-button');
+      const showStatus = (message) => {
+        statusBox.textContent = message;
+        statusBox.classList.remove('hidden');
+      };
+
+      if (!currentUser || currentUser.role_type !== '同工') {
+        alert('此功能僅限已登入的同工使用。');
+        return;
+      }
+      if (new URL(SUPABASE_URL).hostname !== `${FACE_BACKFILL_TARGET_PROJECT_REF}.supabase.co`) {
+        alert('資料庫安全檢查未通過，已停止操作。');
+        return;
+      }
+      if (isFaceBackfillRunning) return;
+
+      isFaceBackfillRunning = true;
+      button.disabled = true;
+      button.classList.add('opacity-60');
+      try {
+        const { data: students, error } = await db.from('users')
+          .select('id,name,role_type,status,avatar_url,face_descriptor')
+          .eq('role_type', '學生')
+          .order('id');
+        if (error) throw new Error('讀取學生資料失敗，尚未寫入任何特徵。');
+
+        const candidates = (students || []).filter(student =>
+          !['退班', '畢業'].includes(student.status) &&
+          typeof student.avatar_url === 'string' &&
+          student.avatar_url.trim() &&
+          !student.face_descriptor
+        );
+        if (candidates.length === 0) {
+          showStatus('目前沒有需要補建的在籍學生照片。');
+          return;
+        }
+
+        const confirmed = confirm(
+          `即將在這台裝置的瀏覽器本機辨識 ${candidates.length} 位學生照片，僅將成功辨識的臉部特徵寫入新資料庫。照片不會上傳給 Gemini 或其他 AI 服務；已有特徵的資料會跳過。是否繼續？`
+        );
+        if (!confirmed) return;
+
+        showStatus(`正在載入辨識模型，共 ${candidates.length} 張照片。請保持此頁開啟。`);
+        if (!await loadFaceApiModels()) throw new Error('無法載入人臉辨識模型，尚未開始寫入。');
+
+        let saved = 0;
+        let processed = 0;
+        const failures = [];
+        for (const student of candidates) {
+          processed++;
+          showStatus(`辨識進度：${processed}/${candidates.length}\n目前：${student.name}（${student.id}）\n已寫入：${saved}`);
+          try {
+            const image = await faceapi.fetchImage(student.avatar_url);
+            const detections = await faceapi
+              .detectAllFaces(image, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 }))
+              .withFaceLandmarks(true)
+              .withFaceDescriptors();
+
+            if (detections.length !== 1) {
+              failures.push(`${student.id}：${detections.length === 0 ? '未辨識到人臉' : `照片中有 ${detections.length} 張臉，為避免誤配而跳過`}`);
+              continue;
+            }
+            const descriptor = Array.from(detections[0].descriptor);
+            if (descriptor.length !== 128 || descriptor.some(value => !Number.isFinite(value))) {
+              failures.push(`${student.id}：特徵格式不完整`);
+              continue;
+            }
+
+            let update = db.from('users').update({ face_descriptor: descriptor })
+              .eq('id', student.id)
+              .eq('role_type', '學生')
+              .is('face_descriptor', null);
+            if (student.status !== null && student.status !== undefined) update = update.eq('status', student.status);
+            const { data, error: updateError } = await update.select('id').maybeSingle();
+            if (updateError) {
+              failures.push(`${student.id}：資料庫拒絕寫入`);
+              continue;
+            }
+            if (!data) {
+              failures.push(`${student.id}：資料已變動或未寫入，請重新整理確認`);
+              continue;
+            }
+            student.face_descriptor = descriptor;
+            saved++;
+          } catch {
+            failures.push(`${student.id}：照片讀取或辨識失敗`);
+          }
+        }
+
+        await loadUsers();
+        await buildFaceMatcher();
+        const summary = `批次補建完成：成功寫入 ${saved}/${candidates.length} 筆。` +
+          (failures.length ? `\n未完成 ${failures.length} 筆：\n${failures.join('\n')}` : '');
+        showStatus(summary);
+      } catch (error) {
+        showStatus(error?.message || '批次補建失敗；請稍後重試。');
+      } finally {
+        isFaceBackfillRunning = false;
+        button.disabled = false;
+        button.classList.remove('opacity-60');
+      }
     }
 
     // 🌟 點選式標籤控制：家庭狀況
@@ -2575,6 +2684,8 @@
     function doLogout() { currentUser = null; mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); }
     function updateAuthUI() {
       const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock');
+      const faceBackfillButton = document.getElementById('face-backfill-button');
+      if (faceBackfillButton) faceBackfillButton.classList.toggle('hidden', currentUser?.role_type !== '同工');
       if (currentUser) {
         document.getElementById('auth-unlogged').classList.add('hidden');
         document.getElementById('auth-logged').classList.remove('hidden'); document.getElementById('auth-logged').classList.add('flex');
