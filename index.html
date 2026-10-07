@@ -642,6 +642,7 @@
       <form onsubmit="handleUserSubmit(event)" class="space-y-5 text-xs sm:text-sm">
         <input type="hidden" id="form-user-mode" value="add">
         <input type="hidden" id="form-face-descriptor" value="">
+        <input type="hidden" id="form-original-avatar-url" value="">
         
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
           <h4 class="font-bold text-slate-700">1. 基本身分與 AI 人臉建檔</h4>
@@ -752,7 +753,7 @@
 
         <div class="flex space-x-3 pt-3 border-t">
           <button type="button" onclick="closeUserModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
+          <button id="user-submit-button" type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-sm">確認儲存</button>
         </div>
       </form>
     </div>
@@ -1336,30 +1337,50 @@
     async function captureAndExtractFace() {
       const v = document.getElementById('snap-video'), tip = document.getElementById('face-extract-tip');
       const uid = document.getElementById('form-id').value.trim().toUpperCase() || 'TEMP_' + Date.now();
+      const submitButton = document.getElementById('user-submit-button');
+      submitButton.disabled = true;
       tip.textContent = "AI 分析並上傳中...";
-      const canvas = document.createElement('canvas'); canvas.width = v.videoWidth; canvas.height = v.videoHeight;
-      canvas.getContext('2d').drawImage(v, 0, 0);
-      const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })).withFaceLandmarks(true).withFaceDescriptor();
-      if (!det) { alert("未偵測到人臉！"); tip.textContent = "失敗"; return; }
-      document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor));
-      document.getElementById('face-enrolled-badge').classList.remove('hidden');
-      canvas.toBlob(async (blob) => {
-        try {
-          const storageRef = await uploadMschoolAvatar(blob, `${uid}_${Date.now()}.jpg`);
-          document.getElementById('preview-avatar').src = URL.createObjectURL(blob); document.getElementById('form-avatar').value = storageRef;
-          tip.textContent = "✅ 建檔成功！";
-        } catch (error) { tip.textContent = "照片上傳失敗"; alert(error.message); }
-        stopCameraSnap();
-      }, 'image/jpeg', 0.85);
+      try {
+        const canvas = document.createElement('canvas'); canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+        canvas.getContext('2d').drawImage(v, 0, 0);
+        const det = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })).withFaceLandmarks(true).withFaceDescriptor();
+        if (!det) { alert("未偵測到人臉！"); tip.textContent = "失敗"; return; }
+        const descriptor = Array.from(det.descriptor);
+        if (descriptor.length !== 128 || descriptor.some(value => !Number.isFinite(value))) {
+          alert("人臉特徵格式不正確，請重新拍攝。"); tip.textContent = "辨識失敗"; return;
+        }
+        const blob = await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('無法產生照片檔案')), 'image/jpeg', 0.85));
+        const storageRef = await uploadMschoolAvatar(blob, `${uid}_${Date.now()}.jpg`);
+        document.getElementById('preview-avatar').src = URL.createObjectURL(blob);
+        document.getElementById('form-avatar').value = storageRef;
+        document.getElementById('form-face-descriptor').value = JSON.stringify(descriptor);
+        document.getElementById('face-enrolled-badge').classList.remove('hidden');
+        tip.textContent = "✅ 照片與人臉資料已準備好，請再按下儲存資料。";
+      } catch (error) {
+        tip.textContent = "照片上傳失敗，尚未建立人臉資料";
+        alert(error?.message || '照片上傳失敗，請重試。');
+      } finally { submitButton.disabled = false; stopCameraSnap(); }
     }
     async function autoExtractFaceFromUrl() {
-      const url = document.getElementById('form-avatar').value.trim(); if (!url) return;
-      document.getElementById('preview-avatar').src = url; await loadFaceApiModels();
+      const url = document.getElementById('form-avatar').value.trim();
+      document.getElementById('preview-avatar').src = url;
+      document.getElementById('form-face-descriptor').value = "";
+      document.getElementById('face-enrolled-badge').classList.add('hidden');
+      const tip = document.getElementById('face-extract-tip');
+      if (!url) { if (tip) tip.textContent = "照片已清除；儲存時會一併清除舊特徵。"; return; }
+      if (tip) tip.textContent = "正在辨識照片...";
+      await loadFaceApiModels();
       try {
         const img = await faceapi.fetchImage(url);
         const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceDescriptor();
-        if (det) { document.getElementById('form-face-descriptor').value = JSON.stringify(Array.from(det.descriptor)); document.getElementById('face-enrolled-badge').classList.remove('hidden'); }
-      } catch (e) {}
+        if (det) {
+          const descriptor = Array.from(det.descriptor);
+          if (descriptor.length !== 128 || descriptor.some(value => !Number.isFinite(value))) throw new Error('人臉特徵格式不正確');
+          document.getElementById('form-face-descriptor').value = JSON.stringify(descriptor);
+          document.getElementById('face-enrolled-badge').classList.remove('hidden');
+          if (tip) tip.textContent = "人臉辨識完成，請按下儲存資料。";
+        } else if (tip) tip.textContent = "此照片未辨識到人臉；儲存時會清除舊特徵。";
+      } catch (error) { if (tip) tip.textContent = `照片辨識失敗：${error?.message || '請確認照片可讀取'}`; }
     }
 
     function toggleCameraScanner() { if (isCameraScanning) stopCameraScanner(); else startCameraScanner(); }
@@ -1627,6 +1648,7 @@
 
       document.getElementById('form-user-mode').value = "add";
       document.getElementById('form-face-descriptor').value = "";
+      document.getElementById('form-original-avatar-url').value = "";
       document.getElementById('form-family-status').value = "";
       document.getElementById('form-health-notes').value = "";
       document.getElementById('form-health-extra').value = "";
@@ -1679,6 +1701,7 @@
 
         if (u.avatar_url) {
           document.getElementById('form-avatar').value = u.avatar_url;
+          document.getElementById('form-original-avatar-url').value = u.avatar_url;
           document.getElementById('preview-avatar').src = u.avatar_url;
         }
         if (u.face_descriptor) {
@@ -1740,6 +1763,18 @@
       const extra = document.getElementById('form-health-extra').value.trim();
       const finalHealth = [...currentHealthTags];
       if (extra && !finalHealth.includes(extra)) finalHealth.push(extra);
+      const isEdit = document.getElementById('form-user-mode').value === 'edit';
+      const descriptorText = document.getElementById('form-face-descriptor').value.trim();
+      const avatarUrl = document.getElementById('form-avatar').value.trim() || null;
+      const originalAvatarUrl = document.getElementById('form-original-avatar-url').value.trim() || null;
+      let faceDescriptor = null;
+      if (descriptorText) {
+        try { faceDescriptor = JSON.parse(descriptorText); }
+        catch { alert('人臉特徵資料格式錯誤，請重新拍攝辨識。'); return; }
+        if (!Array.isArray(faceDescriptor) || faceDescriptor.length !== 128 || faceDescriptor.some(value => !Number.isFinite(value))) {
+          alert('人臉特徵資料不完整，請重新拍攝辨識。'); return;
+        }
+      }
 
       const payload = {
         id: document.getElementById('form-id').value.trim().toUpperCase(),
@@ -1759,10 +1794,11 @@
         points: parseInt(document.getElementById('form-points').value) || 0,
         family_status: currentFamilyTags.join('、'),
         health_notes: finalHealth.join('、'),
-        avatar_url: document.getElementById('form-avatar').value.trim() || null
+        avatar_url: avatarUrl
       };
+      if (faceDescriptor) payload.face_descriptor = faceDescriptor;
+      else if (isEdit && avatarUrl !== originalAvatarUrl) payload.face_descriptor = null;
 
-      const isEdit = document.getElementById('form-user-mode').value === 'edit';
       const result = isEdit
         ? await db.from('users').update(payload).eq('id', payload.id)
         : await db.from('users').insert([payload]);
