@@ -376,13 +376,61 @@ test('new person forms generate the next Taipei-year role ID and insert without 
   field('form-role').value = '學生';
   vm.runInContext('handleUserRoleChange()', context);
   field('form-name').value = 'Synthetic New Student';
+  const syntheticDescriptor = Array(128).fill(0);
+  field('form-face-descriptor').value = JSON.stringify(syntheticDescriptor);
   await vm.runInContext('handleUserSubmit({ preventDefault() {} })', context);
 
   const insert = writes.find((write) => write.table === 'users' && write.method === 'insert');
   assert.ok(insert);
   assert.equal(insert.payload[0].id, `${currentYear}S0008`);
   assert.equal(insert.payload[0].role_type, '學生');
+  assert.equal(JSON.stringify(insert.payload[0].face_descriptor), JSON.stringify(syntheticDescriptor));
   assert.equal(writes.some((write) => write.table === 'users' && write.method === 'upsert'), false);
+});
+
+test('invalid face descriptor is rejected without writing a person record', async () => {
+  const { context, writes, alerts } = createHarness();
+  await vm.runInContext('loadUsers()', context);
+  vm.runInContext("openUserModal('add')", context);
+  context.document.getElementById('form-name').value = 'Synthetic New Student';
+  context.document.getElementById('form-face-descriptor').value = JSON.stringify([0, 1]);
+
+  await vm.runInContext('handleUserSubmit({ preventDefault() {} })', context);
+
+  assert.equal(writes.some(write => write.table === 'users' && write.method === 'insert'), false);
+  assert.ok(alerts.some(message => message.includes('人臉特徵資料不完整')));
+});
+
+test('editing another field preserves an existing face descriptor', async () => {
+  const descriptor = Array(128).fill(0.25);
+  const { context, writes } = createHarness({ users: [
+    { id: 'S-QA-001', name: 'Synthetic Student', role_type: '學生', status: '在班', avatar_url: 'mschool-avatar://avatars/test.jpg', face_descriptor: descriptor },
+  ] });
+  await vm.runInContext('loadUsers()', context);
+  await vm.runInContext("openUserModal('edit', 'S-QA-001')", context);
+  context.document.getElementById('form-name').value = 'Synthetic Student Updated';
+
+  await vm.runInContext('handleUserSubmit({ preventDefault() {} })', context);
+
+  const update = writes.find(write => write.table === 'users' && write.method === 'update');
+  assert.ok(update);
+  assert.equal(Object.hasOwn(update.payload, 'face_descriptor'), false);
+});
+
+test('changing a photo without a successful new match clears the old descriptor', async () => {
+  const descriptor = Array(128).fill(0.25);
+  const { context, writes } = createHarness({ users: [
+    { id: 'S-QA-001', name: 'Synthetic Student', role_type: '學生', status: '在班', avatar_url: 'mschool-avatar://avatars/old.jpg', face_descriptor: descriptor },
+  ] });
+  await vm.runInContext('loadUsers()', context);
+  await vm.runInContext("openUserModal('edit', 'S-QA-001')", context);
+  context.document.getElementById('form-avatar').value = 'mschool-avatar://avatars/new.jpg';
+
+  await vm.runInContext('handleUserSubmit({ preventDefault() {} })', context);
+
+  const update = writes.find(write => write.table === 'users' && write.method === 'update');
+  assert.ok(update);
+  assert.equal(update.payload.face_descriptor, null);
 });
 
 test('staff role IDs use independent M, T, and P sequences', async () => {
