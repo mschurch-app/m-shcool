@@ -1909,8 +1909,8 @@
       else if (isEdit && avatarUrl !== originalAvatarUrl) payload.face_descriptor = null;
 
       const result = isEdit
-        ? await db.from('users').update(payload).eq('id', payload.id)
-        : await db.from('users').insert([payload]);
+        ? await db.from('users').update(payload).eq('id', payload.id).select('id').single()
+        : await db.from('users').insert([payload]).select('id').single();
       if (result.error) {
         const conflict = result.error.code === '23505';
         if (conflict && !isEdit) {
