@@ -24,6 +24,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: '20'
+          node-version: '22'
+      - name: Install pinned offline database test dependency
+        run: npm ci --prefix tests --ignore-scripts
       - name: Run offline tests
         run: node --test

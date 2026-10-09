@@ -676,7 +676,7 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">身分證字號</label><input type="text" id="form-id-card" class="w-full uppercase font-mono px-3 py-2 bg-white border rounded-xl"></div>
-            <div><label class="block font-bold text-slate-600 mb-1">身分類別</label><select id="form-role" onchange="handleUserRoleChange()" class="w-full px-3 py-2 bg-white border rounded-xl font-bold"><option value="學生">學生</option><option value="同工">同工</option><option value="老師">老師</option><option value="工讀生">工讀生</option></select></div>
+            <div><label class="block font-bold text-slate-600 mb-1">身分類別</label><select id="form-role" onchange="handleUserRoleChange()" class="w-full px-3 py-2 bg-white border rounded-xl font-bold"><option value="學生">學生</option><option value="同工">同工</option><option value="老師">老師</option><option value="工讀生">工讀生</option></select></div><div class="sm:col-span-2"><p class="text-xs text-slate-600">既有人員類別不在個人資料中變更。同工的登入角色與停權請使用登入權限設定。</p><button id="staff-access-open" type="button" onclick="openStaffAccess()" class="hidden mt-2 min-h-[44px] px-4 py-3 rounded-xl border text-rose-700 font-bold">設定同工登入權限</button></div>
             <div><label class="block font-bold text-slate-600 mb-1">狀態 *</label><select id="form-status" class="w-full px-3 py-2 bg-amber-50 font-bold border border-amber-300 rounded-xl text-amber-900"><option value="在班">在班</option><option value="退班">退班</option><option value="畢業">畢業</option><option value="在職">在職</option><option value="離職">離職</option></select></div>
           </div>
         </div>
@@ -793,21 +793,31 @@
     </div>
   </div>
 
-  <!-- 登入彈窗 -->
-  <div id="modal-login" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+  <!-- 教會 OS 登入 -->
+  <div id="modal-login" role="dialog" aria-modal="true" aria-labelledby="school-login-title" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl border">
-      <div class="text-center mb-4"><h3 class="text-lg font-black text-slate-800">同工管理者登入</h3><p class="text-xs text-slate-400">請輸入人員編號或姓名與手機號碼</p></div>
-      <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
-        <div><label class="block text-xs font-bold text-slate-600 mb-1">編號 或 姓名</label><input type="text" id="login-uid" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm font-bold"></div>
-        <div><label class="block text-xs font-bold text-slate-600 mb-1">密碼 (手機號碼)</label><input type="password" id="login-pwd" required class="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-sm font-bold font-mono"></div>
-        <div id="login-err" class="text-xs font-bold text-rose-600 hidden"></div>
-        <div class="flex space-x-2 pt-2">
-          <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">取消</button>
-          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">確認登入</button>
-        </div>
-      </form>
-      <div class="mt-4 pt-4 border-t text-center"><p class="text-xs text-slate-400 mb-2">或使用教會 OS 帳號</p><a href="https://mscos.mchurch.online/admin-dashboard.html" class="block w-full py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold">回到教會 OS 开启课辅系统</a><p class="text-[10px] text-slate-400 mt-2">从教会 OS 进入时会自动登录；原本登录方式仍可使用。</p></div>
+      <h3 id="school-login-title" class="text-xl font-bold text-slate-900">登入課輔</h3>
+      <p class="mt-3 text-sm text-slate-700 leading-relaxed">使用教會 OS 的 LINE 或 Email 帳號登入，再選擇「課輔」，即可回到課輔系統。</p>
+      <p class="mt-2 text-sm text-slate-600 leading-relaxed">學生打卡不需要登入。新同工請先請管理同工確認登入權限。</p>
+      <a href="https://mscos.mchurch.online/admin-dashboard.html" class="block text-center mt-5 min-h-[44px] px-4 py-3 bg-rose-600 text-white rounded-xl font-bold">前往教會 OS 登入</a>
+      <button type="button" onclick="closeLoginModal()" class="w-full mt-2 min-h-[44px] px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold">返回打卡</button>
     </div>
+  </div>
+  <div id="modal-staff-access" role="dialog" aria-modal="true" aria-labelledby="staff-access-title" class="fixed inset-0 bg-slate-950/70 flex items-center justify-center p-4 z-50 hidden">
+    <form onsubmit="saveStaffAccess(event)" class="bg-white rounded-3xl max-w-md w-full p-6 max-h-[85dvh] overflow-y-auto">
+      <h3 id="staff-access-title" class="text-xl font-bold text-slate-900">同工登入權限</h3>
+      <p id="staff-access-person" class="mt-2 font-bold text-slate-800"></p>
+      <p class="my-3 text-sm text-slate-700">請確認這是本人已審核的教會帳號。儲存後，此同工的舊登入會失效，需要重新由教會 OS 進入。</p>
+      <input id="staff-access-id" type="hidden">
+      <label for="staff-access-account" class="block mt-3 text-sm font-bold text-slate-800">教會 OS 帳號</label>
+      <select id="staff-access-account" required class="w-full mt-1 min-h-[44px] border rounded-xl p-3 bg-white text-slate-900"></select>
+      <label for="staff-access-role" class="block mt-3 text-sm font-bold text-slate-800">課輔角色</label>
+      <select id="staff-access-role" class="w-full mt-1 min-h-[44px] border rounded-xl p-3 bg-white text-slate-900"><option>同工</option><option>老師</option><option>工讀生</option></select>
+      <p class="mt-2 text-sm text-slate-600">同工可管理；老師可新增及修改，不能刪除；工讀生可查閱。</p>
+      <label class="flex items-center gap-3 min-h-[44px] my-3 text-slate-900"><input type="checkbox" id="staff-access-active">允許登入課輔</label>
+      <p id="staff-access-error" role="status" class="text-sm text-rose-700 my-2"></p>
+      <div class="flex gap-2"><button type="button" onclick="closeStaffAccess()" class="flex-1 min-h-[44px] bg-slate-100 text-slate-700 rounded-xl p-3">取消</button><button id="staff-access-save" type="submit" class="flex-1 min-h-[44px] bg-rose-600 text-white rounded-xl p-3 font-bold">儲存權限</button></div>
+    </form>
   </div>
 
   <!-- 金句彈窗 -->
@@ -849,8 +859,8 @@
     }
     async function callMschoolApi(path, options = {}) {
       const headers = new Headers(options.headers || {});
-      if (mschoolSessionToken) headers.set('x-mschool-session', mschoolSessionToken);
-      const response = await nativeFetch(`${MSCHOOL_API_URL}${path}`, { ...options, headers });
+      if (mschoolSessionToken && !headers.get('x-mschool-session')) headers.set('x-mschool-session', mschoolSessionToken);
+      const response = await nativeFetch(`${MSCHOOL_API_URL}${path}`, { ...options, headers, signal: options.signal || (typeof AbortSignal !== 'undefined' ? AbortSignal.timeout(15000) : undefined) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || '系統連線失敗');
       return result;
@@ -948,19 +958,19 @@
     }
     function requireStaffPrintTab() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
+      if (currentUser.role_type !== '同工') { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
       switchTab('print-center');
     }
     async function openStudentRosterPrint() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：學生名冊含個人資料，僅限同工 (M) 輸出！"); return; }
+      if (currentUser.role_type !== '同工') { alert("⛔ 權限不足：學生名冊含個人資料，僅限同工 (M) 輸出！"); return; }
       document.getElementById('print-report-type').value = 'roster';
       onReportTypeChange();
       switchTab('print-center');
     }
     function requireImportTab() {
       if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (!currentUser.id.includes('M')) { alert("⛔ 權限不足：此匯入工具僅限同工 (M) 查閱！"); return; }
+      if (currentUser.role_type !== '同工') { alert("⛔ 權限不足：此匯入工具僅限同工 (M) 查閱！"); return; }
       switchTab('import');
     }
 
@@ -1838,6 +1848,11 @@
         }
         updateHealthTagsUI();
       }
+      const editing = document.getElementById('form-user-mode').value === 'edit';
+      const person = allUsers.find(item => item.id === document.getElementById('form-id').value);
+      document.getElementById('form-role').disabled = editing;
+      document.getElementById('form-status').disabled = editing && person?.role_type !== '學生' && (currentUser?.role_type !== '同工' || person?.id === currentUser?.id);
+      document.getElementById('staff-access-open').classList.toggle('hidden', !editing || !person || person.role_type === '學生' || currentUser?.role_type !== '同工' || person.id === currentUser?.id);
       document.getElementById('modal-user').classList.remove('hidden');
     }
 
@@ -2667,21 +2682,61 @@
     function openLoginModal() { document.getElementById('modal-login').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('modal-login').classList.add('hidden'); }
     async function handleLoginSubmit(e) {
-      e.preventDefault();
-      const r = document.getElementById('login-uid').value.trim();
-      const password = document.getElementById('login-pwd').value.trim();
-      try {
-        const result = await callMschoolApi('/manual-login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ identity: r, password }) });
-        mschoolSessionToken = result.session;
-        localStorage.setItem('mplus_mschool_session', mschoolSessionToken);
-        currentUser = result.user;
-        updateAuthUI(); closeLoginModal(); switchTab('schedules');
-      } catch (error) {
-        document.getElementById('login-err').textContent = error.message;
-        document.getElementById('login-err').classList.remove('hidden');
-      }
+      e?.preventDefault();
+      openLoginModal();
     }
-    function doLogout() { currentUser = null; mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); localStorage.removeItem('mplus_current_user'); updateAuthUI(); switchTab('checkin'); }
+    async function flushSchoolLogout() {
+      const pending = localStorage.getItem('mplus_pending_logout');
+      if (!pending) return;
+      if (mschoolSessionToken === pending) { mschoolSessionToken = null; currentUser = null; localStorage.removeItem('mplus_mschool_session'); }
+      await callMschoolApi('/logout', { method: 'POST', headers: { 'x-mschool-session': pending } });
+      localStorage.removeItem('mplus_pending_logout');
+    }
+    async function doLogout() {
+      if (mschoolSessionToken) localStorage.setItem('mplus_pending_logout', mschoolSessionToken);
+      currentUser = null; mschoolSessionToken = null;
+      localStorage.removeItem('mplus_mschool_session'); localStorage.removeItem('mplus_current_user');
+      updateAuthUI(); switchTab('checkin');
+      try { await flushSchoolLogout(); }
+      catch { alert('已離開課輔。連線中斷，伺服器登出尚未完成；請恢復網路後重新開啟課輔，系統會再次完成登出。'); }
+    }
+    async function openStaffAccess() {
+      const id = document.getElementById('form-id').value;
+      const person = allUsers.find(item => item.id === id);
+      if (!person || currentUser?.role_type !== '同工' || person.id === currentUser.id || person.role_type === '學生') return;
+      const error = document.getElementById('staff-access-error');
+      error.textContent = '';
+      try {
+        const options = await callMschoolApi('/staff-access');
+        const link = options.links.find(item => item.user_id === id);
+        document.getElementById('staff-access-id').value = id;
+        document.getElementById('staff-access-person').textContent = person.name;
+        const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+        document.getElementById('staff-access-account').innerHTML = '<option value="">請選擇本人帳號</option>' + options.accounts.map(account => `<option value="${escape(account.user_id)}">${escape(account.display_name)}（${escape(account.user_id.slice(0, 8))}）</option>`).join('');
+        document.getElementById('staff-access-account').value = link?.auth_user_id || '';
+        document.getElementById('staff-access-role').value = link?.role_type || person.role_type;
+        document.getElementById('staff-access-active').checked = link?.is_active || false;
+        document.getElementById('modal-staff-access').classList.remove('hidden');
+      } catch (failure) { alert(`無法載入登入權限：${failure.message}`); }
+    }
+    function closeStaffAccess() { document.getElementById('modal-staff-access').classList.add('hidden'); }
+    async function saveStaffAccess(event) {
+      event.preventDefault();
+      const button = document.getElementById('staff-access-save'), error = document.getElementById('staff-access-error');
+      if (button.disabled) return;
+      if (!confirm('確定更新這位同工的登入權限？舊登入將失效。')) return;
+      button.disabled = true; button.textContent = '儲存中…'; error.textContent = '';
+      try {
+        await callMschoolApi('/staff-access', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+          user_id: document.getElementById('staff-access-id').value,
+          auth_user_id: document.getElementById('staff-access-account').value,
+          role_type: document.getElementById('staff-access-role').value,
+          is_active: document.getElementById('staff-access-active').checked
+        }) });
+        closeStaffAccess(); closeUserModal(); await loadUsers(); alert('登入權限已更新，請同工重新由教會 OS 進入課輔。');
+      } catch (failure) { error.textContent = failure.message; }
+      finally { button.disabled = false; button.textContent = '儲存權限'; }
+    }
     function updateAuthUI() {
       const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock');
       const faceBackfillButton = document.getElementById('face-backfill-button');
@@ -2690,7 +2745,7 @@
         document.getElementById('auth-unlogged').classList.add('hidden');
         document.getElementById('auth-logged').classList.remove('hidden'); document.getElementById('auth-logged').classList.add('flex');
         document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`;
-        if (currentUser.id.includes('M')) { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
+        if (currentUser.role_type === '同工') { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
         if (dock) { dock.classList.remove('hidden'); dock.classList.add('flex'); }
       } else {
         document.getElementById('auth-unlogged').classList.remove('hidden');
@@ -2701,6 +2756,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      try { await flushSchoolLogout(); } catch { /* Retry on the next visit; never restore a pending logout token. */ }
       consumeChurchSession();
       localStorage.removeItem('mplus_current_user');
       if (mschoolSessionToken) {

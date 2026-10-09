@@ -8,7 +8,8 @@ test('browser uses the unified school API and no longer names the retired projec
   assert.match(index, /const MSCHOOL_API_URL\s*=\s*`\$\{SUPABASE_URL\}\/functions\/v1\/mschool-api`/u);
   assert.match(index, /aqanuwilmvdtlzuqlrau\.supabase\.co/u);
   assert.doesNotMatch(index, /othgvewffvkkafbezejy/u);
-  assert.match(index, /callMschoolApi\(['"]\/manual-login['"]/u);
+  assert.doesNotMatch(index, /callMschoolApi\(['"]\/manual-login['"]/u);
+  assert.match(index, /mscos\.mchurch\.online\/admin-dashboard\.html/u);
   assert.match(index, /callMschoolApi\(['"]\/kiosk\/check-in['"]/u);
 });
 
