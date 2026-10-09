@@ -782,3 +782,82 @@ test('late report queries cannot overwrite the most recently selected month',asy
  context.document.getElementById('print-month-filter').value='2026-10';const newer=vm.runInContext('renderSelectedReport()',context);await new Promise(r=>setImmediate(r));assert.equal(pending.length,2);
  const report=name=>({days:[],summary:[{worker_id:'P-QA',name,planned_hours:2,actual_hours:1,completed_days:1,pending_days:0}]});pending[1](report('Newest month'));await newer;pending[0](report('Older month'));await older;assert.match(elements.get('print-paper-content').innerHTML,/Newest month/);assert.doesNotMatch(elements.get('print-paper-content').innerHTML,/Older month/);
 });
+
+test('roll call mobile exposes every field, preserves incomplete options, escapes text and updates all statistics', async () => {
+  const h = createHarness({users:[{id:'S-QA',name:'<img src=x>',role_type:'學生',status:'在班'}],rollCalls:[
+    {id:9,student_id:'S-QA',created_at:'2026-10-09T16:00:00Z',course_name:'課後輔導',attendance_status:'請假',homework_status:'未完成',contact_book_signed:'未簽',note:'"><script>bad()</script>'}
+  ]});
+  vm.runInContext("currentUser={id:'T-QA',role_type:'老師'}",h.context);
+  h.context.document.getElementById('rollcall-date-picker').value='2026-10-09';
+  await vm.runInContext('loadRollCallsForDate()',h.context);
+  for(const id of ['rollcall-cards-mobile','rollcall-table-body']) {
+    const markup=h.elements.get(id).innerHTML;
+    for(const title of ['出席','作業','聯絡簿','備註'])assert.ok(markup.includes(title));
+    assert.match(markup,/value="未完成" selected/);assert.match(markup,/value="未簽" selected/);
+    assert.doesNotMatch(markup,/<script>|<img/);assert.match(markup,/&lt;img/);
+  }
+  assert.equal(h.elements.get('rc-stat-hw').textContent,'0%');assert.equal(h.elements.get('rc-stat-signed').textContent,'0 人');
+  vm.runInContext("batchSetAll('homework','已完成');batchSetAll('signed','是');updateRollCallField(0,'attendance','出席')",h.context);
+  assert.equal(h.elements.get('rc-stat-hw').textContent,'100%');assert.equal(h.elements.get('rc-stat-signed').textContent,'1 人');assert.equal(h.elements.get('rc-stat-attend').textContent,'1 人');
+});
+test('legacy duplicate roll call rows select highest exact bigint ID and leave every historical row intact',()=>{
+ const h=createHarness();
+ const records=[{id:'9007199254740993',student_id:'S',created_at:'2026-10-09T16:00Z',homework_status:'未完成'},{id:'9007199254740992',student_id:'S',created_at:'2026-10-09T16:00Z',homework_status:'已完成'},{id:99,student_id:'S',created_at:'2026-10-09T16:00Z',course_name:'其他課程'}];
+ h.context.records=records;
+ const latest=vm.runInContext("latestRollCallRecords(records,'課後輔導')",h.context);
+ assert.equal(latest.length,1);assert.equal(latest[0].homework_status,'未完成');assert.equal(records.length,3);assert.equal(h.writes.length,0);
+});
+test('cannot save old roll call entries under a newly selected date; failed save keeps input',async()=>{
+ const h=createHarness({users:[{id:'S-QA',name:'Student',status:'在班',role_type:'學生'}],failures:{'roll_calls.upsert':'retry'}});
+ vm.runInContext("currentUser={id:'T',role_type:'老師'}",h.context);h.context.document.getElementById('rollcall-date-picker').value='2026-10-09';
+ await vm.runInContext('loadRollCallsForDate()',h.context);
+ h.elements.get('rollcall-date-picker').value='2026-10-10';await vm.runInContext('saveRollCallSheet()',h.context);assert.equal(h.writes.length,0);
+ h.elements.get('rollcall-date-picker').value='2026-10-09';vm.runInContext("updateRollCallField(0,'note','保留備註')",h.context);await vm.runInContext('saveRollCallSheet()',h.context);
+ assert.equal(vm.runInContext('activeRollCallList[0].note',h.context),'保留備註');assert.equal(h.elements.get('rollcall-save').disabled,false);assert.equal(h.elements.get('rollcall-date-picker').disabled,false);
+});
+test('CSV and TSV parser handles quoted commas, tabs, newlines, doubled quotes and BOM',()=>{
+ const h=createHarness();h.context.raw='\ufeffid,name,note\r\nS1,"張,同學","第一行\n第二行 ""引號"""\r\n';
+ const csv=vm.runInContext('parseDelimitedText(raw)',h.context);assert.deepEqual(JSON.parse(JSON.stringify(csv.rows)),[['S1','張,同學','第一行\n第二行 "引號"']]);
+ h.context.raw='id\tname\tnote\nS2\t名字\t"有,逗號及\t分隔"';assert.equal(vm.runInContext('parseDelimitedText(raw).rows[0][2]',h.context),'有,逗號及\t分隔');
+ for(const raw of ['id,name\nS1,"broken','id,name\nS1,Name,extra','id,name\nS1,"Name"bad']) {h.context.raw=raw;assert.throws(()=>vm.runInContext('parseDelimitedText(raw)',h.context));}
+});
+test('CSV change plans preserve unmapped/empty fields and existing points; reject duplicates and invalid values',()=>{
+ const h=createHarness();h.context.people=[{id:'S1',name:'舊姓名',phone:'Keep',health_notes:'Keep health',points:50}];h.context.rows=[['S1','新姓名','','0'],['S2','新增','New','3']];h.context.mapping={id:0,name:1,phone:2,points:3};
+ const plan=vm.runInContext('buildCsvImportPlan(rows,mapping,people)',h.context);
+ assert.deepEqual(JSON.parse(JSON.stringify(plan[0].payload)),{name:'新姓名'});assert.equal(plan[1].payload.points,3);assert.equal(plan[1].payload.role_type,'學生');
+ h.context.rows=[['S1','One'],['S1','Two'],['','No ID']];h.context.mapping={id:0,name:1};assert.ok(vm.runInContext('buildCsvImportPlan(rows,mapping,people)',h.context).every(x=>x.kind==='error'));
+ h.context.rows=[['S3','Three','2026-02-30']];h.context.mapping={id:0,name:1,birth:2};assert.equal(vm.runInContext('buildCsvImportPlan(rows,mapping,people)[0].kind',h.context),'error');
+});
+function setupCsvHarness(h,raw,mapping) {
+ h.context.document.getElementById('csv-raw-textarea').value=raw;
+ h.context.document.querySelectorAll=selector=>selector==='.csv-mapping-select'?Object.entries(mapping).map(([key,value])=>({value:String(value),getAttribute:()=>key})):[];
+ vm.runInContext("currentUser={id:'M-QA',role_type:'同工'};parseCsvContent()",h.context);
+}
+test('CSV requires preview, patches only confirmed fields, inserts new students and permits a safe retry',async()=>{
+ const users=[{id:'S1',name:'Old',phone:'Keep',points:8}];const h=createHarness({users});
+ setupCsvHarness(h,'id,name\nS1,Updated\nS2,New',{id:0,name:1});
+ await vm.runInContext('executeCsvImport()',h.context);assert.equal(h.writes.length,0);
+ await vm.runInContext('previewCsvImport()',h.context);assert.equal(h.writes.length,0);
+ await vm.runInContext('executeCsvImport()',h.context);assert.deepEqual(h.writes.map(x=>x.method),['update','insert']);assert.equal(users[0].phone,'Keep');assert.equal(users[0].points,8);assert.equal(users.length,2);
+ await vm.runInContext('previewCsvImport()',h.context);assert.ok(vm.runInContext("csvImportPlan.entries.every(x=>x.kind==='skip')",h.context));
+ await vm.runInContext('executeCsvImport()',h.context);assert.equal(h.writes.length,2);
+});
+test('CSV content changes invalidate confirmation; failed writes list the affected row and preserve source',async()=>{
+ const h=createHarness({users:[{id:'S1',name:'Old'}],failures:{'users.update':'denied'}});const raw='id,name\nS1,Updated';setupCsvHarness(h,raw,{id:0,name:1});
+ await vm.runInContext('previewCsvImport()',h.context);h.elements.get('csv-raw-textarea').value=raw+'changed';await vm.runInContext('executeCsvImport()',h.context);assert.equal(h.writes.length,0);
+ h.elements.get('csv-raw-textarea').value=raw;await vm.runInContext('executeCsvImport()',h.context);assert.match(h.elements.get('csv-import-review').innerHTML,/denied/);assert.match(h.alerts.at(-1),/完成 0 筆；失敗 1 筆/);assert.equal(h.elements.get('csv-raw-textarea').value,raw);assert.equal(h.elements.get('csv-confirm-button').disabled,false);
+});
+test('CSV upload headers and previews escape HTML; reader roles cannot preview or import',async()=>{
+ const h=createHarness();setupCsvHarness(h,'id,name,<img src=x>\nS1,<script>bad()</script>,note',{id:0,name:1});
+ assert.doesNotMatch(h.elements.get('mapping-dropdowns-grid').innerHTML,/<img/);
+ await vm.runInContext('previewCsvImport()',h.context);assert.doesNotMatch(h.elements.get('csv-import-review').innerHTML,/<script>/);
+ vm.runInContext("currentUser={id:'T',role_type:'老師'}",h.context);await vm.runInContext('executeCsvImport()',h.context);assert.equal(h.writes.length,0);
+});
+
+test('monthly roll call keeps legacy course history and does not silently render failed reads as zero',async()=>{
+ const h=createHarness({users:[{id:'S-QA',name:'Student',role_type:'學生',status:'在班'}],rollCalls:[{id:1,student_id:'S-QA',created_at:'2026-10-02T16:00:00Z',course_name:'課後輔導互動',attendance_status:'出席'}]});
+ h.context.document.getElementById('print-report-type').value='month_rollcall';h.context.document.getElementById('print-month-filter').value='2026-10';h.context.document.getElementById('print-class-filter').value='elementary';
+ await vm.runInContext('renderSelectedReport()',h.context);assert.match(h.elements.get('print-paper-content').innerHTML,/100%/);assert.equal(h.queries.filter(query=>query.table==='roll_calls').at(-1).filters.some(filter=>Array.isArray(filter)&&filter[0]==='course_name'),false);
+ const denied=createHarness({failures:{'roll_calls.select':'Synthetic read failed'}});denied.context.document.getElementById('print-report-type').value='month_rollcall';denied.context.document.getElementById('print-month-filter').value='2026-10';
+ await vm.runInContext('renderSelectedReport()',denied.context);assert.match(denied.elements.get('print-paper-content').innerHTML,/載入失敗/);assert.doesNotMatch(denied.elements.get('print-paper-content').innerHTML,/0%/);
+});

@@ -188,7 +188,7 @@
     }
   </style>
   <link rel="stylesheet" href="church-palette.css?v=20261003-components1">
-  <link rel="stylesheet" href="church-os-theme.css?v=20261009-attendance1">
+  <link rel="stylesheet" href="church-os-theme.css?v=20261009-dailyflows1">
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
@@ -537,7 +537,7 @@
         <div class="space-y-2">
           <label class="block font-bold text-xs text-slate-700">1. 上傳 CSV 檔案 或 直接貼上：</label>
           <input type="file" id="csv-file-input" accept=".csv" onchange="handleCsvFileUpload(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700">
-          <textarea id="csv-raw-textarea" rows="5" placeholder="或在此貼上舊 Excel 內容..." class="w-full p-3 font-mono text-xs bg-slate-50 border rounded-2xl"></textarea>
+          <textarea id="csv-raw-textarea" rows="5" oninput="invalidateCsvPreview()" placeholder="或在此貼上舊 Excel 內容..." class="w-full p-3 font-mono text-xs bg-slate-50 border rounded-2xl"></textarea>
           <button type="button" onclick="parseCsvContent()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm">🔍 解析 CSV 欄位並進行對應</button>
         </div>
         <div id="csv-mapping-section" class="hidden space-y-4 pt-4 border-t border-slate-200">
@@ -545,8 +545,11 @@
           <div id="mapping-dropdowns-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border"></div>
           <div class="flex items-center justify-between pt-2">
             <span id="csv-preview-count" class="text-xs font-bold text-slate-600">共解析出 0 筆資料</span>
-            <button type="button" onclick="executeCsvImport()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">🚀 確認無誤，批次匯入資料庫</button>
+            <button type="button" id="csv-preview-button" onclick="previewCsvImport()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-md">預覽變更</button>
           </div>
+          <p class="text-sm text-slate-700">未對應或留白的欄位會保留原資料；既有人員的點數不由匯入覆寫。</p>
+          <div id="csv-import-review" class="space-y-3" style="scroll-margin-top:96px" aria-live="polite"></div>
+          <button type="button" id="csv-confirm-button" onclick="executeCsvImport()" style="scroll-margin-block:120px" class="hidden w-full px-5 py-3 bg-emerald-600 text-white rounded-xl font-bold">確認匯入</button>
         </div>
       </div>
     </div>
@@ -1494,43 +1497,83 @@
       const canEdit = canManageRollCalls();
       ['rollcall-batch-attendance', 'rollcall-batch-homework', 'rollcall-batch-signed', 'rollcall-save'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', !canEdit));
     }
-    async function initRollCallTab() { updateRollCallActionUI(); document.getElementById('rollcall-date-picker').value = new Date().toISOString().split('T')[0]; await loadRollCallsForDate(); }
+    let rollCallLoadedDate = null, rollCallLoadSequence = 0, rollCallSaving = false;
+    async function initRollCallTab() { updateRollCallActionUI(); document.getElementById('rollcall-date-picker').value = taipeiDateKey(new Date()); await loadRollCallsForDate(); }
     async function loadRollCallsForDate() {
       const dt = document.getElementById('rollcall-date-picker').value;
+      const sequence = ++rollCallLoadSequence;
+      rollCallLoadedDate = null;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dt)) return false;
       if (allUsers.length === 0) {
         const { data, error } = await db.from('users').select('*');
         if (error) { alert(`載入學員名冊失敗：${error.message}`); return; }
         if (data) allUsers = data;
       }
       const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
-      const { data: saved, error } = await db.from('roll_calls').select('*').gte('created_at', `${dt}T00:00:00.000Z`).lte('created_at', `${dt}T23:59:59.999Z`).order('id', { ascending: false });
+      // Legacy records encode the selected class date in the UTC date portion.
+      // Keep that contract until an explicit class_date migration is approved.
+      const { data: saved, error } = await db.from('roll_calls').select('*').eq('course_name', '課後輔導').gte('created_at', `${dt}T00:00:00.000Z`).lte('created_at', `${dt}T23:59:59.999Z`).order('id', { ascending: false });
+      if (sequence !== rollCallLoadSequence || document.getElementById('rollcall-date-picker').value !== dt) return false;
       if (error) { alert(`載入點名紀錄失敗：${error.message}`); return; }
-      const map = {}; (saved || []).forEach(r => map[r.student_id] = r);
+      const map = new Map();
+      for (const r of latestRollCallRecords(saved || [], '課後輔導')) map.set(r.student_id, r);
       activeRollCallList = students.map(s => {
-        const r = map[s.id];
+        const r = map.get(s.id);
         return { record_id: r?.id ?? null, student_id: s.id, student_name: s.name, school: s.school||'', grade: s.grade||'', attendance: r?.attendance_status||'出席', homework: r?.homework_status||'已完成', signed: r?.contact_book_signed||'是', note: r?.note||'' };
       });
-      renderRollCallRows(); updateRollCallStats();
+      rollCallLoadedDate = dt;
+      renderRollCallRows(); updateRollCallStats(); return true;
+    }
+    function latestRollCallRecords(records, courseName = null) {
+      const result = new Map();
+      for (const row of records) {
+        if (courseName && row.course_name && row.course_name !== courseName) continue;
+        const key = JSON.stringify([String(row.created_at || '').slice(0, 10), row.student_id]);
+        const previous = result.get(key);
+        if (!previous || BigInt(row.id || 0) > BigInt(previous.id || 0)) result.set(key, row);
+      }
+      return [...result.values()];
+    }
+    function updateRollCallField(index, field, value) {
+      if (!canManageRollCalls() || rollCallSaving || !activeRollCallList[index] || !['attendance', 'homework', 'signed', 'note'].includes(field)) return;
+      activeRollCallList[index][field] = value;
+      document.querySelectorAll(`[data-rc-index="${index}"][data-rc-field="${field}"]`).forEach(control => { if (control.value !== value) control.value = value; });
+      updateRollCallStats();
     }
     function renderRollCallRows() {
-      const disabled = canManageRollCalls() ? '' : 'disabled';
-      document.getElementById('rollcall-cards-mobile').innerHTML = activeRollCallList.map((r, i) => `<div class="bg-white border rounded-2xl p-4 space-y-2"><div class="flex justify-between"><b>${r.student_name} (${r.student_id})</b><select ${disabled} onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs font-bold"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></div></div>`).join('');
-      document.getElementById('rollcall-table-body').innerHTML = activeRollCallList.map((r, i) => `<tr><td class="py-3 px-3 font-mono font-bold">${r.student_id}</td><td class="py-3 px-3 font-bold">${r.student_name}</td><td class="py-3 px-3 text-xs">${r.school} ${r.grade}</td><td class="py-3 px-3"><select ${disabled} onchange="activeRollCallList[${i}].attendance=this.value" class="border rounded px-2 py-1 text-xs"><option value="出席" ${r.attendance==='出席'?'selected':''}>出席</option><option value="請假" ${r.attendance==='請假'?'selected':''}>請假</option></select></td><td class="py-3 px-3"><select ${disabled} onchange="activeRollCallList[${i}].homework=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="已完成" ${r.homework==='已完成'?'selected':''}>已完成</option><option value="未完成">未完成</option></select></td><td class="py-3 px-3"><select ${disabled} onchange="activeRollCallList[${i}].signed=this.value" class="border rounded px-2.5 py-1 text-xs"><option value="是" ${r.signed==='是'?'selected':''}>已核章</option><option value="未簽">未簽</option></select></td><td class="py-3 px-3"><input ${disabled} type="text" value="${r.note}" onchange="activeRollCallList[${i}].note=this.value" class="border rounded px-2 py-1 text-xs w-full"></td></tr>`).join('');
+      const disabled = canManageRollCalls() && !rollCallSaving ? '' : 'disabled', esc = escapeCounselingHtml;
+      const select = (r, i, field, title, options) => `<select ${disabled} data-rc-index="${i}" data-rc-field="${field}" aria-label="${esc(r.student_name)} ${title}" onchange="updateRollCallField(${i},'${field}',this.value)" class="border rounded-xl px-2 py-2 min-h-[44px] max-w-full text-sm">${options.map(([value, label]) => `<option value="${value}" ${r[field] === value ? 'selected' : ''}>${label}</option>`).join('')}</select>`;
+      const attendance = (r, i) => select(r, i, 'attendance', '出席', [['出席','出席'],['請假','請假']]);
+      const homework = (r, i) => select(r, i, 'homework', '作業', [['已完成','已完成'],['未完成','未完成']]);
+      const signed = (r, i) => select(r, i, 'signed', '聯絡簿', [['是','已核章'],['未簽','未簽']]);
+      const note = (r, i) => `<input ${disabled} data-rc-index="${i}" data-rc-field="note" aria-label="${esc(r.student_name)} 備註" type="text" value="${esc(r.note)}" oninput="updateRollCallField(${i},'note',this.value)" class="border rounded-xl px-2 py-2 min-h-[44px] text-sm w-full">`;
+      document.getElementById('rollcall-cards-mobile').innerHTML = activeRollCallList.map((r, i) => `<div class="bg-white border rounded-2xl p-4 space-y-3"><b>${esc(r.student_name)} (${esc(r.student_id)})</b><p class="text-sm text-slate-600">${esc(r.school)} ${esc(r.grade)}</p><div class="grid grid-cols-2 gap-3"><label class="grid gap-1 text-sm">出席${attendance(r,i)}</label><label class="grid gap-1 text-sm">作業${homework(r,i)}</label><label class="grid gap-1 text-sm">聯絡簿${signed(r,i)}</label></div><label class="grid gap-1 text-sm">備註（選填）${note(r,i)}</label></div>`).join('');
+      document.getElementById('rollcall-table-body').innerHTML = activeRollCallList.map((r, i) => `<tr><td class="py-3 px-3 font-mono font-bold">${esc(r.student_id)}</td><td class="py-3 px-3 font-bold">${esc(r.student_name)}</td><td class="py-3 px-3 text-xs">${esc(r.school)} ${esc(r.grade)}</td><td class="py-3 px-3">${attendance(r,i)}</td><td class="py-3 px-3">${homework(r,i)}</td><td class="py-3 px-3">${signed(r,i)}</td><td class="py-3 px-3">${note(r,i)}</td></tr>`).join('');
     }
-    function updateRollCallStats() { document.getElementById('rc-stat-total').textContent = `${activeRollCallList.length} 人`; document.getElementById('rc-stat-attend').textContent = `${activeRollCallList.filter(x=>x.attendance==='出席').length} 人`; }
+    function updateRollCallStats() {
+      document.getElementById('rc-stat-total').textContent = `${activeRollCallList.length} 人`;
+      document.getElementById('rc-stat-attend').textContent = `${activeRollCallList.filter(x=>x.attendance==='出席').length} 人`;
+      document.getElementById('rc-stat-hw').textContent = `${activeRollCallList.length ? Math.round(activeRollCallList.filter(x=>x.homework==='已完成').length / activeRollCallList.length * 100) : 0}%`;
+      document.getElementById('rc-stat-signed').textContent = `${activeRollCallList.filter(x=>x.signed==='是').length} 人`;
+    }
     async function saveRollCallSheet() {
       if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; }
+      if (rollCallSaving) return;
       const dt = document.getElementById('rollcall-date-picker').value;
       if (!dt || activeRollCallList.length === 0) { alert('沒有可儲存的點名資料。'); return; }
+      if (rollCallLoadedDate !== dt) { alert('請先載入所選日期的點名資料，再儲存。'); return; }
       const payload = activeRollCallList.map(r => ({ ...(r.record_id != null ? { id: r.record_id } : {}), created_at: `${dt}T16:00:00.000Z`, course_name: "課後輔導", student_id: r.student_id, student_name: r.student_name, attendance_status: r.attendance, homework_status: r.homework, contact_book_signed: r.signed, note: r.note }));
       try {
+        rollCallSaving = true; document.getElementById('rollcall-save').disabled = true;
+        document.getElementById('rollcall-date-picker').disabled = true; renderRollCallRows();
         const { error } = await db.from('roll_calls').upsert(payload, { onConflict: 'id' });
         if (error) throw error;
-        await loadRollCallsForDate();
-        alert("✅ 點名儲存成功！");
+        const loaded = await loadRollCallsForDate();
+        alert(loaded ? '✅ 點名儲存成功！' : '點名已儲存，但重新載入失敗。請重新載入確認。');
       } catch (error) { alert(`儲存點名失敗：${error?.message || '未知錯誤'}`); }
+      finally { rollCallSaving = false; document.getElementById('rollcall-save').disabled = false; document.getElementById('rollcall-date-picker').disabled = false; renderRollCallRows(); }
     }
-    function batchSetAll(f, v) { if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; } activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); }
+    function batchSetAll(f, v) { if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; } if (rollCallSaving || !['attendance','homework','signed'].includes(f)) return; activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); updateRollCallStats(); }
 
     // =============================================================
     // 5. 人員名冊管理 (精準對齊 SQL 16 個欄位)
@@ -2305,12 +2348,14 @@
         const monthStartIso = new Date(Date.UTC(y, m - 1, 1) - 8 * 60 * 60 * 1000).toISOString();
         const nextMonthStartIso = new Date(Date.UTC(y, m, 1) - 8 * 60 * 60 * 1000).toISOString();
         const rollCallNextMonthIso = new Date(Date.UTC(y, m, 1)).toISOString();
-        const { data: mLogs } = await db.from('check_in_logs').select('*')
+        const { data: mLogs, error: logsError } = await db.from('check_in_logs').select('*')
           .gte('check_time', monthStartIso)
           .lt('check_time', nextMonthStartIso);
-        const { data: monthlyRollCalls } = await db.from('roll_calls').select('*')
+        const { data: rollCallRows, error: rollCallsError } = await db.from('roll_calls').select('*')
           .gte('created_at', `${targetMonth}-01T00:00:00.000Z`)
           .lt('created_at', rollCallNextMonthIso);
+        if (logsError || rollCallsError) throw logsError || rollCallsError;
+        const monthlyRollCalls = latestRollCallRecords(rollCallRows || []);
 
         const map = {};
         (mLogs || []).forEach(l => {
@@ -2652,23 +2697,54 @@
     // =============================================================
     // 舊資料 CSV 智慧匯入精靈 (完美支援 SQL 16 欄位)
     // =============================================================
-    let parsedCsvHeaders = []; let parsedCsvRows = [];
+    let parsedCsvHeaders = [], parsedCsvRows = [], parsedCsvSource = '', csvImportPlan = null, csvImportBusy = false;
+    const csvImportLabels = {id:'學號',name:'姓名',gender:'性別',birth:'生日',school:'學校',grade:'年級',phone:'電話',id_card:'身分證字號',parent_name:'家長姓名',parent_relation:'家長關係',parent_phone:'家長電話',address:'地址',family_status:'家庭狀況',health_notes:'健康備註',status:'狀態',points:'點數'};
+    const csvImportFields = Object.keys(csvImportLabels);
+    function invalidateCsvPreview() {
+      csvImportPlan = null; document.getElementById('csv-confirm-button').classList.add('hidden');
+      document.getElementById('csv-import-review').textContent = '內容有變更時，請重新預覽後確認。';
+    }
+    function parseDelimitedText(text) {
+      const raw = String(text).replace(/^\uFEFF/, ''), first = raw.split(/\r?\n/, 1)[0];
+      let quoted = false, tabs = 0, commas = 0;
+      for (let i = 0; i < first.length; i++) {
+        if (first[i] === '"') { if (quoted && first[i+1] === '"') i++; else quoted = !quoted; }
+        else if (!quoted && first[i] === '\t') tabs++;
+        else if (!quoted && first[i] === ',') commas++;
+      }
+      const delimiter = tabs > commas ? '\t' : ',', rows = []; let row = [], cell = '', inQuote = false, closedQuote = false;
+      const pushCell = () => { row.push(cell.trim()); cell = ''; closedQuote = false; };
+      const pushRow = () => { pushCell(); if (row.some(value => value !== '')) rows.push(row); row = []; };
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (inQuote) {
+          if (ch === '"') { if (raw[i+1] === '"') { cell += '"'; i++; } else { inQuote = false; closedQuote = true; } }
+          else cell += ch;
+        } else if (ch === delimiter) pushCell();
+        else if (ch === '\n' || ch === '\r') { if (ch === '\r' && raw[i+1] === '\n') i++; pushRow(); }
+        else if (ch === '"' && !cell.trim() && !closedQuote) { cell = ''; inQuote = true; }
+        else if (closedQuote && !/\s/.test(ch)) throw new Error('引號後有無法解析的內容，請檢查 CSV 格式。');
+        else if (!closedQuote) cell += ch;
+      }
+      if (inQuote) throw new Error('CSV 引號未關閉，請檢查後再解析。');
+      if (cell || row.length || closedQuote) pushRow();
+      if (rows.length < 2) throw new Error('請提供標題列及至少一筆資料。');
+      if (rows.length > 1001) throw new Error('每次最多匯入 1,000 筆，請分批處理。');
+      const headers = rows.shift();
+      if (rows.some(values => values.length !== headers.length)) throw new Error('資料列欄位數與標題不一致，請先修正。');
+      return { headers, rows };
+    }
     function handleCsvFileUpload(e) {
       const f = e.target.files[0]; if (!f) return;
       const r = new FileReader(); r.onload = (evt) => { document.getElementById('csv-raw-textarea').value = evt.target.result; parseCsvContent(); };
       r.readAsText(f, 'UTF-8');
     }
     function parseCsvContent() {
-      const raw = document.getElementById('csv-raw-textarea').value.trim(); if (!raw) { alert("請先貼上內容！"); return; }
-      const lines = raw.split(/\r\n|\n/); const delim = lines[0].includes('\t') ? '\t' : ',';
-      parsedCsvHeaders = lines[0].split(delim).map(h => h.trim().replace(/^["']|["']$/g, ''));
-      parsedCsvRows = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim()) {
-          const rowRegex = /(?:,|\t)(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-          parsedCsvRows.push(lines[i].split(rowRegex).map(c => c.trim().replace(/^["']|["']$/g, '').replace(/^"+|"+$/g, '')));
-        }
-      }
+      if (csvImportBusy) return;
+      invalidateCsvPreview(); parsedCsvSource = '';
+      const raw = document.getElementById('csv-raw-textarea').value;
+      try { const parsed = parseDelimitedText(raw); parsedCsvHeaders = parsed.headers; parsedCsvRows = parsed.rows; parsedCsvSource = raw; }
+      catch (error) { document.getElementById('csv-mapping-section').classList.add('hidden'); alert(error.message); return; }
       document.getElementById('csv-mapping-section').classList.remove('hidden');
       document.getElementById('csv-preview-count').textContent = `共解析出 ${parsedCsvRows.length} 筆資料 (偵測到 ${parsedCsvHeaders.length} 個欄位)`;
       
@@ -2692,48 +2768,102 @@
       ];
 
       document.getElementById('mapping-dropdowns-grid').innerHTML = targetFields.map(tf => {
-        const matchIdx = parsedCsvHeaders.findIndex(h => h.toLowerCase().includes(tf.key.toLowerCase()));
+        const matchIdx = parsedCsvHeaders.findIndex(h => h.toLowerCase() === tf.key.toLowerCase());
         return `
           <div class="bg-white p-3 rounded-xl border space-y-1"><label class="block text-xs font-bold text-slate-700">${tf.label}</label>
-          <select data-target-key="${tf.key}" class="csv-mapping-select w-full px-3 py-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-slate-800">
-          <option value="">-- 略過此欄位 --</option>${parsedCsvHeaders.map((h, hIdx) => `<option value="${hIdx}" ${hIdx === matchIdx ? 'selected' : ''}>${h} (欄 ${hIdx+1})</option>`).join('')}</select></div>`;
+          <select data-target-key="${tf.key}" onchange="invalidateCsvPreview()" class="csv-mapping-select w-full px-3 py-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-slate-800">
+          <option value="">-- 略過此欄位 --</option>${parsedCsvHeaders.map((h, hIdx) => `<option value="${hIdx}" ${hIdx === matchIdx ? 'selected' : ''}>${escapeCounselingHtml(h)} (欄 ${hIdx+1})</option>`).join('')}</select></div>`;
       }).join('');
     }
 
+    function getCsvMapping() {
+      const mapping = {};
+      document.querySelectorAll('.csv-mapping-select').forEach(select => {
+        const field = select.getAttribute('data-target-key');
+        if (csvImportFields.includes(field) && select.value !== '') mapping[field] = Number(select.value);
+      });
+      if (mapping.id === undefined || mapping.name === undefined) throw new Error('必須對應「學號」與「姓名」。');
+      if (Object.values(mapping).some(index => !Number.isInteger(index) || index < 0 || index >= parsedCsvHeaders.length)) throw new Error('欄位對應有誤，請重新解析。');
+      return mapping;
+    }
+    function csvPlanFingerprint(mapping) { return JSON.stringify([parsedCsvSource, parsedCsvRows, mapping]); }
+    function buildCsvImportPlan(rows, mapping, people) {
+      const known = new Map(people.map(person => [person.id, person]));
+      const entries = [], ids = new Map();
+      rows.forEach(row => { const id = String(row[mapping.id] || '').trim().toUpperCase(); ids.set(id, (ids.get(id) || 0) + 1); });
+      rows.forEach((row, index) => {
+        const id = String(row[mapping.id] || '').trim().toUpperCase(), name = String(row[mapping.name] || '').trim();
+        const existing = known.get(id), payload = {}, entry = { row: index + 2, id, name, payload, kind: 'skip', fields: [], error: '' };
+        if (!id || !name) entry.error = '學號及姓名不可留白';
+        else if (!/^[A-Z0-9_-]{1,64}$/.test(id)) entry.error = '編號只能包含英數字、底線或連字號';
+        else if (ids.get(id) > 1) entry.error = '同一份檔案有重複編號，請先合併';
+        for (const field of csvImportFields) {
+          if (field === 'id' || mapping[field] === undefined) continue;
+          let value = String(row[mapping[field]] || '').trim();
+          if (!value || (field === 'points' && existing)) continue;
+          if (field === 'birth' && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 10) !== value)) entry.error = '生日須為有效的 YYYY-MM-DD 日期';
+          if (field === 'points') { if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) > 2147483647) entry.error = '點數須為有效的非負整數'; value = Number(value); }
+          if (field === 'status') {
+            const statuses = existing && ['同工','老師','工讀生'].includes(existing.role_type) ? ['在職','在班'] : ['在班','退班','畢業'];
+            if (!statuses.includes(value)) entry.error = '狀態不適用此人員；教職停權請使用授權管理';
+          }
+          if (!existing || String(existing[field] ?? '') !== String(value)) { payload[field] = value; entry.fields.push(field); }
+        }
+        if (!existing) { payload.id = id; payload.status ||= '在班'; payload.role_type = '學生'; entry.kind = 'insert'; }
+        else if (entry.fields.length) entry.kind = 'update';
+        if (entry.error) entry.kind = 'error';
+        entries.push(entry);
+      });
+      return entries;
+    }
+    function renderCsvImportPlan(entries, outcome = '') {
+      const esc = escapeCounselingHtml, labels = {insert:'新增',update:'修改',skip:'略過',error:'需修正'};
+      const count = kind => entries.filter(entry => entry.kind === kind).length;
+      document.getElementById('csv-import-review').innerHTML = `<p class="font-bold text-slate-900">新增 ${count('insert')} · 修改 ${count('update')} · 略過 ${count('skip')} · 需修正 ${count('error')}</p>${outcome ? `<p class="text-slate-900">${esc(outcome)}</p>` : ''}<div class="max-h-80 overflow-auto border rounded-xl"><table class="w-full text-sm text-left"><thead><tr><th class="p-2">資料列</th><th class="p-2">學員</th><th class="p-2">變更</th></tr></thead><tbody>${entries.map(entry => `<tr><td class="p-2">${entry.row}</td><td class="p-2">${esc(entry.name)}<br>${esc(entry.id)}</td><td class="p-2">${labels[entry.kind]}${entry.error ? `：${esc(entry.error)}` : entry.fields.length ? `：${entry.fields.map(field => esc(csvImportLabels[field])).join('、')}` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    async function previewCsvImport() {
+      if (csvImportBusy) return;
+      if (currentUser?.role_type !== '同工') { alert('只有管理同工可以匯入資料。'); return; }
+      invalidateCsvPreview();
+      try {
+        if (!parsedCsvSource || parsedCsvSource !== document.getElementById('csv-raw-textarea').value) throw new Error('內容已變更，請先重新解析欄位。');
+        const mapping = getCsvMapping(), fingerprint = csvPlanFingerprint(mapping);
+        csvImportBusy = true; document.getElementById('csv-preview-button').disabled = true;
+        const { data, error } = await db.from('users').select('*'); if (error) throw error;
+        if (fingerprint !== csvPlanFingerprint(getCsvMapping()) || parsedCsvSource !== document.getElementById('csv-raw-textarea').value) throw new Error('內容有變更，請重新預覽。');
+        const entries = buildCsvImportPlan(parsedCsvRows, mapping, data || []);
+        csvImportPlan = { entries, fingerprint }; renderCsvImportPlan(entries);
+        document.getElementById('csv-confirm-button').classList.toggle('hidden', entries.some(entry => entry.kind === 'error') || !entries.some(entry => ['insert','update'].includes(entry.kind)));
+        document.getElementById('csv-import-review').scrollIntoView?.({block:'start'});
+      } catch (error) { alert(`無法預覽：${error?.message || '請重新嘗試'}`); }
+      finally { csvImportBusy = false; document.getElementById('csv-preview-button').disabled = false; }
+    }
     async function executeCsvImport() {
-      const selects = document.querySelectorAll('.csv-mapping-select'); const mapping = {};
-      selects.forEach(s => { if (s.value !== "") mapping[s.getAttribute('data-target-key')] = parseInt(s.value, 10); });
-      if (mapping.id === undefined || mapping.name === undefined) { alert("⚠️ 必須對應「學號」與「姓名」！"); return; }
-      if (!confirm(`確定要將 ${parsedCsvRows.length} 筆資料匯入資料庫嗎？`)) return;
-
-      let successCount = 0;
-      for (const row of parsedCsvRows) {
-        const uid = mapping.id !== undefined ? row[mapping.id]?.trim().toUpperCase() : null;
-        if (!uid) continue;
-
-        const payload = {
-          id: uid,
-          name: mapping.name !== undefined ? row[mapping.name] : '未命名',
-          gender: mapping.gender !== undefined ? row[mapping.gender] : '',
-          birth: mapping.birth !== undefined && row[mapping.birth] ? row[mapping.birth] : null,
-          school: mapping.school !== undefined ? row[mapping.school] : '',
-          grade: mapping.grade !== undefined ? row[mapping.grade] : '',
-          phone: mapping.phone !== undefined ? row[mapping.phone] : '',
-          id_card: mapping.id_card !== undefined ? row[mapping.id_card] : '',
-          parent_name: mapping.parent_name !== undefined ? row[mapping.parent_name] : '',
-          parent_relation: mapping.parent_relation !== undefined ? row[mapping.parent_relation] : '',
-          parent_phone: mapping.parent_phone !== undefined ? row[mapping.parent_phone] : '',
-          address: mapping.address !== undefined ? row[mapping.address] : '',
-          family_status: mapping.family_status !== undefined ? row[mapping.family_status] : '',
-          health_notes: mapping.health_notes !== undefined ? row[mapping.health_notes] : '',
-          status: mapping.status !== undefined && row[mapping.status] ? row[mapping.status] : '在班',
-          points: mapping.points !== undefined && !isNaN(parseInt(row[mapping.points])) ? parseInt(row[mapping.points]) : 0
-        };
-
-        const { error } = await db.from('users').upsert([payload]);
-        if (!error) successCount++;
-      }
-      alert(`✅ 成功匯入 ${successCount} 筆學員完整資料！`); loadUsers(); switchTab('students');
+      if (csvImportBusy) return;
+      if (currentUser?.role_type !== '同工') { alert('只有管理同工可以匯入資料。'); return; }
+      let plan;
+      try {
+        plan = csvImportPlan;
+        if (!plan || parsedCsvSource !== document.getElementById('csv-raw-textarea').value || plan.fingerprint !== csvPlanFingerprint(getCsvMapping())) throw new Error('請重新預覽，再確認匯入。');
+        if (plan.entries.some(entry => entry.kind === 'error')) throw new Error('請先修正資料再重新預覽。');
+      } catch (error) { alert(error.message); return; }
+      const changes = plan.entries.filter(entry => ['insert','update'].includes(entry.kind));
+      if (!changes.length || !confirm(`確認匯入 ${changes.length} 筆變更？未對應與留白欄位會保留，既有人員點數不會覆寫。`)) return;
+      csvImportBusy = true; document.getElementById('csv-confirm-button').disabled = true; document.getElementById('csv-preview-button').disabled = true;
+      let success = 0; const failures = [];
+      try {
+        for (const entry of changes) {
+          try {
+            const result = entry.kind === 'insert' ? await db.from('users').insert([entry.payload]) : await db.from('users').update(entry.payload).eq('id', entry.id).select('id');
+            if (result.error) throw result.error;
+            if (entry.kind === 'update' && !result.data?.some(person => person.id === entry.id)) throw new Error('此人員已不存在，請重新預覽');
+            success++;
+          } catch (error) { failures.push({ ...entry, kind:'error', error: error?.message || '連線失敗，請重新預覽確認實際結果' }); }
+        }
+        const message = `完成 ${success} 筆；失敗 ${failures.length} 筆。${failures.length ? '請查看失敗清單，再重新預覽；已成功的資料會重新比對。' : '可前往名冊確認。'}`;
+        renderCsvImportPlan(failures.length ? failures : plan.entries, message); alert(message);
+        allUsers = []; csvImportPlan = null; document.getElementById('csv-confirm-button').classList.add('hidden');
+      } finally { csvImportBusy = false; document.getElementById('csv-confirm-button').disabled = false; document.getElementById('csv-preview-button').disabled = false; }
     }
 
     // =============================================================

@@ -100,3 +100,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .workhours-scroll { overflow: visible; }
   .workhours-report table { min-width: 0; width: 100%; }
 }
+/* Keep import confirmation above the fixed mobile navigation. */
+@media screen and (max-width:767px){
+  #csv-confirm-button{position:sticky;bottom:calc(92px + env(safe-area-inset-bottom));z-index:41;box-shadow:0 8px 24px rgba(22,67,61,.16)}
+}
