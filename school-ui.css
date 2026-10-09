@@ -1,0 +1,181 @@
+/* Screen adapter to Church OS tokens. Print tables keep their own document styles. */
+@media screen {
+  html{color-scheme:light;font-family:var(--app-font-body);scroll-padding-top:160px}
+  body.school-app{padding-bottom:0!important;font-family:var(--app-font-body)!important;color:var(--app-ink)!important;background:var(--app-surface-muted)!important;background-image:none!important;line-height:1.6}
+  .school-app *, .school-app *::before,.school-app *::after{box-sizing:border-box}
+  .school-app button,.school-app input,.school-app select,.school-app textarea{font-family:inherit;touch-action:manipulation}
+  .school-app button,.school-app a.os-home-link{min-height:44px;min-width:44px}
+  .school-app :is(input:not([type=checkbox]):not([type=radio]),select,textarea){min-height:46px;max-width:100%;font-size:16px!important;color:var(--app-ink)!important;background:var(--app-surface)!important;border:1px solid var(--app-border)!important;border-radius:var(--app-radius-field);line-height:1.4}
+  .school-app input[type=checkbox],.school-app input[type=radio]{accent-color:var(--app-accent);width:20px;height:20px;flex-shrink:0}
+  .school-app :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid var(--app-focus)!important;outline-offset:3px;box-shadow:none!important}
+  .school-app :is(button,input,select,textarea):disabled{cursor:not-allowed;opacity:1;color:var(--app-secondary)!important;background:#eee9e4!important;border-color:var(--app-border)!important}
+  .school-app [readonly]{background:var(--app-surface-muted)!important}
+  .school-app .glass-header{color:var(--app-ink)!important;background:rgba(255,255,255,.96)!important;border:0!important;border-bottom:1px solid var(--app-border)!important;border-radius:0!important;box-shadow:var(--app-shadow)!important;backdrop-filter:blur(20px)}
+  .school-app .glass-header>div{max-width:1240px}
+  .school-app .glass-header>div>div:first-child{height:80px!important;min-height:80px;gap:10px}
+  .school-app .glass-header .bg-gradient-to-tr{width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,var(--app-accent-end),var(--app-accent))!important;color:#fff!important;box-shadow:0 4px 10px #a8392920!important}
+  .school-app .glass-header :is(.text-white,.text-amber-300){color:var(--app-ink)!important}
+  .school-app .glass-header .bg-amber-400\/20{background:var(--app-surface-muted)!important;border-color:var(--app-border)!important;font-size:11px}
+  .school-app .glass-header #clock-display{color:var(--app-secondary)!important;font-family:var(--app-font-body);font-size:11px}
+  .school-app #auth-logged>div{background:var(--app-surface-muted);border:0;padding:8px;color:var(--app-ink)}
+  .school-app #auth-logged button{background:var(--app-surface-muted)!important;color:var(--app-accent)!important;border:1px solid var(--app-border);padding:8px 12px}
+  .school-app .os-home-link{color:var(--app-accent)!important;border:1px solid var(--app-border)!important;background:var(--app-surface-muted)!important;font-size:13px;padding:8px 12px}
+  .school-app #school-desktop-nav{border-color:var(--app-border)!important;gap:6px;padding-block:8px;min-height:60px}
+  .school-app #school-desktop-nav button{color:var(--app-secondary)!important;font-size:13px;border:0!important;background:transparent!important;gap:6px;flex-shrink:0;padding:10px 12px}
+  .school-app #school-desktop-nav button[aria-current=page]{color:var(--app-accent)!important;background:#fff0e9!important;border-radius:12px}
+  .school-app main{width:min(1180px,calc(100% - 48px))!important;padding:28px 0 48px!important}
+  .school-app :is(h1,h2,h3,h4){font-family:var(--app-font-heading);letter-spacing:-.025em;line-height:1.35}
+  .school-app .clean-card{background:var(--app-surface)!important;border:1px solid var(--app-border)!important;border-radius:var(--app-radius-card)!important;box-shadow:var(--app-shadow)!important}
+  .school-app .clean-card:hover{border-color:var(--app-border)!important;box-shadow:var(--app-shadow)!important;transform:none!important}
+  .school-app :is(.text-slate-800,.text-slate-900,.text-slate-950,.text-slate-700){color:var(--app-ink)!important}
+  .school-app :is(.text-slate-400,.text-slate-500,.text-slate-600){color:var(--app-secondary)!important}
+  .school-app :is(.text-indigo-400,.text-indigo-500,.text-indigo-600,.text-indigo-700,.text-amber-500,.text-amber-600,.text-amber-700){color:var(--app-accent)!important}
+  .school-app :is(.text-blue-400,.text-blue-500,.text-blue-600,.text-blue-700){color:var(--app-link)!important}
+  .school-app :is(.text-emerald-400,.text-emerald-500,.text-emerald-600,.text-emerald-700,.text-teal-400,.text-teal-600){color:var(--app-success)!important}
+  .school-app :is(.text-rose-400,.text-rose-500,.text-rose-600,.text-rose-700){color:var(--app-error)!important}
+  .school-app :is(.text-purple-600,.text-violet-600){color:#6541a3!important}
+  .school-app :is(.text-xs,.text-\[9px\],.text-\[10px\],.text-\[11px\]){font-size:12px!important;line-height:1.55}
+  .school-app :is(button.bg-indigo-600,button.bg-emerald-600,button.bg-rose-600,button.bg-blue-600,button.bg-slate-900,button.bg-violet-600,button.bg-gradient-to-r){background:var(--app-accent)!important;background-image:none!important;color:var(--app-on-accent)!important;box-shadow:none!important}
+  .school-app :is(button.bg-indigo-600,button.bg-emerald-600,button.bg-rose-600,button.bg-slate-900):hover{background:#8d2f23!important}
+  .school-app button.bg-rose-500{background:var(--app-error-surface)!important;color:var(--app-error)!important;border:1px solid #e2bcb5}
+  .school-app :is(.bg-slate-50,.bg-slate-100){background:var(--app-surface-muted)!important}
+  .school-app :is(.border-slate-100,.border-slate-200){border-color:var(--app-border)!important}
+  .school-app table{font-size:14px;line-height:1.6}
+  .school-app th{font-weight:650;color:var(--app-secondary)!important;background:var(--app-surface-muted)!important}
+  .school-app td{vertical-align:middle}
+  .school-app .overflow-x-auto{overscroll-behavior-x:contain;max-width:100%}
+  .school-app [id^=modal-]{background:rgba(48,40,35,.5)!important;overscroll-behavior:contain}
+  .school-app [id^=modal-]>div{border:1px solid var(--app-border);border-radius:var(--app-radius-sheet)!important;box-shadow:0 24px 80px #30282330!important;max-height:calc(100dvh - 40px)!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .school-app [id^=modal-] form>.flex:last-child{position:sticky;bottom:-20px;background:rgba(255,255,255,.97);padding-block:12px;margin-bottom:-10px;z-index:2;backdrop-filter:blur(16px)}
+  .school-form-note{font-size:13px;color:var(--app-secondary);margin-block:0 16px}
+  .school-form-status{padding:12px 14px;background:var(--app-link-surface);border-radius:12px;color:var(--app-link);white-space:pre-wrap}
+  .school-form-status[data-tone=error]{color:var(--app-error);background:var(--app-error-surface)}
+  .school-page-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+  .school-page-bar p{font-size:12px;font-weight:600;color:var(--app-secondary);margin-bottom:4px}
+  .school-page-bar h1{font-size:28px;font-weight:750;margin:0}
+  .school-page-bar button{background:#fff;border:1px solid var(--app-border);border-radius:14px;padding:10px 14px;font-size:14px;color:var(--app-accent);font-weight:600}
+  .school-launcher{margin-bottom:32px}
+  .school-launcher h2{font-size:20px;font-weight:700;margin:16px 0}
+  .school-welcome{color:var(--app-secondary);font-size:14px}
+  .school-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .school-feature{display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:start;gap:8px;color:var(--app-ink);font-weight:650;background:transparent!important;padding:10px 4px;border:0;text-decoration:none;border-radius:18px;min-width:0;line-height:1.35}
+  .school-feature>span:not(.school-icon-tile){font-size:14px;overflow-wrap:anywhere}
+  .school-feature small{font-size:12px;font-weight:400;color:var(--app-secondary);max-width:180px}
+  .school-feature:hover{background:#eee9e480!important}
+  .school-icon-tile{display:grid;place-items:center;width:64px;height:64px;border-radius:16px;background:var(--app-icon-default);color:#fff;box-shadow:inset 0 1px 1px #ffffff70,0 3px 7px #30282310;border:1px solid #30282308;flex-shrink:0}
+  .school-icon-tile svg{width:36px;height:36px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .school-icon-tile[data-symbol=student]{color:#6c51c4}
+  .school-icon-tile[data-symbol=printer]{color:#526273}
+  .school-symbol{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:1.15em;height:1.15em;vertical-align:-.15em}
+  .school-symbol svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .school-nav-item{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--app-secondary)}
+  .school-app #mobile-bottom-dock{padding:8px 6px!important;bottom:calc(10px + env(safe-area-inset-bottom));inset-inline:12px;gap:0!important;border:1px solid var(--app-border)!important;border-radius:24px!important;background:rgba(255,255,255,.97)!important;box-shadow:0 8px 32px #30282318!important;backdrop-filter:blur(20px);height:auto}
+  .school-app #mobile-bottom-dock button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:5px 2px;min-height:52px;color:var(--app-secondary)!important;font-size:11px;line-height:1.3;min-width:0}
+  .school-app #mobile-bottom-dock .school-symbol{font-size:22px}
+  .school-app #mobile-bottom-dock :is([aria-current=page],[data-current]){color:var(--app-accent)!important}
+  .school-app .school-sheet{position:fixed;inset:0;padding:0;width:min(680px,calc(100% - 40px));max-height:calc(100dvh - 48px);margin:auto;border:1px solid var(--app-border);border-radius:var(--app-radius-sheet);background:var(--app-surface);color:var(--app-ink);box-shadow:0 28px 90px #30282330;overflow:hidden}
+  .school-sheet::backdrop{background:rgba(48,40,35,.5);backdrop-filter:blur(6px)}
+  .school-sheet-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px 14px;border-bottom:1px solid var(--app-border);background:#fff}
+  .school-sheet-heading h2{font-size:22px;font-weight:700;margin:0}
+  .school-close{width:44px;height:44px;min-height:44px;border-radius:50%;font-size:25px;color:var(--app-secondary);background:var(--app-surface-muted)}
+  .school-sheet-body{padding:20px 24px;overflow-y:auto;max-height:calc(100dvh - 150px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .school-sheet label{display:block;color:var(--app-secondary);font-size:14px;margin-bottom:8px;font-weight:600}
+  .school-sheet :is(input,textarea){width:100%;padding:12px}
+  #school-feature-groups section{padding-block:20px;border-bottom:1px solid var(--app-border)}
+  #school-feature-groups h3{font-size:16px;font-weight:700;margin:0 0 12px}
+  .school-empty{padding:32px 0;color:var(--app-secondary);text-align:center}
+  .school-actions{display:flex;gap:12px;justify-content:flex-end;padding-top:20px}
+  .school-actions button{min-height:46px;padding:10px 20px;border-radius:14px;font-weight:600;border:1px solid var(--app-border)}
+  .school-primary{background:var(--app-accent);color:#fff}
+  .school-secondary{background:var(--app-surface-muted);color:var(--app-ink)}
+  .school-question-copy,.school-record-row{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}
+  .school-record-row{padding:16px 0;border-bottom:1px solid var(--app-border)}
+  #school-feedback{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(12px);width:max-content;max-width:min(90vw,600px);max-height:35dvh;overflow-y:auto;z-index:200;padding:14px 18px;border:1px solid var(--app-border);border-radius:16px;color:var(--app-ink);background:#fff;box-shadow:0 8px 32px #30282325;white-space:pre-wrap;opacity:0;visibility:hidden;transition:opacity 180ms,transform 180ms;pointer-events:none;font-size:14px}
+  #school-feedback.is-visible{opacity:1;visibility:visible;transform:translateX(-50%)}
+  #school-feedback[data-tone=error]{background:var(--app-error-surface);color:var(--app-error);border-color:#e2bcb5}
+  .school-modal-open{position:fixed!important;overflow:hidden!important;width:100%;overscroll-behavior:none}
+  .school-skip{position:fixed;left:16px;top:-100px;z-index:300;background:#fff;color:var(--app-accent);padding:12px;border-radius:12px}
+  .school-skip:focus{top:12px}
+  .school-spin{animation:school-spin 1.5s linear infinite}
+  @keyframes school-spin{to{transform:rotate(360deg)}}
+  .school-app [hidden]{display:none!important}
+  .school-app #csv-confirm-button{bottom:calc(92px + env(safe-area-inset-bottom))}
+  @media(min-width:768px){.school-launcher .school-feature-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.school-app #school-desktop-nav{display:flex!important}}
+  @media(max-width:767px){
+    html{scroll-padding-top:100px}
+    .school-app .glass-header>div{padding-inline:16px!important}
+    .school-app main{width:100%!important;padding:22px 16px calc(112px + env(safe-area-inset-bottom))!important}
+    .school-app .glass-header>div>div:first-child{height:80px!important}
+    .school-app #school-desktop-nav{display:none!important}
+    .school-app .os-home-link{padding:8px}.school-app .os-home-link>span:not(.school-symbol){display:none}
+    .school-app #logged-user-tag{max-width:64px;font-size:12px}
+    .school-app #auth-logged>div{padding:4px;background:transparent}
+    .school-app #auth-logged button{padding:8px;font-size:12px}
+    .school-page-bar h1{font-size:24px}.school-page-bar button{font-size:13px;padding:10px}
+    .school-app [id^=modal-]{padding:12px!important}
+    .school-app [id^=modal-]>div{padding:20px 16px!important;max-height:calc(100dvh - 24px)!important}
+    .school-app [id^=modal-] form>.flex:last-child{bottom:-20px;margin-inline:-16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+    .school-app .school-sheet{width:calc(100% - 24px);max-height:calc(100dvh - 24px);border-radius:24px}
+    .school-sheet-heading{padding:16px}.school-sheet-body{padding:16px;max-height:calc(100dvh - 120px)}
+    .school-feature-grid{gap:10px}.school-icon-tile{width:64px;height:64px}
+    .school-feature small{display:none}
+    #tab-checkin>.clean-card.max-w-xl>.flex{flex-wrap:wrap}
+    #tab-students .flex.flex-wrap>input{min-width:130px}
+  }
+  @media(max-width:359px){.school-app main{padding-inline:12px!important}.school-app .glass-header>div{padding-inline:10px!important}.school-app .glass-header .bg-gradient-to-tr{width:30px;height:30px}.school-app #auth-logged>div{display:none}.school-feature>span:not(.school-icon-tile){font-size:13px}.school-page-bar{gap:8px}.school-page-bar h1{font-size:22px}}
+  @media(prefers-reduced-motion:reduce){.school-app *, .school-app *::before,.school-app *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+}
+@media print{.school-launcher,.school-page-bar,.school-sheet,#school-feedback,.school-skip{display:none!important}}
+
+@media screen {
+.school-icon-tile[data-symbol=people]{background:var(--app-icon-people)}
+.school-icon-tile[data-symbol=student]{background:var(--app-icon-student)}
+.school-icon-tile[data-symbol=check]{background:var(--app-icon-check)}
+.school-icon-tile[data-symbol=calendar]{background:var(--app-icon-calendar)}
+.school-icon-tile[data-symbol=heart]{background:var(--app-icon-heart)}
+.school-icon-tile[data-symbol=chat]{background:var(--app-icon-chat)}
+.school-icon-tile[data-symbol=chart]{background:var(--app-icon-chart)}
+.school-icon-tile[data-symbol=clipboard]{background:var(--app-icon-clipboard)}
+.school-icon-tile[data-symbol=camera]{background:var(--app-icon-camera)}
+.school-icon-tile[data-symbol=book]{background:var(--app-icon-book)}
+.school-icon-tile[data-symbol=printer]{background:var(--app-icon-printer)}
+.school-icon-tile[data-symbol=gear]{background:var(--app-icon-gear)}
+.school-icon-tile[data-symbol=link]{background:var(--app-icon-link)}
+.school-icon-tile[data-symbol=clock]{background:var(--app-icon-clock)}
+.school-icon-tile[data-symbol=sprout]{background:var(--app-icon-sprout)}
+.school-icon-tile[data-symbol=bell]{background:var(--app-icon-bell)}
+.school-icon-tile[data-symbol=box]{background:var(--app-icon-box)}
+.school-icon-tile[data-symbol=bolt]{background:var(--app-icon-bolt)}
+.school-icon-tile[data-symbol=alert]{background:var(--app-icon-alert)}
+.school-icon-tile[data-symbol=sliders]{background:var(--app-icon-sliders)}
+.school-icon-tile[data-symbol=target]{background:var(--app-icon-target)}
+.school-icon-tile[data-symbol=trophy]{background:var(--app-icon-trophy)}
+}
+
+@media screen {
+.school-app .os-home-link .school-symbol{display:inline-flex!important}
+.school-app .school-skip{clip-path:inset(50%);width:1px;height:1px;overflow:hidden;white-space:nowrap;top:0;left:0}
+.school-app .school-skip:focus{clip-path:none;width:auto;height:auto;top:12px;left:12px}
+.school-app :is(button.bg-indigo-600,button.bg-emerald-600,button.bg-rose-600,button.bg-slate-900,button.bg-violet-600,button.bg-gradient-to-r){--school-symbol-cutout:var(--app-accent)}
+.school-app a.bg-rose-600{background:var(--app-accent)!important;color:var(--app-on-accent)!important}
+.school-app #kiosk-device-dialog{color:var(--app-ink)!important;background:var(--app-surface)!important;border-color:var(--app-border)!important;overflow-y:auto}
+.school-app #kiosk-device-dialog::backdrop{background:rgba(48,40,35,.5);backdrop-filter:blur(6px)}
+.school-app #kiosk-device-dialog button.bg-teal-800{background:var(--app-accent)!important;color:#fff!important}
+.school-app label:has(input[type=checkbox]),.school-app label:has(input[type=radio]){min-height:44px;align-items:center}
+}
+
+@media screen {
+.school-calendar-scroll>div{min-width:560px}
+.school-calendar-scroll .cal-day-cell{min-height:114px;padding:5px!important;cursor:default}
+.school-app .school-calendar-date{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;min-height:44px;padding:8px;border-radius:10px;color:var(--app-ink);font-size:14px;font-weight:650;background:var(--app-surface-muted)}
+.school-app .school-calendar-date:hover{background:#fff0e9}
+.school-calendar-shifts{display:grid;gap:5px;margin-top:5px}
+.school-app .school-calendar-shift{display:block;width:100%;padding:8px 4px;border-radius:10px;background:var(--app-link-surface);color:var(--app-link);font-size:12px;white-space:normal;line-height:1.45;overflow-wrap:anywhere;text-align:left}
+.school-app #schedule-calendar-view>.flex>div{gap:4px;flex-wrap:wrap}
+@media(max-width:359px){#schedule-calendar-view>.flex{padding-inline:8px;gap:4px}#calendar-month-title{font-size:12px!important}}
+}
+@media screen {
+.school-app .bg-amber-500.text-white{background:var(--app-warning-surface)!important;color:var(--app-warning)!important;border:1px solid #e1c79f}
+.school-app .bg-emerald-500.text-white{background:var(--app-success)!important;color:#fff!important}
+.school-app ::placeholder{color:var(--app-secondary)!important;opacity:1}
+}
