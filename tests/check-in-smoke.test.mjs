@@ -133,13 +133,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
         writes.push({ table: 'check_in_logs', method: 'insert', payload: [{ target_id: target.id, action_text: actionText }] });
         return response(200, { ok: true, kind: 'staff', title: `💼 ${target.name} ${actionText}成功！`, subtitle: '出勤已登記' });
       }
-      if (url.endsWith('/manual-login')) {
-        const request = JSON.parse(String(options.body || '{}'));
-        const target = users.find((entry) => entry.id === request.identity || entry.name === request.identity);
-        const normalized = (value) => String(value || '').replace(/\D/g, '');
-        if (!target || normalized(target.phone) !== normalized(request.password)) return response(401, { error: '帳號或手機號碼不正確' });
-        return response(200, { user: target, session: 'synthetic-session-token' });
-      }
+      if (url.endsWith('/logout')) { if (failures.logout) return Promise.reject(new Error('Synthetic network failure')); return response(200, { ok: true }); }
       return Promise.reject(new Error('Blocked outbound request in offline test harness'));
     },
     XMLHttpRequest: class {
@@ -688,33 +682,27 @@ test('staff rescan after cooldown writes checkout attendance', async () => {
   assert.equal(writes[0].payload[0].action_text, '下班簽退');
 });
 
-test('login verifies the phone number and stores only an opaque session token', async () => {
-  const user = {
-    id: 'M-QA-001',
-    name: 'Synthetic Staff',
-    role_type: '同工',
-    phone: '00000000',
-    health_notes: 'synthetic note',
-  };
-  const { context, storage, elements } = createHarness({ user });
-  const switchedTabs = [];
-  context.testSwitchedTabs = switchedTabs;
-  vm.runInContext('switchTab = (tab) => testSwitchedTabs.push(tab)', context);
-  context.document.getElementById('login-uid').value = 'M-QA-001';
-  context.document.getElementById('login-pwd').value = 'definitely-not-the-phone-number';
-
+test('login directs users to Church OS without collecting a phone password', async () => {
+  const {context, storage, elements, blockedRequests} = createHarness();
   await vm.runInContext('handleLoginSubmit({ preventDefault() {} })', context);
   assert.equal(storage.has('mplus_mschool_session'), false);
-  assert.equal(switchedTabs.length, 0);
-
-  context.document.getElementById('login-pwd').value = '00000000';
-  await vm.runInContext('handleLoginSubmit({ preventDefault() {} })', context);
-
-  assert.equal(storage.get('mplus_mschool_session'), 'synthetic-session-token');
-  assert.equal(storage.has('mplus_current_user'), false);
-  assert.deepEqual(switchedTabs, ['schedules']);
-  assert.equal(elements.get('nav-print').classList.contains('hidden'), false);
-  assert.equal(elements.get('nav-import').classList.contains('hidden'), false);
+  assert.equal(elements.get('modal-login').classList.contains('hidden'), false);
+  assert.equal(blockedRequests.length, 0);
+});
+test('logout clears the local session and revokes the server token', async () => {
+  const {context,storage,blockedRequests}=createHarness();
+  vm.runInContext("mschoolSessionToken='a'.repeat(64); currentUser={id:'M-QA',role_type:'同工'}; switchTab=()=>{}",context);
+  await vm.runInContext('doLogout()',context);
+  assert.equal(storage.has('mplus_mschool_session'),false);
+  assert.equal(storage.has('mplus_pending_logout'),false);
+  assert.ok(blockedRequests.some(url=>url.endsWith('/logout')));
+});
+test('manager UI uses the verified role instead of ID text', () => {
+  const {context,elements}=createHarness();
+  vm.runInContext("currentUser={id:'T-QA',name:'Synthetic Admin',role_type:'同工'}; updateAuthUI()",context);
+  assert.equal(elements.get('nav-import').classList.contains('hidden'),false);
+  vm.runInContext("currentUser={id:'M-QA',name:'Synthetic Reader',role_type:'工讀生'}; updateAuthUI()",context);
+  assert.equal(elements.get('nav-import').classList.contains('hidden'),true);
 });
 
 test('P staff can open counseling and message tabs for read-only use', () => {
@@ -772,4 +760,14 @@ test('offline harness blocks fetch and XMLHttpRequest before any request can lea
   );
   assert.throws(() => vm.runInContext('new XMLHttpRequest()', context), /Blocked XMLHttpRequest in offline test harness/);
   assert.deepEqual(blockedRequests, ['https://othgvewffvkkafbezejy.supabase.co/rest/v1/users']);
+});
+
+test('interrupted logout cannot restore a pending token when offline', async () => {
+ const {context,storage}=createHarness({failures:{logout:true}});
+ storage.set('mplus_pending_logout','a'.repeat(64));storage.set('mplus_mschool_session','a'.repeat(64));
+ vm.runInContext("mschoolSessionToken='a'.repeat(64)",context);
+ await assert.rejects(vm.runInContext('flushSchoolLogout()',context),/Synthetic network failure/);
+ assert.equal(storage.has('mplus_mschool_session'),false);
+ assert.equal(vm.runInContext('mschoolSessionToken',context),null);
+ assert.equal(storage.get('mplus_pending_logout'),'a'.repeat(64));
 });
