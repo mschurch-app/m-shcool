@@ -34,6 +34,14 @@ test('health fails closed on redirect, unavailable API and drift',async()=>{
 });
 test('release manifest covers all school assets and remains synchronized with source',async()=>{
  const manifest=JSON.parse(await readFile(new URL('../operations/release-manifest.json',import.meta.url)));
- assert.equal(manifest.assets.length,11);
+ const required=new Set(['index.html','index2.html','enrollment.html']);
+ for(const entry of [...required]){
+  const html=await readFile(new URL('../'+entry,import.meta.url),'utf8');
+  for(const tag of html.matchAll(/<(?:link|script)\b[^>]*>/g)){
+   const path=tag[0].match(/(?:href|src)="([^"]+)"/)?.[1].split('?')[0];
+   if(path&&!path.includes(':')&&!path.startsWith('//'))required.add(path);
+  }
+ }
+ assert.deepEqual(new Set(manifest.assets.map(a=>a.path)),required);
  for(const asset of manifest.assets){assert.equal(sha256(await readFile(new URL('../'+asset.path,import.meta.url))),asset.sha256,asset.path);}
 });

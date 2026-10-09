@@ -45,6 +45,10 @@
     {
       "path": "church-os-theme.css",
       "sha256": "6223940a08f6f8d50b2b9b1d791616e6f416ec6d4efc875cfaa1575e597aa571"
+    },
+    {
+      "path": "church-palette.css",
+      "sha256": "fb8ca4fea8de49b6fa3583647bb12b6102eb6bf20a3742359b8a6ad6506414fd"
     }
   ]
 }

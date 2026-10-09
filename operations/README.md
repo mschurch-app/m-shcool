@@ -4,11 +4,11 @@ Production: `https://school.mchurch.online/`. Shared project: `aqanuwilmvdtlzuql
 
 ## Read-only health checks
 
-`node operations/health.mjs` verifies eleven deployed asset hashes and three management endpoints refusing anonymous requests with HTTP 401. It performs only GET requests, needs no privileged key, and emits no response bodies or personal records. All failures return a failing exit code. The scheduled GitHub workflow runs hourly at minute 17 UTC, with a manual Actions entry. GitHub may delay scheduled runs; this is not a real-time uptime SLA.
+`node operations/health.mjs` verifies twelve deployed asset hashes and three management endpoints refusing anonymous requests with HTTP 401. It performs only GET requests, needs no privileged key, and emits no response bodies or personal records. All failures return a failing exit code. The scheduled GitHub workflow runs hourly at minute 17 UTC, with a manual Actions entry. GitHub may delay scheduled runs; this is not a real-time uptime SLA.
 
 Check the **School production health** Actions run on failure. The workflow has no LINE/email integration; GitHub notification delivery depends on repository subscriptions and account settings. Check the existing Church OS system monitor for daily school report and cron delivery status. That dashboard is authorized separately from school staff access.
 
-When releasing frontend changes, regenerate `operations/release-manifest.json` from the exact reviewed eleven source files, record the release baseline, and release it together with the matching files. `tests/operations.test.mjs` rejects stale hashes. Do not accept drift by regenerating hashes from whatever the public server happens to return. API v18 is the recorded baseline, not a version verified by the HTTP probes.
+When releasing frontend changes, regenerate `operations/release-manifest.json` from the exact reviewed twelve source files, record the release baseline, and release it together with the matching files. `tests/operations.test.mjs` rejects stale hashes. Do not accept drift by regenerating hashes from whatever the public server happens to return. API v18 is the recorded baseline, not a version verified by the HTTP probes.
 
 The probes cannot verify an authenticated login, a saved operation, database consistency, real recognition accuracy, Safari, paper printing, third-party face-model availability or daily report delivery. Do not use a green workflow to claim these passed. Audit bounded backend error aggregates when investigating a specific incident; do not publish raw logs or credentials.
 
