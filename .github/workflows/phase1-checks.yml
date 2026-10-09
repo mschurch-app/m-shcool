@@ -1,4 +1,4 @@
-name: Phase 1 safety checks
+name: School safety checks
 
 on:
   push:
@@ -29,3 +29,5 @@ jobs:
         run: npm ci --prefix tests --ignore-scripts
       - name: Run offline tests
         run: node --test
+      - name: Verify second HTML entry workflows
+        run: MSCHOOL_FRONTEND_FILE=index2.html node --test tests/check-in-smoke.test.mjs tests/ui-wiring.test.mjs

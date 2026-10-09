@@ -39,3 +39,10 @@ Before any schema change:
 
 ## Definition of done
 A change is not done merely because code works locally. Existing daily workflows must continue to work and rollback must be possible.
+
+## Shared interface contract
+- Before changing a school page, read `docs/design/school-interface.md`.
+- Reuse `app-design-tokens.css`, `school-icons.js`, `school-ui.css`, and `school-ui.js`; register new entrances in `SchoolUI.catalog` for both mobile and desktop.
+- Keep the 80px school brand header, semantic contrast, system typography, accessible dialogs, dirty-form guards, and read-only controls consistent across entries.
+- A successful HTTP response is not a saved business operation. Clear dirty state only in the successful write handler.
+- Preserve print styles and verify both HTML administration entries. Physical iPhone/Safari/camera checks must not be claimed from Chrome viewport simulation.

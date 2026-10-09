@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>M+ 大雅教會 課輔行政系統</title>
   
   <!-- Tailwind CSS CDN -->
@@ -18,13 +18,7 @@
     }
   </script>
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome 6 Pro CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- System typography and local SVG icons are shared with Church OS. -->
   
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -188,8 +182,14 @@
     }
   </style>
   <link rel="stylesheet" href="church-os-theme.css?v=20261009-dailyflows1">
+  <link rel="stylesheet" href="app-design-tokens.css?v=20261009-stage3">
+  <link rel="stylesheet" href="school-ui.css?v=20261009-stage3">
+  <meta name="theme-color" content="#faf8f6">
+  <link rel="icon" href="school-mark.svg" type="image/svg+xml">
+  <script defer src="school-icons.js?v=20261009-stage3"></script>
+  <script defer src="school-ui.js?v=20261009-stage3"></script>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="school-app min-h-screen flex flex-col antialiased">
 
   <!-- 頂部導航列 -->
   <header class="glass-header text-white sticky top-0 z-40">
@@ -218,7 +218,7 @@
         </div>
       </div>
 
-      <nav class="hidden md:flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
+      <nav id="school-desktop-nav" aria-label="課輔功能" class="hidden md:flex space-x-1 overflow-x-auto pb-1.5 text-xs font-bold border-t border-white/10 pt-1.5 custom-scroll">
         <button onclick="switchTab('checkin')" id="nav-checkin" class="tab-btn-active px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-qrcode text-xs"></i><span>打卡中心</span></button>
         <button onclick="requireTab('schedules')" id="nav-schedules" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-calendar-check text-xs"></i><span>排班行事曆</span></button>
         <button onclick="requireTab('rollcall')" id="nav-rollcall" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-clipboard-check text-xs"></i><span>課堂點名</span></button>
@@ -226,16 +226,19 @@
         <button onclick="requireTab('counseling')" id="nav-counseling" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-hand-holding-heart text-xs"></i><span>個別輔導</span></button>
         <button onclick="requireTab('messages')" id="nav-messages" class="px-3 py-1.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition flex items-center space-x-1.5 whitespace-nowrap"><i class="fa-solid fa-comments text-xs"></i><span>家長留言</span></button>
         <button onclick="requireStaffPrintTab()" id="nav-print" class="hidden px-3 py-1.5 rounded-lg bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-amber-400/30"><i class="fa-solid fa-file-export text-xs"></i><span>報表輸出</span></button>
-        <button onclick="requireImportTab()" id="nav-import" class="hidden px-3 py-1.5 rounded-lg bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-emerald-400/30"><i class="fa-solid fa-file-csv text-xs"></i><span>舊資料匯入精靈</span></button>
+        <button onclick="requireImportTab()" id="nav-import" class="hidden px-3 py-1.5 rounded-lg bg-emerald-400/20 text-emerald-300 hover:bg-emerald-400/30 transition flex items-center space-x-1.5 whitespace-nowrap border border-emerald-400/30"><i class="fa-solid fa-file-csv text-xs"></i><span>資料匯入</span></button>
       </nav>
     </div>
   </header>
 
+  <a href="#school-main" class="school-skip">跳到主要內容</a>
   <!-- 主內容容器 -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 py-4">
+  <main id="school-main" class="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 py-4">
 
+    <div id="school-page-bar" class="school-page-bar" hidden><div><p id="school-page-group">學生與到班</p><h1 id="school-page-title">到班打卡</h1></div><button type="button" data-school-open-tools>功能收納盒</button></div>
     <!-- 1. 打卡中心 -->
     <div id="tab-checkin" class="space-y-4">
+      <section id="school-feature-launcher" class="school-launcher" aria-label="課輔常用功能" hidden></section>
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <div class="clean-card rounded-2xl p-3 sm:p-4 flex items-center justify-between">
           <div><p class="text-[11px] font-bold text-slate-400">今日到班學員</p><div class="flex items-baseline gap-1 mt-0.5"><span class="text-xl sm:text-2xl font-black text-slate-800" id="stat-stu-count">0</span><span class="text-xs text-slate-400">人</span></div></div>
@@ -257,9 +260,9 @@
 
       <div class="clean-card rounded-3xl p-5 sm:p-7 max-w-xl mx-auto text-center">
         <div class="flex justify-center gap-2.5 mb-4">
-          <button type="button" onclick="toggleFaceRecognition()" id="btn-toggle-face" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold rounded-xl shadow-sm text-xs sm:text-sm flex items-center space-x-1.5 transition active:scale-95"><i class="fa-solid fa-face-smile text-base"></i><span id="btn-face-text">👤 開啟人臉相機</span></button>
+          <button type="button" onclick="toggleFaceRecognition()" id="btn-toggle-face" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold rounded-xl shadow-sm text-xs sm:text-sm flex items-center space-x-1.5 transition active:scale-95"><i class="fa-solid fa-face-smile text-base"></i><span id="btn-face-text">開啟人臉相機</span></button>
           <button type="button" id="kiosk-manage-button" onclick="openKioskDevices()" class="hidden min-h-[44px] px-4 rounded-xl border text-slate-900">簽到設備</button>
-          <button type="button" onclick="toggleCameraScanner()" id="btn-toggle-cam" class="px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 text-white font-bold rounded-xl shadow-sm text-xs sm:text-sm flex items-center space-x-1.5 transition active:scale-95"><i class="fa-solid fa-qrcode text-base"></i><span id="btn-cam-text">📷 QR 掃描</span></button>
+          <button type="button" onclick="toggleCameraScanner()" id="btn-toggle-cam" class="px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 text-white font-bold rounded-xl shadow-sm text-xs sm:text-sm flex items-center space-x-1.5 transition active:scale-95"><i class="fa-solid fa-qrcode text-base"></i><span id="btn-cam-text">QR 掃描</span></button>
         </div>
 
         <div id="face-recognition-container" class="hidden mb-4 overflow-hidden rounded-2xl border-2 border-indigo-500 bg-slate-950 relative shadow-xl">
@@ -315,7 +318,7 @@
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
           <div>
             <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-days text-indigo-600"></i> 教職員排班行事曆</h2>
-            <p class="text-xs text-slate-400 mt-0.5">點擊月曆任意日期快速排班，或使用「每週週期批次排班」快速生成並自選剔除</p>
+            <p class="text-xs text-slate-400 mt-0.5">查看月曆或清單；需要固定時段時，可一次安排多週。</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
@@ -323,7 +326,7 @@
               <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
             </div>
             <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
-            <button id="btn-batch-schedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-calendar-plus"></i><span>每週週期批次排班</span></button>
+            <button id="btn-batch-schedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-calendar-plus"></i><span>安排多週班表</span></button>
             <button id="btn-add-schedule" onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-plus"></i><span>單日排班</span></button>
           </div>
         </div>
@@ -344,7 +347,8 @@
             </div>
             <button onclick="goToCurrentMonth()" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-100 transition">本月</button>
           </div>
-          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white">
+          <p class="md:hidden text-xs text-slate-600">月曆可左右滑動，也可切換清單查看。</p>
+          <div class="school-calendar-scroll border border-slate-200 rounded-2xl overflow-x-auto bg-white" tabindex="0" aria-label="可左右捲動的排班月曆">
             <div class="grid grid-cols-7 text-center font-bold text-[11px] sm:text-xs py-2 bg-slate-50 border-b border-slate-200 text-slate-600">
               <div class="text-rose-500">週日</div><div>週一</div><div>週二</div><div>週三</div><div>週四</div><div>週五</div><div class="text-blue-600">週六</div>
             </div>
@@ -405,9 +409,10 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
           <div>
             <h2 class="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-address-book text-indigo-600"></i> 學員與人員名冊</h2>
-            <p class="text-xs text-slate-400 mt-0.5">完整支援個資查看、家庭狀況、健康備註與快捷編輯</p>
+            <p class="text-xs text-slate-400 mt-0.5">選擇人員類別與狀態，查看或更新資料。</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <select id="user-role-scope" aria-label="人員類別" onchange="filterUsersList()" class="school-scope"><option value="all">全部人員</option><option value="students">學生</option><option value="staff">教職同工</option></select>
             <select id="user-status-filter" onchange="filterUsersList()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
               <option value="全部">全部狀態</option><option value="在班" selected>在班學員</option><option value="退班">退班學員</option><option value="畢業">畢業學員</option><option value="在職">在職教職</option><option value="離職">離職同工</option>
             </select>
@@ -511,7 +516,7 @@
           </select>
 
           <select id="print-class-filter" onchange="renderSelectedReport()" class="px-3 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-black text-amber-900">
-            <option value="elementary">🎒 國小班點名表</option>
+            <option value="elementary">國小班點名表</option>
             <option value="junior">🎓 國中班點名表</option>
             <option value="both" selected>📑 國小＋國中班（分開兩頁）</option>
           </select>
@@ -567,11 +572,11 @@
 
   <!-- ======================== 彈窗區域 ======================== -->
 
-  <!-- 每週週期批次排班產生器彈窗 -->
+  <!-- 安排多週班表產生器彈窗 -->
   <div id="modal-batch-schedule" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll border border-slate-100">
       <div class="flex justify-between items-center mb-3.5 border-b pb-3">
-        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-plus text-emerald-600"></i> 每週週期批次排班產生器</h3>
+        <h3 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-plus text-emerald-600"></i> 安排多週班表產生器</h3>
         <button onclick="closeBatchScheduleModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
       <div class="space-y-3.5 text-xs sm:text-sm">
@@ -637,7 +642,7 @@
   <div id="modal-user" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl overflow-y-auto max-h-[92vh] custom-scroll">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
-        <h3 class="text-lg sm:text-xl font-black text-slate-800" id="modal-user-title">學員與人員詳細資料表</h3>
+        <h3 class="text-lg sm:text-xl font-black text-slate-800" id="modal-user-title">個人資料</h3>
         <button onclick="closeUserModal()" class="text-slate-400 font-bold text-2xl">&times;</button>
       </div>
       <form onsubmit="handleUserSubmit(event)" class="space-y-5 text-xs sm:text-sm">
@@ -646,7 +651,7 @@
           <input type="hidden" id="form-face-descriptor" value="">
         
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
-          <h4 class="font-bold text-slate-700">1. 基本身分與 AI 人臉建檔</h4>
+          <h4 class="font-bold text-slate-700">基本資料與照片</h4>
           <div class="flex flex-col sm:flex-row items-center gap-4">
             <div class="relative shrink-0">
               <img id="preview-avatar" src="https://ui-avatars.com/api/?name=User&background=cbd5e1" class="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow-md">
@@ -655,13 +660,13 @@
             <div class="flex-1 w-full space-y-2">
               <div><label class="block font-bold text-slate-600 mb-1">大頭照網址</label><input type="text" id="form-avatar" onchange="autoExtractFaceFromUrl()" placeholder="照片網址或系統私人照片" class="w-full px-3.5 py-2 bg-white border rounded-xl text-xs"></div>
               <div class="flex items-center space-x-2">
-                <button type="button" onclick="startCameraSnapForFace()" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i><span>用手機現場拍照建檔</span></button>
+                <button type="button" onclick="startCameraSnapForFace()" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera"></i><span>拍照建檔</span></button>
                 <span id="face-extract-tip" class="text-[11px] font-bold text-slate-400"></span>
               </div>
               <div id="camera-snap-box" class="hidden p-3 bg-slate-950 rounded-2xl text-center space-y-2">
                 <video id="snap-video" autoplay playsinline muted class="w-full max-w-xs mx-auto rounded-xl aspect-square object-cover"></video>
                 <div class="flex justify-center space-x-2">
-                  <button type="button" onclick="captureAndExtractFace()" class="px-4 py-1 bg-emerald-500 text-white font-bold rounded-lg text-xs">📸 按此拍攝並儲存</button>
+                  <button type="button" onclick="captureAndExtractFace()" class="px-4 py-1 bg-emerald-500 text-white font-bold rounded-lg text-xs">拍照並儲存</button>
                   <button type="button" onclick="stopCameraSnap()" class="px-3 py-1 bg-slate-700 text-white rounded-lg text-xs">取消</button>
                 </div>
               </div>
@@ -681,7 +686,7 @@
         </div>
 
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3">
-          <h4 class="font-bold text-slate-700">2. 就讀學校與課輔編制</h4>
+          <h4 class="font-bold text-slate-700">學校與住址</h4>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">就讀學校</label><input type="text" id="form-school" placeholder="大雅國小/國中" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">年級班級</label><input type="text" id="form-grade" placeholder="4年級/5班" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
@@ -690,7 +695,7 @@
         </div>
 
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3">
-          <h4 class="font-bold text-slate-700">3. 聯絡方式與家長資訊</h4>
+          <h4 class="font-bold text-slate-700">聯絡方式</h4>
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
             <div><label class="block font-bold text-slate-600 mb-1">本人手機</label><input type="text" id="form-phone" class="w-full font-mono px-3 py-2 bg-white border rounded-xl"></div>
             <div><label class="block font-bold text-slate-600 mb-1">主要家長姓名</label><input type="text" id="form-parent-name" class="w-full px-3 py-2 bg-white border rounded-xl"></div>
@@ -703,7 +708,7 @@
         <!-- 🌟 4. 家庭與經濟狀況 (點選式複選標籤，先點選者為第一優先) -->
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
           <div class="flex justify-between items-center">
-            <h4 class="font-bold text-slate-700"><i class="fa-solid fa-people-roof text-rose-600"></i> 4. 家庭與經濟狀況 (點選複選，先點選者為主要狀況)</h4>
+            <h4 class="font-bold text-slate-700"><i class="fa-solid fa-people-roof text-rose-600"></i> 家庭狀況 · 可複選</h4>
             <input type="hidden" id="form-family-status" value="">
           </div>
           <div class="bg-white p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -727,7 +732,7 @@
         <!-- 🌟 5. 個人身心/健康備註 (點選式複選標籤) -->
         <div class="bg-slate-50 p-4 rounded-2xl border space-y-3.5">
           <div class="flex justify-between items-center">
-            <h4 class="font-bold text-slate-700"><i class="fa-solid fa-notes-medical text-teal-600"></i> 5. 個人身心狀況與健康備註 (點選複選或手動備註)</h4>
+            <h4 class="font-bold text-slate-700"><i class="fa-solid fa-notes-medical text-teal-600"></i> 健康與叮嚀 · 可複選</h4>
             <input type="hidden" id="form-health-notes" value="">
           </div>
           <div class="bg-white p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -826,7 +831,7 @@
       <h3 class="text-xl sm:text-2xl font-black text-slate-900" id="verse-title">簽到成功！</h3>
       <p class="text-xs text-slate-500 mt-1" id="verse-sub">已登記出勤紀錄</p>
       <div class="my-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left">
-        <p class="text-xs font-bold text-amber-800 mb-1">📖 今日屬天祝福：</p>
+        <p class="text-xs font-bold text-amber-800 mb-1">今日屬天祝福：</p>
         <p class="text-xs sm:text-sm text-amber-950 font-serif leading-relaxed" id="verse-quote"></p>
       </div>
       <button onclick="closeVerseModal()" class="w-full py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl">我知道了</button>
@@ -880,17 +885,17 @@
     async function manageKioskDevice(action,id=null) {
       if (kioskDeviceBusy || currentUser?.role_type !== '同工') return;
       let payload={action,id};
-      if(action==='register') {const label=prompt('請輸入這台簽到電腦的名稱：');if(!label?.trim())return;payload.label=label.trim();}
-      if(action==='policy'){payload.enforce=!kioskDeviceState?.require_device;if(!confirm(payload.enforce?'已確認現場設備可用，現在限制只有已綁定設備能簽到？':'恢復相容模式，允許未綁定設備簽到？'))return;}
-      if(action==='revoke'&&!confirm('停用這台簽到設備？若已限制設備，它將無法打卡。'))return;
+      if(action==='register') {const label=await schoolPrompt('請輸入這台簽到電腦的名稱：');if(!label?.trim())return;payload.label=label.trim();}
+      if(action==='policy'){payload.enforce=!kioskDeviceState?.require_device;if(!await schoolConfirm(payload.enforce?'已確認現場設備可用，現在限制只有已綁定設備能簽到？':'恢復相容模式，允許未綁定設備簽到？'))return;}
+      if(action==='revoke'&&!await schoolConfirm('停用這台簽到設備？若已限制設備，它將無法打卡。'))return;
       kioskDeviceBusy=true;
       try{const result=await callMschoolApi('/kiosk/devices',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
-        if(result.device_token){localStorage.setItem('mplus_kiosk_device',result.device_token);alert('這台電腦已綁定。請登出課輔與教會 OS 管理帳號，再提供公共簽到使用。');}
+        if(result.device_token){localStorage.setItem('mplus_kiosk_device',result.device_token);schoolNotice('這台電腦已綁定。請登出課輔與教會 OS 管理帳號，再提供公共簽到使用。');}
         await openKioskDevices();
       }catch(error){document.getElementById('kiosk-device-status').textContent=error.message;}finally{kioskDeviceBusy=false;}
     }
     async function showImportHistory(){
-      try{const rows=await callMschoolApi('/imports/history');alert(rows.length?rows.map(r=>`${new Date(r.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})}｜${r.actor_id}｜成功 ${r.result.success}／${r.result.results.length} 筆`).join('\n'):'尚無本次更新後的匯入紀錄。');}catch(error){alert(error.message);}
+      try{const rows=await callMschoolApi('/imports/history');schoolRecord('匯入紀錄', rows.length?rows.map(r=>`${new Date(r.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})}｜${r.actor_id}｜成功 ${r.result.success}／${r.result.results.length} 筆`).join('\n'):'尚無本次更新後的匯入紀錄。');}catch(error){schoolNotice(error.message);}
     }
 
     const pendingFlowOperations = new Map();
@@ -913,9 +918,9 @@
     async function saveScheduleFlow(method, id, rows, key) {
       const payload = {method, id, rows};
       const preview = await callMschoolApi('/schedules/preview', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
-      if (!preview.ok) { alert('這位同工的時段重疊或舊班表需確認：\n' + (preview.conflicts || []).map(c => `${c.existing_date} ${c.shift || '時段未填'}`).join('\n')); return false; }
+      if (!preview.ok) { schoolNotice('這位同工的時段重疊或舊班表需確認：\n' + (preview.conflicts || []).map(c => `${c.existing_date} ${c.shift || '時段未填'}`).join('\n')); return false; }
       const overnight = rows.some(row => { const t = String(row.shift).split(/\s*-\s*/); return t[1] < t[0]; });
-      if (!confirm(`確認${method === 'DELETE' ? '刪除' : '儲存'} ${preview.count} 筆排班？${overnight ? '跨日班次會延續至隔日。' : ''}`)) return false;
+      if (!await schoolConfirm(`確認${method === 'DELETE' ? '刪除' : '儲存'} ${preview.count} 筆排班？${overnight ? '跨日班次會延續至隔日。' : ''}`)) return false;
       await postFlow('/schedules/save',payload,key);return true;
     }
     let scheduleSaving = false, userSaving = false;
@@ -962,7 +967,7 @@
 
     let currentCalYear = Number(taipeiDateKey(Date.now()).slice(0,4));
     let currentCalMonth = Number(taipeiDateKey(Date.now()).slice(5,7));
-    let activeScheduleView = 'calendar';
+    let activeScheduleView = window.matchMedia?.('(max-width:767px)')?.matches ? 'list' : 'calendar';
     let verseAutoCloseTimer = null;
 
     let isFaceModelsLoaded = false;
@@ -1007,26 +1012,32 @@
 
     function requireTab(tabId) {
       if (!currentUser) { openLoginModal(); return; }
-      if (tabId === 'counseling' && !['M', 'T', 'P'].includes(counselingAccessRole())) { alert('目前帳號沒有輔導紀錄的查閱權限。'); return; }
+      if (tabId === 'counseling' && !['M', 'T', 'P'].includes(counselingAccessRole())) { schoolNotice('目前帳號沒有輔導紀錄的查閱權限。'); return; }
       switchTab(tabId);
     }
     function requireStaffPrintTab() {
-      if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (currentUser.role_type !== '同工') { alert("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
+      if (!currentUser) { schoolNotice("請先登入同工帳號！"); openLoginModal(); return; }
+      if (currentUser.role_type !== '同工') { schoolNotice("⛔ 權限不足：此報表列印中心僅限同工 (M) 查閱！"); return; }
       switchTab('print-center');
     }
     async function openStudentRosterPrint() {
-      if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (currentUser.role_type !== '同工') { alert("⛔ 權限不足：學生名冊含個人資料，僅限同工 (M) 輸出！"); return; }
+      if (!currentUser) { schoolNotice("請先登入同工帳號！"); openLoginModal(); return; }
+      if (currentUser.role_type !== '同工') { schoolNotice("⛔ 權限不足：學生名冊含個人資料，僅限同工 (M) 輸出！"); return; }
       document.getElementById('print-report-type').value = 'roster';
       onReportTypeChange();
       switchTab('print-center');
     }
     function requireImportTab() {
-      if (!currentUser) { alert("請先登入同工帳號！"); openLoginModal(); return; }
-      if (currentUser.role_type !== '同工') { alert("⛔ 權限不足：此匯入工具僅限同工 (M) 查閱！"); return; }
+      if (!currentUser) { schoolNotice("請先登入同工帳號！"); openLoginModal(); return; }
+      if (currentUser.role_type !== '同工') { schoolNotice("⛔ 權限不足：此匯入工具僅限同工 (M) 查閱！"); return; }
       switchTab('import');
     }
+
+    function schoolNotice(message) { if (window.SchoolUI) window.SchoolUI.notify(message); else alert(message); }
+    function schoolRecord(title, message) { if (window.SchoolUI) window.SchoolUI.record(title, message); else alert(message); }
+    async function schoolConfirm(message) { return window.SchoolUI ? window.SchoolUI.confirm(message) : confirm(message); }
+    async function schoolPrompt(message) { return window.SchoolUI ? window.SchoolUI.prompt(message) : prompt(message); }
+    function schoolClearDraft(id) { window.SchoolUI?.clearDraft(id); }
 
     function switchTab(tabId) {
       if (tabId !== 'checkin') { stopFaceRecognition(); stopCameraScanner(); }
@@ -1046,6 +1057,7 @@
       const activeMNav = document.getElementById(`m-nav-${tabId}`);
       if (activeMNav) activeMNav.className = "flex flex-col items-center py-1 text-amber-400 font-black";
 
+      window.SchoolUI?.onNavigate(tabId);
       if (tabId === 'checkin') { loadLogs(); setTimeout(() => document.getElementById('scan-code-input').focus(), 150); }
       if (tabId === 'schedules') loadSchedules();
       if (tabId === 'rollcall') initRollCallTab();
@@ -1086,15 +1098,15 @@
       return staffList;
     }
     async function openBatchScheduleModal() {
-      if (!canManageSchedules()) { alert('目前帳號只有查看排班的權限。'); return; }
+      if (!canManageSchedules()) { schoolNotice('目前帳號只有查看排班的權限。'); return; }
       try {
         if (staffList.length === 0) await loadScheduleStaffOptions();
-        if (staffList.length === 0) { alert('目前沒有可排班的人員。'); return; }
+        if (staffList.length === 0) { schoolNotice('目前沒有可排班的人員。'); return; }
         populateScheduleStaffOptions();
         if (!document.getElementById('batch-month').value) document.getElementById('batch-month').value = taipeiDateKey(Date.now()).slice(0,7);
         document.getElementById('modal-batch-schedule').classList.remove('hidden');
         previewBatchDates();
-      } catch (error) { alert(`載入排班人員失敗：${error?.message || '未知錯誤'}`); }
+      } catch (error) { schoolNotice(`載入排班人員失敗：${error?.message || '未知錯誤'}`); }
     }
     function closeBatchScheduleModal() { document.getElementById('modal-batch-schedule').classList.add('hidden'); }
 
@@ -1129,11 +1141,11 @@
     function removeBatchDate(idx) { activeBatchDates.splice(idx, 1); renderBatchChips(); }
 
     async function executeBatchSchedule() {
-      if (!canManageSchedules()) { alert('目前帳號沒有新增排班的權限。'); return; }
-      if (activeBatchDates.length === 0) { alert("沒有日期可建立！"); return; }
+      if (!canManageSchedules()) { schoolNotice('目前帳號沒有新增排班的權限。'); return; }
+      if (activeBatchDates.length === 0) { schoolNotice("沒有日期可建立！"); return; }
       const sel = document.getElementById('batch-worker-select');
       const workerId = sel.value; const workerName = sel.selectedOptions[0]?.getAttribute('data-name');
-      if (!workerId) { alert("請選擇同工！"); return; }
+      if (!workerId) { schoolNotice("請選擇同工！"); return; }
       const start = document.getElementById('batch-start-time').value;
       const end = document.getElementById('batch-end-time').value;
       const [sH, sM] = start.split(':').map(Number); const [eH, eM] = end.split(':').map(Number);
@@ -1143,9 +1155,9 @@
       try {
         if (scheduleSaving) return; scheduleSaving = true;
         if (!await saveScheduleFlow('POST', null, payload, 'schedule:batch')) return;
-        alert(`✅ 成功批次建立 ${activeBatchDates.length} 筆排班！`);
-        closeBatchScheduleModal(); await loadSchedules();
-      } catch (error) { alert(`批次建立排班失敗：${error?.message || '未知錯誤'}`); }
+        schoolNotice(`✅ 成功批次建立 ${activeBatchDates.length} 筆排班！`);
+        schoolClearDraft('modal-batch-schedule'); closeBatchScheduleModal(); await loadSchedules();
+      } catch (error) { schoolNotice(`批次建立排班失敗：${error?.message || '未知錯誤'}`); }
       finally { scheduleSaving = false; }
     }
 
@@ -1162,10 +1174,10 @@
         if (error) throw error;
         rawSchedules = data || [];
         setScheduleStatus(staffLoadMessage);
-        renderActiveScheduleView();
+        setScheduleView(activeScheduleView);
       } catch (error) {
         rawSchedules = [];
-        renderActiveScheduleView();
+        setScheduleView(activeScheduleView);
         setScheduleStatus(`排班資料載入失敗：${error?.message || '未知錯誤'}`);
       }
     }
@@ -1221,20 +1233,25 @@
         const isToday = dStr === todayStr;
         const cell = document.createElement('div');
         cell.className = `cal-day-cell p-1 sm:p-2 flex flex-col justify-between cursor-pointer ${isToday ? 'bg-amber-50/70 ring-2 ring-inset ring-amber-400' : 'bg-white'}`;
-        const shiftsHtml = (byDay[d] || []).map(s => `<div onclick="event.stopPropagation(); openScheduleModal('edit', ${escapeCounselingHtml(s.id)})" class="text-[9px] font-bold px-1 py-0.5 rounded border bg-amber-100 text-amber-900 truncate">${escapeCounselingHtml(s.worker_name)} (${s.hours}h)</div>`).join('');
-        cell.innerHTML = `<div><div class="flex justify-between items-center mb-1"><span class="font-black font-mono text-[10px] ${isToday?'bg-amber-500 text-white px-1 rounded':''}">${d}</span><button onclick="event.stopPropagation(); quickAddScheduleOnDate('${dStr}')" class="w-4 h-4 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center text-[9px]"><i class="fa-solid fa-plus"></i></button></div><div class="space-y-1 overflow-y-auto max-h-[55px] custom-scroll">${shiftsHtml}</div></div>`;
-        cell.onclick = () => quickAddScheduleOnDate(dStr);
+        const editable = canManageSchedules();
+        const shiftsHtml = (byDay[d] || []).map(s => editable
+          ? `<button type="button" onclick="event.stopPropagation(); openScheduleModal('edit', ${escapeCounselingHtml(s.id)})" class="school-calendar-shift">${escapeCounselingHtml(s.worker_name)}<br>${escapeCounselingHtml(s.shift || '')}</button>`
+          : `<p class="school-calendar-shift">${escapeCounselingHtml(s.worker_name)}<br>${escapeCounselingHtml(s.shift || '')}</p>`).join('');
+        const dateLabel = editable
+          ? `<button type="button" class="school-calendar-date" aria-label="${dStr} 新增排班" onclick="quickAddScheduleOnDate('${dStr}')"><span>${d}</span><span aria-hidden="true">＋</span></button>`
+          : `<span class="school-calendar-date">${d}</span>`;
+        cell.innerHTML = `<div>${dateLabel}<div class="school-calendar-shifts">${shiftsHtml}</div></div>`;
         grid.appendChild(cell);
       }
     }
     async function openScheduleModal(mode = 'add', scheduleId = null) {
-      if (!canManageSchedules()) { alert('目前帳號只有查看排班的權限。'); return; }
+      if (!canManageSchedules()) { schoolNotice('目前帳號只有查看排班的權限。'); return; }
       try {
         if (staffList.length === 0) await loadScheduleStaffOptions();
         else populateScheduleStaffOptions();
-        if (staffList.length === 0) { alert('目前沒有可排班的人員。'); return; }
+        if (staffList.length === 0) { schoolNotice('目前沒有可排班的人員。'); return; }
         const schedule = mode === 'edit' ? rawSchedules.find(item => String(item.id) === String(scheduleId)) : null;
-        if (mode === 'edit' && !schedule) { alert('找不到這筆排班，請重新載入清單。'); return; }
+        if (mode === 'edit' && !schedule) { schoolNotice('找不到這筆排班，請重新載入清單。'); return; }
         const form = document.querySelector('#modal-schedule form');
         if (form) form.reset();
         document.getElementById('sch-edit-id').value = schedule ? String(schedule.id) : '';
@@ -1250,25 +1267,25 @@
           document.getElementById('sch-hours-display').textContent = `${Number(schedule.hours)} 小時`;
         } else autoCalcHours();
         document.getElementById('modal-schedule').classList.remove('hidden');
-      } catch (error) { alert(`開啟排班表單失敗：${error?.message || '未知錯誤'}`); }
+      } catch (error) { schoolNotice(`開啟排班表單失敗：${error?.message || '未知錯誤'}`); }
     }
     function closeScheduleModal() { document.getElementById('modal-schedule').classList.add('hidden'); }
     function quickAddScheduleOnDate(dt) {
-      if (!canManageSchedules()) { alert('目前帳號只有查看排班的權限。'); return; }
+      if (!canManageSchedules()) { schoolNotice('目前帳號只有查看排班的權限。'); return; }
       openScheduleModal('add').then(() => {
         if (!document.getElementById('modal-schedule').classList.contains('hidden')) document.getElementById('sch-date').value = dt;
       });
     }
     async function handleScheduleSubmit(event) {
       event.preventDefault();
-      if (!canManageSchedules()) { alert('目前帳號沒有新增或修改排班的權限。'); return; }
+      if (!canManageSchedules()) { schoolNotice('目前帳號沒有新增或修改排班的權限。'); return; }
       const date = document.getElementById('sch-date').value;
       const workerId = document.getElementById('sch-worker-select').value;
       const worker = staffList.find(person => String(person.id) === String(workerId));
       const start = document.getElementById('sch-start-time').value;
       const end = document.getElementById('sch-end-time').value;
       const hours = Number(document.getElementById('sch-hours-val').value);
-      if (!date || !worker || !start || !end || !Number.isFinite(hours) || hours <= 0) { alert('請選擇排班日期、人員與有效時段。'); return; }
+      if (!date || !worker || !start || !end || !Number.isFinite(hours) || hours <= 0) { schoolNotice('請選擇排班日期、人員與有效時段。'); return; }
       const editId = document.getElementById('sch-edit-id').value;
       const payload = {
         date, worker_id: String(worker.id), worker_name: worker.name,
@@ -1280,21 +1297,21 @@
       try {
         if (scheduleSaving) return; scheduleSaving = true;
         if (!await saveScheduleFlow(editId ? 'PATCH' : 'POST', editId || null, [payload], 'schedule:single')) return;
-        closeScheduleModal();
+        schoolClearDraft('modal-schedule'); closeScheduleModal();
         await loadSchedules();
-        alert(editId ? '✅ 排班修改成功！' : '✅ 排班新增成功！');
-      } catch (error) { alert(`儲存排班失敗：${error?.message || '未知錯誤'}`); }
+        schoolNotice(editId ? '✅ 排班修改成功！' : '✅ 排班新增成功！');
+      } catch (error) { schoolNotice(`儲存排班失敗：${error?.message || '未知錯誤'}`); }
       finally { scheduleSaving = false; }
     }
     async function deleteSchedule(scheduleId) {
-      if (!canDeleteSchedules()) { alert('只有同工可以刪除排班。'); return; }
+      if (!canDeleteSchedules()) { schoolNotice('只有同工可以刪除排班。'); return; }
       if (scheduleSaving) return;
       try {
         scheduleSaving = true;
         if (!await saveScheduleFlow('DELETE', scheduleId, [], 'schedule:delete:' + scheduleId)) return;
         await loadSchedules();
-        alert('✅ 排班已刪除。');
-      } catch (error) { alert(`刪除排班失敗：${error?.message || '未知錯誤'}`); }
+        schoolNotice('✅ 排班已刪除。');
+      } catch (error) { schoolNotice(`刪除排班失敗：${error?.message || '未知錯誤'}`); }
       finally { scheduleSaving = false; }
     }
     function prevMonth() { currentCalMonth--; if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; } renderActiveScheduleView(); }
@@ -1359,13 +1376,13 @@
         faceStream = stream; faceVideoEl.srcObject = stream; isFaceDetecting = true;
         document.getElementById('btn-face-text').textContent = '關閉相機';
         faceVideoEl.onloadedmetadata = () => { if (generation !== faceGeneration) return; faceVideoEl.play().catch(() => {}); startFaceDetectionLoop(); };
-      } catch (error) { if (generation === faceGeneration) { stopFaceRecognition(); alert(error.message || '無法開啟相機，請允許相機權限後重試。'); } }
+      } catch (error) { if (generation === faceGeneration) { stopFaceRecognition(); schoolNotice(error.message || '無法開啟相機，請允許相機權限後重試。'); } }
       finally { if (generation === faceGeneration) faceStarting = false; }
     }
 
     function stopFaceRecognition() {
       faceGeneration++; faceStarting = false; isFaceDetecting = false; if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
-      if (faceVideoEl) { faceVideoEl.onloadedmetadata = null; faceVideoEl.srcObject = null; } document.getElementById('face-recognition-container').classList.add('hidden'); document.getElementById('btn-face-text').textContent = "👤 開啟人臉相機";
+      if (faceVideoEl) { faceVideoEl.onloadedmetadata = null; faceVideoEl.srcObject = null; } document.getElementById('face-recognition-container').classList.add('hidden'); document.getElementById('btn-face-text').textContent = "開啟人臉相機";
     }
 
     document.addEventListener('visibilitychange', () => { if (document.hidden) { stopFaceRecognition(); stopCameraScanner(); stopCameraSnap(); } });
@@ -1451,7 +1468,7 @@
         const stream = await requestCamera({video:{facingMode:'environment',width:480,height:480},audio:false},()=>generation===snapGeneration);
         if (generation !== snapGeneration) { stream.getTracks().forEach(track => track.stop()); return; }
         snapStream = stream; document.getElementById('snap-video').srcObject = stream;
-      } catch (error) { if (generation === snapGeneration) { stopCameraSnap(); alert(error.message || '無法開啟相機，請確認相機權限。'); } }
+      } catch (error) { if (generation === snapGeneration) { stopCameraSnap(); schoolNotice(error.message || '無法開啟相機，請確認相機權限。'); } }
       finally { if (generation === snapGeneration) snapStarting = false; }
     }
 
@@ -1477,10 +1494,10 @@
         if (generation !== snapGeneration || personId !== document.getElementById('form-id').value) return;
         if (faces.length > 1) throw new Error('畫面有多個人，請只留一位學生再拍照。');
         const det = faces[0];
-        if (!det) { alert("未偵測到人臉！"); tip.textContent = "失敗"; return; }
+        if (!det) { schoolNotice("未偵測到人臉！"); tip.textContent = "失敗"; return; }
         const descriptor = Array.from(det.descriptor);
         if (descriptor.length !== 128 || descriptor.some(value => !Number.isFinite(value))) {
-          alert("人臉特徵格式不正確，請重新拍攝。"); tip.textContent = "辨識失敗"; return;
+          schoolNotice("人臉特徵格式不正確，請重新拍攝。"); tip.textContent = "辨識失敗"; return;
         }
         const blob = await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('無法產生照片檔案')), 'image/jpeg', 0.85));
         if (generation !== snapGeneration || personId !== document.getElementById('form-id').value) return;
@@ -1494,7 +1511,7 @@
       } catch (error) {
         if (generation !== snapGeneration) return;
         tip.textContent = "照片上傳失敗，尚未建立人臉資料";
-        alert(error?.message || '照片上傳失敗，請重試。');
+        schoolNotice(error?.message || '照片上傳失敗，請重試。');
       } finally { snapCapturing = false; submitButton.disabled = false; if (generation === snapGeneration) stopCameraSnap(); }
     }
 
@@ -1539,7 +1556,7 @@
         await Promise.race([qrPendingTask,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('相機授權逾時，請確認權限後重試。')),30000);})]);
         if(generation!==qrGeneration)return;
         isCameraScanning=true;document.getElementById('btn-cam-text').textContent='關閉';
-      }catch(error){if(generation===qrGeneration){stopCameraScanner();alert(error.message||'無法開啟 QR 相機，請確認相機權限後重試。');}}
+      }catch(error){if(generation===qrGeneration){stopCameraScanner();schoolNotice(error.message||'無法開啟 QR 相機，請確認相機權限後重試。');}}
       finally{clearTimeout(timer);if(generation===qrGeneration)qrStarting=false;}
     }
 
@@ -1547,7 +1564,7 @@
       qrGeneration++; qrStarting=false; isCameraScanning=false;
       const scanner=html5QrScanner; html5QrScanner=null;
       if (scanner) { const previous=qrPendingTask; qrPendingTask=Promise.resolve(previous).catch(()=>{}).then(()=>scanner.stop()).then(()=>scanner.clear()).catch(()=>{}); }
-      document.getElementById('camera-scanner-container').classList.add('hidden'); document.getElementById('btn-cam-text').textContent='📷 QR 掃描';
+      document.getElementById('camera-scanner-container').classList.add('hidden'); document.getElementById('btn-cam-text').textContent='QR 掃描';
     }
 
     // =============================================================
@@ -1621,7 +1638,7 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dt)) return false;
       if (allUsers.length === 0) {
         const { data, error } = await db.from('users').select('*');
-        if (error) { alert(`載入學員名冊失敗：${error.message}`); return; }
+        if (error) { schoolNotice(`載入學員名冊失敗：${error.message}`); return; }
         if (data) allUsers = data;
       }
       const students = allUsers.filter(u => (!u.role_type || u.role_type === '學生') && u.status !== '退班' && u.status !== '畢業');
@@ -1629,7 +1646,7 @@
       try { const result = await callMschoolApi('/rollcalls?day=' + encodeURIComponent(dt)); saved = result.records; if (sequence === rollCallLoadSequence) rollCallRevision = result.revision; }
       catch (failure) { error = failure; }
       if (sequence !== rollCallLoadSequence || document.getElementById('rollcall-date-picker').value !== dt) return false;
-      if (error) { alert(`載入點名紀錄失敗：${error.message}`); return; }
+      if (error) { schoolNotice(`載入點名紀錄失敗：${error.message}`); return; }
       const map = new Map();
       for (const r of latestRollCallRecords(saved || [], '課後輔導')) map.set(r.student_id, r);
       activeRollCallList = students.map(s => {
@@ -1639,7 +1656,7 @@
       rollCallLoadedDate = dt;
       renderRollCallRows(); updateRollCallStats(); return true;
     }
-    async function reloadRollCallSheet() { if (rollCallSaving) return; if (confirm('重新載入會放棄尚未儲存的修改，確定要繼續？')) await loadRollCallsForDate(); }
+    async function reloadRollCallSheet() { if (rollCallSaving) return; if (await schoolConfirm('重新載入會放棄尚未儲存的修改，確定要繼續？')) { if (await loadRollCallsForDate()) schoolClearDraft('tab-rollcall'); } }
     function latestRollCallRecords(records, courseName = null) {
       const result = new Map();
       for (const row of records) {
@@ -1673,11 +1690,11 @@
       document.getElementById('rc-stat-signed').textContent = `${activeRollCallList.filter(x=>x.signed==='是').length} 人`;
     }
     async function saveRollCallSheet() {
-      if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; }
+      if (!canManageRollCalls()) { schoolNotice('目前帳號只有查看點名紀錄的權限。'); return; }
       if (rollCallSaving) return;
       const dt = document.getElementById('rollcall-date-picker').value;
-      if (!dt || activeRollCallList.length === 0) { alert('沒有可儲存的點名資料。'); return; }
-      if (rollCallLoadedDate !== dt) { alert('請先載入所選日期的點名資料，再儲存。'); return; }
+      if (!dt || activeRollCallList.length === 0) { schoolNotice('沒有可儲存的點名資料。'); return; }
+      if (rollCallLoadedDate !== dt) { schoolNotice('請先載入所選日期的點名資料，再儲存。'); return; }
       const payload = activeRollCallList.map(r => ({ student_id: r.student_id, student_name: r.student_name, attendance_status: r.attendance, homework_status: r.homework, contact_book_signed: r.signed, note: r.note }));
       try {
         rollCallSaving = true; document.getElementById('rollcall-save').disabled = true;
@@ -1685,11 +1702,11 @@
         const result = await postFlow('/rollcalls', {day:dt, rows:payload, revision:rollCallRevision}, 'rollcall:' + dt);
         rollCallRevision = result.revision;
         const loaded = await loadRollCallsForDate();
-        alert(loaded ? '✅ 點名儲存成功！' : '點名已儲存，但重新載入失敗。請重新載入確認。');
-      } catch (error) { alert(`儲存點名失敗：${error?.message || '未知錯誤'}`); }
+        schoolClearDraft('tab-rollcall'); schoolNotice(loaded ? '✅ 點名儲存成功！' : '點名已儲存，但重新載入失敗。請重新載入確認。');
+      } catch (error) { schoolNotice(`儲存點名失敗：${error?.message || '未知錯誤'}`); }
       finally { rollCallSaving = false; document.getElementById('rollcall-save').disabled = false; document.getElementById('rollcall-date-picker').disabled = false; renderRollCallRows(); }
     }
-    function batchSetAll(f, v) { if (!canManageRollCalls()) { alert('目前帳號只有查看點名紀錄的權限。'); return; } if (rollCallSaving || !['attendance','homework','signed'].includes(f)) return; activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); updateRollCallStats(); }
+    function batchSetAll(f, v) { if (!canManageRollCalls()) { schoolNotice('目前帳號只有查看點名紀錄的權限。'); return; } if (rollCallSaving || !['attendance','homework','signed'].includes(f)) return; activeRollCallList.forEach(r => r[f] = v); renderRollCallRows(); updateRollCallStats(); }
 
     // =============================================================
     // 5. 人員名冊管理 (精準對齊 SQL 16 個欄位)
@@ -1743,7 +1760,8 @@
 
     function filterUsersList() {
       const q = document.getElementById('user-filter').value.toLowerCase(), st = document.getElementById('user-status-filter').value;
-      renderUsers(allUsers.filter(u => (!q || (u.name&&u.name.toLowerCase().includes(q)) || (u.id&&u.id.toLowerCase().includes(q)) || (u.family_status&&u.family_status.toLowerCase().includes(q))) && (st === '全部' || u.status === st)));
+      const scope = document.getElementById('user-role-scope')?.value || 'all';
+      renderUsers(allUsers.filter(u => (!q || (u.name&&u.name.toLowerCase().includes(q)) || (u.id&&u.id.toLowerCase().includes(q)) || (u.family_status&&u.family_status.toLowerCase().includes(q))) && (st === '全部' || u.status === st) && (scope === 'all' || (scope === 'students' ? !u.role_type || u.role_type === '學生' : u.role_type && u.role_type !== '學生'))));
     }
 
     // 🌟 點選式標籤控制：家庭狀況
@@ -1937,9 +1955,9 @@
       let faceDescriptor = null;
       if (descriptorText) {
         try { faceDescriptor = JSON.parse(descriptorText); }
-        catch { alert('人臉特徵資料格式錯誤，請重新拍攝辨識。'); return; }
+        catch { schoolNotice('人臉特徵資料格式錯誤，請重新拍攝辨識。'); return; }
         if (!Array.isArray(faceDescriptor) || faceDescriptor.length !== 128 || faceDescriptor.some(value => !Number.isFinite(value))) {
-          alert('人臉特徵資料不完整，請重新拍攝辨識。'); return;
+          schoolNotice('人臉特徵資料不完整，請重新拍攝辨識。'); return;
         }
       }
 
@@ -1978,23 +1996,23 @@
           await loadUsers();
           const nextId = generatePersonId(payload.role_type);
           document.getElementById('form-id').value = nextId;
-          alert(`剛好有另一筆資料使用了此編號，已更新為 ${nextId}；請確認後再次儲存。`);
-        } else alert(conflict ? `編號 ${payload.id} 已存在，請重新開啟新增表單取得新編號。` : `儲存失敗：${result.error.message}`);
+          schoolNotice(`剛好有另一筆資料使用了此編號，已更新為 ${nextId}；請確認後再次儲存。`);
+        } else schoolNotice(conflict ? `編號 ${payload.id} 已存在，請重新開啟新增表單取得新編號。` : `儲存失敗：${result.error.message}`);
         return;
       }
-      alert("✅ 儲存成功！");
+      schoolClearDraft('modal-user'); schoolNotice("✅ 儲存成功！");
       closeUserModal(); await loadUsers(); await buildFaceMatcher();
-      } catch (error) { alert(`儲存失敗：${error?.message || '請稍後再試'}`); }
+      } catch (error) { schoolNotice(`儲存失敗：${error?.message || '請稍後再試'}`); }
       finally { userSaving = false; }
     }
 
     async function deleteUser(uid) {
-      if (!confirm("確定刪除此人員？")) return;
+      if (!await schoolConfirm("確定刪除此人員？")) return;
       try {
         const { error } = await db.from('users').delete().eq('id', uid);
         if (error) throw error;
         await loadUsers(); await buildFaceMatcher();
-      } catch (error) { alert(`刪除人員失敗：${error?.message || '未知錯誤'}`); }
+      } catch (error) { schoolNotice(`刪除人員失敗：${error?.message || '未知錯誤'}`); }
     }
 
     const pointsBusy = new Set();
@@ -2003,19 +2021,19 @@
       const u = allUsers.find(x => x.id === uid); if (!u || (u.role_type && u.role_type !== '學生')) return;
       const key = 'points:' + uid, pending = pendingFlowOperations.get(key);
       let payload;
-      if (pending && confirm('上次點數操作尚未確認結果。要重試同一筆嗎？')) payload = JSON.parse(pending.fingerprint);
-      else { if (pending) { alert('請先查看點數紀錄確認上次結果，再重新整理頁面操作。'); return; }
-        const reason = prompt(`請填寫 ${delta > 0 ? '增加' : '扣除'}點數的理由：`); if (!reason?.trim()) return;
+      if (pending && await schoolConfirm('上次點數操作尚未確認結果。要重試同一筆嗎？')) payload = JSON.parse(pending.fingerprint);
+      else { if (pending) { schoolNotice('請先查看點數紀錄確認上次結果，再重新整理頁面操作。'); return; }
+        const reason = await schoolPrompt(`請填寫 ${delta > 0 ? '增加' : '扣除'}點數的理由：`); if (!reason?.trim()) return;
         payload = {id:uid, delta, reason:reason.trim()}; }
       pointsBusy.add(uid);
       try { await postFlow('/points/adjust', payload, key); await loadUsers(); }
-      catch (error) { alert(`點數操作尚未確認：${error?.message || '請重試同一筆或查看紀錄'}`); }
+      catch (error) { schoolNotice(`點數操作尚未確認：${error?.message || '請重試同一筆或查看紀錄'}`); }
       finally { pointsBusy.delete(uid); }
     }
     async function showPointsHistory(uid) {
       try { const rows = await callMschoolApi('/points/history?student_id=' + encodeURIComponent(uid));
-        alert(rows.length ? rows.map(r => `${new Date(r.change_time).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})}｜${Number(r.points_delta)>0?'+':''}${r.points_delta}｜${r.reason || '舊紀錄未填理由'}｜${r.actor_id || (r.source==='attendance'?'到班簽到':'舊紀錄')}｜餘額 ${r.balance_after ?? '舊紀錄未記錄'}`).join('\n') : '尚無點數紀錄。');
-      } catch (error) { alert(`點數紀錄載入失敗：${error.message}`); }
+        schoolRecord('點數紀錄', rows.length ? rows.map(r => `${new Date(r.change_time).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})}｜${Number(r.points_delta)>0?'+':''}${r.points_delta}｜${r.reason || '舊紀錄未填理由'}｜${r.actor_id || (r.source==='attendance'?'到班簽到':'舊紀錄')}｜餘額 ${r.balance_after ?? '舊紀錄未記錄'}`).join('\n') : '尚無點數紀錄。');
+      } catch (error) { schoolNotice(`點數紀錄載入失敗：${error.message}`); }
     }
 
     // =============================================================
@@ -2034,10 +2052,10 @@
         counselingPeople = peopleResult.error ? [] : (peopleResult.data || []);
         populateCounselingPeople();
         filterCounselingList();
-        if (peopleResult.error) alert('學員名冊載入失敗；目前仍可查看既有輔導紀錄，但新增與修改暫不可用。');
+        if (peopleResult.error) schoolNotice('學員名冊載入失敗；目前仍可查看既有輔導紀錄，但新增與修改暫不可用。');
       } catch (error) {
         list.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-rose-600">輔導紀錄載入失敗，請重新載入。</td></tr>';
-        alert(`載入輔導紀錄失敗：${error?.message || '未知錯誤'}`);
+        schoolNotice(`載入輔導紀錄失敗：${error?.message || '未知錯誤'}`);
       }
     }
     function counselingAccessRole() {
@@ -2155,15 +2173,15 @@
       return `${part.year}-${part.month}-${part.day}`;
     }
     function openAddCounselingModal() {
-      if (!canManageCounseling()) { alert('目前帳號只有檢視權限，無法新增輔導紀錄。'); return; }
+      if (!canManageCounseling()) { schoolNotice('目前帳號只有檢視權限，無法新增輔導紀錄。'); return; }
       resetCounselingForm();
       document.getElementById('modal-counseling-add').classList.remove('hidden');
     }
     function closeAddCounselingModal() { document.getElementById('modal-counseling-add').classList.add('hidden'); }
     function editCounseling(id) {
-      if (!canManageCounseling()) { alert('目前帳號沒有修改輔導紀錄的權限。'); return; }
+      if (!canManageCounseling()) { schoolNotice('目前帳號沒有修改輔導紀錄的權限。'); return; }
       const record = rawCounselingList.find(item => String(item.id) === String(id));
-      if (!record) { alert('找不到這筆輔導紀錄，請重新載入清單。'); return; }
+      if (!record) { schoolNotice('找不到這筆輔導紀錄，請重新載入清單。'); return; }
       resetCounselingForm();
       document.getElementById('counsel-edit-id').value = record.id;
       document.getElementById('counsel-student-select').value = record.student_id || '';
@@ -2184,7 +2202,7 @@
     }
     async function handleCounselingSubmit(e) {
       e.preventDefault();
-      if (!canManageCounseling()) { alert('目前帳號沒有新增或修改輔導紀錄的權限。'); return; }
+      if (!canManageCounseling()) { schoolNotice('目前帳號沒有新增或修改輔導紀錄的權限。'); return; }
       const studentId = document.getElementById('counsel-student-select').value;
       const teacherId = counselingAccessRole() === 'T' ? String(currentUser?.id || '') : document.getElementById('counsel-teacher-select').value;
       const meetingDate = document.getElementById('counsel-date').value;
@@ -2195,7 +2213,7 @@
       const content = [currentCounselingTags.length ? `觀察與協助：${currentCounselingTags.join('、')}` : '', note].filter(Boolean).join('\n補充：');
       const followupNote = document.getElementById('counsel-followup').value.trim();
       const followUp = [currentCounselingFollowupTags.length ? `處理方式：${currentCounselingFollowupTags.join('、')}` : '', followupNote ? `補充：${followupNote}` : ''].filter(Boolean).join('\n');
-      if (!student || !teacher || !meetingDate || !Number.isFinite(duration) || duration <= 0 || !content) { alert('請選擇學童、輔導老師、日期與有效時長，並勾選至少一項觀察或填寫補充描述。'); return; }
+      if (!student || !teacher || !meetingDate || !Number.isFinite(duration) || duration <= 0 || !content) { schoolNotice('請選擇學童、輔導老師、日期與有效時長，並勾選至少一項觀察或填寫補充描述。'); return; }
       const payload = {
         student_id: String(student.id),
         student_name: student.name,
@@ -2215,11 +2233,11 @@
           ? await db.from('counseling_logs').update(payload).eq('id', editId)
           : await db.from('counseling_logs').insert(payload);
         if (result.error) throw result.error;
-        closeAddCounselingModal();
-        alert(editId ? '✅ 輔導紀錄修改成功！' : '✅ 輔導紀錄新增成功！');
+        schoolClearDraft('modal-counseling-add'); closeAddCounselingModal();
+        schoolNotice(editId ? '✅ 輔導紀錄修改成功！' : '✅ 輔導紀錄新增成功！');
         await loadCounseling();
       } catch (error) {
-        alert(`儲存輔導紀錄失敗：${error?.message || '未知錯誤'}`);
+        schoolNotice(`儲存輔導紀錄失敗：${error?.message || '未知錯誤'}`);
       } finally {
         submitButton.disabled = false;
       }
@@ -2231,15 +2249,15 @@
       if (button.dataset.counselAction === 'delete') await deleteCounseling(button.dataset.counselId);
     }
     async function deleteCounseling(id) {
-      if (counselingAccessRole() !== 'M') { alert('只有同工可以刪除輔導紀錄。'); return; }
-      if (!confirm('確定刪除這筆輔導紀錄？此操作無法復原。')) return;
+      if (counselingAccessRole() !== 'M') { schoolNotice('只有同工可以刪除輔導紀錄。'); return; }
+      if (!await schoolConfirm('確定刪除這筆輔導紀錄？此操作無法復原。')) return;
       try {
         const { error } = await db.from('counseling_logs').delete().eq('id', id);
         if (error) throw error;
         await loadCounseling();
-        alert('✅ 輔導紀錄已刪除。');
+        schoolNotice('✅ 輔導紀錄已刪除。');
       } catch (error) {
-        alert(`刪除輔導紀錄失敗：${error?.message || '未知錯誤'}`);
+        schoolNotice(`刪除輔導紀錄失敗：${error?.message || '未知錯誤'}`);
       }
     }
     document.getElementById('counseling-list').addEventListener('click', handleCounselingAction);
@@ -2258,20 +2276,20 @@
         }).join('') || '<tr><td colspan="5" class="py-6 text-center text-slate-400">目前沒有家長留言。</td></tr>';
       } catch (error) {
         list.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-rose-600">家長留言載入失敗，請重新載入。</td></tr>';
-        alert(`載入家長留言失敗：${error?.message || '未知錯誤'}`);
+        schoolNotice(`載入家長留言失敗：${error?.message || '未知錯誤'}`);
       }
     }
     async function replyParentMsg(id) {
-      if (!['M', 'T'].includes(counselingAccessRole())) { alert('目前帳號只有查閱家長留言的權限。'); return; }
-      const txt = prompt('回覆：');
+      if (!['M', 'T'].includes(counselingAccessRole())) { schoolNotice('目前帳號只有查閱家長留言的權限。'); return; }
+      const txt = await schoolPrompt('回覆：');
       if (txt === null || !txt.trim()) return;
       try {
         const { error } = await db.from('parent_messages').update({ reply_content: txt.trim(), reply_time: new Date().toISOString() }).eq('id', id);
         if (error) throw error;
         await loadMessages();
-        alert('✅ 家長留言已回覆。');
+        schoolNotice('✅ 家長留言已回覆。');
       } catch (error) {
-        alert(`回覆家長留言失敗：${error?.message || '未知錯誤'}`);
+        schoolNotice(`回覆家長留言失敗：${error?.message || '未知錯誤'}`);
       }
     }
 
@@ -2738,7 +2756,7 @@
       invalidateCsvPreview(); parsedCsvSource = '';
       const raw = document.getElementById('csv-raw-textarea').value;
       try { const parsed = parseDelimitedText(raw); parsedCsvHeaders = parsed.headers; parsedCsvRows = parsed.rows; parsedCsvSource = raw; }
-      catch (error) { document.getElementById('csv-mapping-section').classList.add('hidden'); alert(error.message); return; }
+      catch (error) { document.getElementById('csv-mapping-section').classList.add('hidden'); schoolNotice(error.message); return; }
       document.getElementById('csv-mapping-section').classList.remove('hidden');
       document.getElementById('csv-preview-count').textContent = `共解析出 ${parsedCsvRows.length} 筆資料 (偵測到 ${parsedCsvHeaders.length} 個欄位)`;
       
@@ -2817,7 +2835,7 @@
     }
     async function previewCsvImport() {
       if (csvImportBusy) return;
-      if (currentUser?.role_type !== '同工') { alert('只有管理同工可以匯入資料。'); return; }
+      if (currentUser?.role_type !== '同工') { schoolNotice('只有管理同工可以匯入資料。'); return; }
       invalidateCsvPreview();
       try {
         if (!parsedCsvSource || parsedCsvSource !== document.getElementById('csv-raw-textarea').value) throw new Error('內容已變更，請先重新解析欄位。');
@@ -2829,20 +2847,20 @@
         csvImportPlan = { entries, fingerprint }; renderCsvImportPlan(entries);
         document.getElementById('csv-confirm-button').classList.toggle('hidden', entries.some(entry => entry.kind === 'error') || !entries.some(entry => ['insert','update'].includes(entry.kind)));
         document.getElementById('csv-import-review').scrollIntoView?.({block:'start'});
-      } catch (error) { alert(`無法預覽：${error?.message || '請重新嘗試'}`); }
+      } catch (error) { schoolNotice(`無法預覽：${error?.message || '請重新嘗試'}`); }
       finally { csvImportBusy = false; document.getElementById('csv-preview-button').disabled = false; }
     }
     async function executeCsvImport() {
       if (csvImportBusy) return;
-      if (currentUser?.role_type !== '同工') { alert('只有管理同工可以匯入資料。'); return; }
+      if (currentUser?.role_type !== '同工') { schoolNotice('只有管理同工可以匯入資料。'); return; }
       let plan;
       try {
         plan = csvImportPlan;
         if (!plan || parsedCsvSource !== document.getElementById('csv-raw-textarea').value || plan.fingerprint !== csvPlanFingerprint(getCsvMapping())) throw new Error('請重新預覽，再確認匯入。');
         if (plan.entries.some(entry => entry.kind === 'error')) throw new Error('請先修正資料再重新預覽。');
-      } catch (error) { alert(error.message); return; }
+      } catch (error) { schoolNotice(error.message); return; }
       const changes = plan.entries.filter(entry => ['insert','update'].includes(entry.kind));
-      if (!changes.length || !confirm(`確認匯入 ${changes.length} 筆變更？未對應與留白欄位會保留，既有人員點數不會覆寫。`)) return;
+      if (!changes.length || !await schoolConfirm(`確認匯入 ${changes.length} 筆變更？未對應與留白欄位會保留，既有人員點數不會覆寫。`)) return;
       csvImportBusy = true; document.getElementById('csv-confirm-button').disabled = true; document.getElementById('csv-preview-button').disabled = true;
       let success = 0; const failures = [];
       try {
@@ -2859,9 +2877,10 @@
           document.getElementById('csv-confirm-button').textContent = `已處理 ${Math.min(offset+100,changes.length)} / ${changes.length} 筆`;
         }
         const message = `完成 ${success} 筆；失敗 ${failures.length} 筆。${failures.length ? '請查看失敗清單，再重新預覽；已成功的資料會重新比對。' : '可前往名冊確認。'}`;
-        renderCsvImportPlan(failures.length ? failures : plan.entries, message); alert(message);
+        if (!failures.length) schoolClearDraft('tab-import');
+        renderCsvImportPlan(failures.length ? failures : plan.entries, message); schoolNotice(message);
         allUsers = []; csvImportPlan = null; document.getElementById('csv-confirm-button').classList.add('hidden');
-      } catch (error) { alert(`匯入結果尚未確認：${error.message}。請按確認重試同一批，系統會比對已儲存結果。`); }
+      } catch (error) { schoolNotice(`匯入結果尚未確認：${error.message}。請按確認重試同一批，系統會比對已儲存結果。`); }
       finally { document.getElementById('csv-confirm-button').textContent = '確認匯入'; csvImportBusy = false; document.getElementById('csv-confirm-button').disabled = false; document.getElementById('csv-preview-button').disabled = false; }
     }
 
@@ -2887,7 +2906,7 @@
       localStorage.removeItem('mplus_mschool_session'); localStorage.removeItem('mplus_current_user');
       updateAuthUI(); switchTab('checkin');
       try { await flushSchoolLogout(); }
-      catch { alert('已離開課輔。連線中斷，伺服器登出尚未完成；請恢復網路後重新開啟課輔，系統會再次完成登出。'); }
+      catch { schoolNotice('已離開課輔。連線中斷，伺服器登出尚未完成；請恢復網路後重新開啟課輔，系統會再次完成登出。'); }
     }
     async function openStaffAccess() {
       const id = document.getElementById('form-id').value;
@@ -2906,14 +2925,14 @@
         document.getElementById('staff-access-role').value = link?.role_type || person.role_type;
         document.getElementById('staff-access-active').checked = link?.is_active || false;
         document.getElementById('modal-staff-access').classList.remove('hidden');
-      } catch (failure) { alert(`無法載入登入權限：${failure.message}`); }
+      } catch (failure) { schoolNotice(`無法載入登入權限：${failure.message}`); }
     }
     function closeStaffAccess() { document.getElementById('modal-staff-access').classList.add('hidden'); }
     async function saveStaffAccess(event) {
       event.preventDefault();
       const button = document.getElementById('staff-access-save'), error = document.getElementById('staff-access-error');
       if (button.disabled) return;
-      if (!confirm('確定更新這位同工的登入權限？舊登入將失效。')) return;
+      if (!await schoolConfirm('確定更新這位同工的登入權限？舊登入將失效。')) return;
       button.disabled = true; button.textContent = '儲存中…'; error.textContent = '';
       try {
         await callMschoolApi('/staff-access', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
@@ -2922,18 +2941,19 @@
           role_type: document.getElementById('staff-access-role').value,
           is_active: document.getElementById('staff-access-active').checked
         }) });
-        closeStaffAccess(); closeUserModal(); await loadUsers(); alert('登入權限已更新，請同工重新由教會 OS 進入課輔。');
+        schoolClearDraft('modal-staff-access'); schoolClearDraft('modal-user'); closeStaffAccess(); closeUserModal(); await loadUsers(); schoolNotice('登入權限已更新，請同工重新由教會 OS 進入課輔。');
       } catch (failure) { error.textContent = failure.message; }
       finally { button.disabled = false; button.textContent = '儲存權限'; }
     }
     function updateAuthUI() {
+      window.SchoolUI?.sync(currentUser);
       document.getElementById('roster-add-button')?.classList.toggle('hidden', !['同工','老師'].includes(currentUser?.role_type));
       document.getElementById('roster-print-button')?.classList.toggle('hidden', currentUser?.role_type !== '同工');
       document.getElementById('kiosk-manage-button')?.classList.toggle('hidden', currentUser?.role_type !== '同工');
       const printNav = document.getElementById('nav-print'), importNav = document.getElementById('nav-import'), dock = document.getElementById('mobile-bottom-dock');
       if (currentUser) {
         document.getElementById('auth-logged').classList.remove('hidden'); document.getElementById('auth-logged').classList.add('flex');
-        document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`;
+        document.getElementById('logged-user-tag').textContent = `${currentUser.name}`;
         if (currentUser.role_type === '同工') { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
         if (dock) { dock.classList.remove('hidden'); dock.classList.add('flex'); }
       } else {
@@ -2942,6 +2962,13 @@
         if (dock) { dock.classList.add('hidden'); dock.classList.remove('flex'); }
       }
     }
+
+    window.schoolInterface = {
+      state: () => ({user: currentUser, rollCallDate: rollCallLoadedDate, busy: userSaving || scheduleSaving || rollCallSaving || csvImportBusy || kioskDeviceBusy}),
+      reloadRollCall: async (day) => { document.getElementById('rollcall-date-picker').value=day; return loadRollCallsForDate(); },
+      navigate: (tab) => tab === 'print-center' ? requireStaffPrintTab() : tab === 'import' ? requireImportTab() : requireTab(tab),
+      roster: (scope) => { document.getElementById('user-role-scope').value = scope; document.getElementById('user-status-filter').value = scope === 'staff' ? '全部' : '在班'; requireTab('students'); },
+    };
 
     document.addEventListener('DOMContentLoaded', async () => {
       try { await flushSchoolLogout(); } catch { /* Retry on the next visit; never restore a pending logout token. */ }
