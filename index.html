@@ -208,12 +208,7 @@
         </div>
 
         <div class="flex items-center space-x-1.5 shrink-0 ml-2">
-          <a class="os-home-link" href="https://mscos.mchurch.online/admin-dashboard.html?church=M%2B" aria-label="返回教會 OS"><i class="fa-solid fa-house"></i><span>教會 OS</span></a>
-          <div id="auth-unlogged">
-            <button onclick="openLoginModal()" class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-xs flex items-center space-x-1 active:scale-95 transition">
-              <i class="fa-solid fa-user-shield text-[10px]"></i><span>同工登入</span>
-            </button>
-          </div>
+          <a class="os-home-link" href="https://mscos.mchurch.online/admin-dashboard.html?church=M%2B" aria-label="前往教會 OS"><i class="fa-solid fa-house"></i><span>教會 OS</span></a>
           <div id="auth-logged" class="hidden items-center space-x-1.5">
             <div class="flex items-center space-x-1 bg-white/10 px-2 py-1 rounded-xl border border-white/10">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -2743,13 +2738,11 @@
       const faceBackfillButton = document.getElementById('face-backfill-button');
       if (faceBackfillButton) faceBackfillButton.classList.toggle('hidden', currentUser?.role_type !== '同工');
       if (currentUser) {
-        document.getElementById('auth-unlogged').classList.add('hidden');
         document.getElementById('auth-logged').classList.remove('hidden'); document.getElementById('auth-logged').classList.add('flex');
         document.getElementById('logged-user-tag').textContent = `👤 ${currentUser.name}`;
         if (currentUser.role_type === '同工') { printNav.classList.remove('hidden'); importNav.classList.remove('hidden'); } else { printNav.classList.add('hidden'); importNav.classList.add('hidden'); }
         if (dock) { dock.classList.remove('hidden'); dock.classList.add('flex'); }
       } else {
-        document.getElementById('auth-unlogged').classList.remove('hidden');
         document.getElementById('auth-logged').classList.add('hidden'); document.getElementById('auth-logged').classList.remove('flex');
         printNav.classList.add('hidden'); importNav.classList.add('hidden');
         if (dock) { dock.classList.add('hidden'); dock.classList.remove('flex'); }
