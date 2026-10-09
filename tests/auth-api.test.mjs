@@ -6,10 +6,10 @@ import {stripTypeScriptTypes} from 'node:module';
 import {webcrypto} from 'node:crypto';
 const source=await readFile(new URL('../supabase/functions/mschool-api/index.ts',import.meta.url),'utf8');
 const js=stripTypeScriptTypes(source.replace(/^import .*;\n/m,''),{mode:'strip'});
-function harness({role='同工',active=true,verify=true,mutationError=null,upstreamStatus=200}={}){
+function harness({role='同工',active=true,verify=true,mutationError=null,upstreamStatus=200,stationRpc=null}={}){
  let handler; const calls=[],upstream=[]; const token='a'.repeat(64);
  const db={schema(){return this;},auth:{getUser:async()=>({data:{user:verify?{id:'11111111-1111-4111-8111-111111111111'}:null},error:verify?null:{message:'invalid'}})},
-  rpc:async(name,payload)=>{calls.push({name,payload});
+  rpc:async(name,payload)=>{calls.push({name,payload});if(stationRpc&&name.startsWith('school_station_'))return {data:await stationRpc(name,payload),error:null};
    if(name==='school_resolve_session')return {data:active?{id:'M-QA',role_type:role,status:'在班'}:null,error:null};
    if(name==='school_issue_session')return {data:active?{id:'M-QA',role_type:role}:null,error:null};
    if(name==='school_mutate_users')return {data:[{id:'S-QA',name:'Synthetic Student'}],error:mutationError};
@@ -67,3 +67,19 @@ test('flat selects cannot embed private authentication relationships',async()=>{
 test('single-row mutation responses preserve Supabase maybeSingle behavior',async()=>{const r=await harness().request('/','PATCH',{name:'Synthetic'},'/users?id=eq.S-QA&select=id',{accept:'application/vnd.pgrst.object+json'});assert.equal(r.status,200);assert.equal((await r.json()).id,'S-QA')});
 
 test('empty successful REST deletes retain HTTP 204 without throwing',async()=>{assert.equal((await harness({upstreamStatus:204}).request('/','DELETE',undefined,'/schedules?id=eq.1')).status,204)});
+
+ test('station tokens never authorize general school management or provisioning',async()=>{
+ const h=harness({active:false});assert.equal((await h.request('/','GET',undefined,'/users',{'x-mschool-session':'','x-enrollment-session':'b'.repeat(64)})).status,401);
+ assert.equal((await h.request('/workstation/devices','POST',{label:'Synthetic',is_active:true,password:'SyntheticPass12'})).status,403);
+ assert.equal((await harness({role:'老師'}).request('/workstation/devices','POST',{label:'Synthetic',is_active:true,password:'SyntheticPass12'})).status,403);
+ for(const table of ['enrollment_devices','enrollment_sessions','enrollment_audit'])assert.equal((await harness().request('/','GET',undefined,'/'+table)).status,403);
+ });
+ test('station login verifies PBKDF2 password before issuing a token and honors rate limits',async()=>{
+ const salt='c'.repeat(32),password='SyntheticPass12';const key=await webcrypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+ const hash=Buffer.from(await webcrypto.subtle.deriveBits({name:'PBKDF2',salt:Buffer.from(salt,'hex'),iterations:600000,hash:'SHA-256'},key,256)).toString('hex');
+ const stationRpc=async name=>name==='school_station_login_prepare'?{version:1,credential:{salt,hash,iterations:600000}}:{device_id:'Synthetic',label:'Station'};
+ const h=harness({stationRpc});const body={device_token:'c'.repeat(64),password};assert.equal((await h.request('/workstation/login','POST',body)).status,200);assert.ok(h.calls.some(c=>c.name==='school_station_login_finish'));
+ const wrong=harness({stationRpc});assert.equal((await wrong.request('/workstation/login','POST',{...body,password:'incorrect'})).status,401);assert.ok(!wrong.calls.some(c=>c.name==='school_station_login_finish'));
+ const blocked=harness({stationRpc:async()=>({blocked:true})});assert.equal((await blocked.request('/workstation/login','POST',body)).status,429);
+ });
+ test('station session must be current for uploads and student requests',async()=>{const h=harness({stationRpc:async()=>null});assert.equal((await h.request('/workstation/students','GET',undefined,undefined,{'x-enrollment-session':'b'.repeat(64)})).status,401);assert.equal((await h.request('/workstation/students','GET')).status,401);});

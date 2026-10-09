@@ -1,6 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-const cors={"access-control-allow-origin":"*","access-control-allow-headers":"authorization,apikey,content-type,x-mschool-session,x-proxy-path,x-file-name,prefer,range,x-client-info,accept-profile,content-profile","access-control-allow-methods":"GET,HEAD,POST,PATCH,DELETE,OPTIONS","access-control-expose-headers":"content-range,range-unit,preference-applied","cache-control":"no-store","content-type":"application/json; charset=utf-8"};
+const cors={"access-control-allow-origin":"*","access-control-allow-headers":"authorization,apikey,content-type,x-mschool-session,x-enrollment-session,x-proxy-path,x-file-name,prefer,range,x-client-info,accept-profile,content-profile","access-control-allow-methods":"GET,HEAD,POST,PATCH,DELETE,OPTIONS","access-control-expose-headers":"content-range,range-unit,preference-applied","cache-control":"no-store","content-type":"application/json; charset=utf-8"};
 const allowed=new Set(["users","students","system_settings","staff_members","courses","student_course_enrollments","rollcall_logs","counseling_records","elective_courses","check_in_logs","schedules","points_logs","roll_calls","counseling_logs","parent_messages","line_bindings"]);
 const encoder=new TextEncoder();
 const FACE_MATCH_MAX_DISTANCE=0.25; // Existing production distance threshold.
@@ -15,11 +15,86 @@ function authSessionId(bearer:string) {
   return typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)?value:null;
  } catch { return null; }
 }
+async function stationPassword(password:string,salt:string) {
+ const material=await crypto.subtle.importKey("raw",encoder.encode(password),"PBKDF2",false,["deriveBits"]);
+ const bytes=Uint8Array.from(salt.match(/../g)!.map(v=>parseInt(v,16)));
+ const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes,iterations:600000,hash:"SHA-256"},material,256);
+ return Array.from(new Uint8Array(bits)).map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+function sameHash(a:string,b:string){let difference=a.length^b.length;for(let i=0;i<64;i++)difference|=(a.charCodeAt(i)||0)^(b.charCodeAt(i)||0);return difference===0;}
+async function workstationRequest(req:Request,db:any,u:URL):Promise<Response|null>{
+ const route=u.pathname.split("/workstation/")[1];if(!route)return null;
+ const rpc=async(name:string,args:any)=>{const r=await db.rpc(name,args);if(r.error)throw r.error;return r.data;};
+ const hashToken=async(value:string|null)=>value&&/^[a-f0-9]{64}$/.test(value)?await sha256(value):null;
+ if(route==="devices"){
+  const actor=await hashToken(req.headers.get("x-mschool-session"));
+  if(!actor)return json({error:"請先由教會 OS 登入管理同工帳號"},401);
+  try{
+   if(req.method==="GET")return json(await rpc("school_station_devices",{p_actor:actor}));
+   if(req.method!=="POST")return json({error:"method not allowed"},405);
+   const manager=await rpc("school_resolve_session",{p_hash:actor});
+   if(manager?.role_type!=="同工")return json({error:"此功能限管理同工使用"},403);
+   const b=await req.json();
+   if(typeof b.label!=="string"||typeof b.is_active!=="boolean")return json({error:"請填寫設備名稱"},400);
+   let credential=null;
+   if(b.password!==undefined){
+    if(typeof b.password!=="string"||b.password.length<12||b.password.length>128)return json({error:"專用密碼請設定 12 至 128 個字元，不使用手機號碼。"},400);
+    const salt=token().slice(0,32);credential={salt,iterations:600000,hash:await stationPassword(b.password,salt)};
+   }
+   const pairing=b.id?null:token();
+   const device=await rpc("school_station_manage",{p_actor:actor,p_id:b.id||null,p_label:b.label,p_enabled:b.is_active,p_pair_hash:pairing?await sha256(pairing):null,p_credential:credential});
+   return json({device,...(pairing?{device_token:pairing}:{})});
+  }catch(error){return json({error:"無法設定設備，請確認管理權限與密碼。"},(error as any)?.code==="42501"?403:400);}
+ }
+ if(route==="login"){
+  if(req.method!=="POST")return json({error:"method not allowed"},405);
+  const b=await req.json(),pairHash=await hashToken(b.device_token);
+  if(!pairHash||typeof b.password!=="string"||b.password.length>128)return json({error:"設備未啟用或密碼不正確"},401);
+  const challenge=await rpc("school_station_login_prepare",{p_pair_hash:pairHash});
+  if(challenge?.blocked)return json({error:"密碼嘗試次數過多，請 15 分鐘後再試，或請管理員重設。"},429);
+  if(!challenge?.credential)return json({error:"設備未啟用或已停用，請聯絡管理同工。"},401);
+  const actual=await stationPassword(b.password,challenge.credential.salt);
+  if(!sameHash(actual,challenge.credential.hash))return json({error:"設備未啟用或密碼不正確"},401);
+  const session=token();
+  const station=await rpc("school_station_login_finish",{p_pair_hash:pairHash,p_version:challenge.version,p_session_hash:await sha256(session)});
+  if(!station)return json({error:"設備已停用，請聯絡管理同工。"},401);
+  return json({station,session});
+ }
+ const hash=await hashToken(req.headers.get("x-enrollment-session"));
+ if(route==="logout"){
+  if(req.method!=="POST")return json({error:"method not allowed"},405);
+  if(hash)await rpc("school_station_logout",{p_hash:hash});return json({ok:true});
+ }
+ if(!hash)return json({error:"請輸入建檔密碼"},401);
+ const station=await rpc("school_station_session",{p_hash:hash});
+ if(!station)return json({error:"建檔已鎖定，請重新輸入密碼"},401);
+ if(route==="session"&&req.method==="POST")return json({station});
+ if(route==="students"&&req.method==="GET"){
+  const students=await rpc("school_station_students",{p_hash:hash,p_search:u.searchParams.get("search")||""});
+  for(const row of students){if(row.avatar_url?.startsWith("mschool-avatar://")){const r=await db.storage.from("mschool-avatars").createSignedUrl(row.avatar_url.slice(17),900);row.avatar_url=r.data?.signedUrl||null;}}
+  return json(students);
+ }
+ if(route==="upload"&&req.method==="POST"){
+  const mime=req.headers.get("content-type")||"",ext=({"image/jpeg":"jpg","image/png":"png","image/webp":"webp"} as any)[mime];
+  if(!ext)return json({error:"請使用 JPEG、PNG 或 WebP 照片"},400);
+  const bytes=new Uint8Array(await req.arrayBuffer());if(!bytes.length||bytes.length>4*1024*1024)return json({error:"照片不可超過 4MB"},400);
+  const path=`enrollment/${station.device_id}/${token()}.${ext}`;
+  const r=await db.storage.from("mschool-avatars").upload(path,bytes,{contentType:mime,upsert:false});if(r.error)throw r.error;
+  return json({storageRef:"mschool-avatar://"+path});
+ }
+ if(route==="students"&&req.method==="POST"){
+  const body=await req.json();
+  try{return json(await rpc("school_station_save",{p_hash:hash,p_payload:body}));}
+  catch(error){return json({error:"建檔未儲存。請確認學生姓名、照片與人臉資料，再試一次。"},(error as any)?.code==="42501"?403:400);}
+ }
+ return json({error:"此建檔帳號沒有這項功能"},403);
+}
 Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
  const base=Deno.env.get("SUPABASE_URL")!,key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
  const db=createClient(base,key,{auth:{persistSession:false}}),school=db.schema("mschool"),u=new URL(req.url);
  try{
+  const workstation=await workstationRequest(req,db,u);if(workstation)return workstation;
   if(u.pathname.endsWith("/church-login")){
    if(req.method!=="POST")return json({error:"method not allowed"},405);
    const bearer=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
