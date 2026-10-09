@@ -10,7 +10,7 @@ test('browser uses the unified school API and no longer names the retired projec
   assert.doesNotMatch(index, /othgvewffvkkafbezejy/u);
   assert.doesNotMatch(index, /callMschoolApi\(['"]\/manual-login['"]/u);
   assert.match(index, /mscos\.mchurch\.online\/admin-dashboard\.html/u);
-  assert.match(index, /callMschoolApi\(['"]\/kiosk\/check-in['"]/u);
+  assert.match(index, /postFlow\(['"]\/kiosk\/check-in['"]/u);
 });
 
 test('avatar uploads use the authenticated private media endpoint', () => {

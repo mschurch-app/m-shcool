@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
 import test from 'node:test';
 
-const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const html = await readFile(new URL('../'+(process.env.MSCHOOL_FRONTEND_FILE||'index.html'), import.meta.url), 'utf8');
 const appMarker = html.indexOf('const SUPABASE_URL');
 const appScriptStart = html.lastIndexOf('<script', appMarker);
 const appScriptEnd = html.indexOf('</script>', appMarker);
@@ -97,6 +98,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
 
   const db = { from: (table) => new Query(table), storage: { from: () => ({}) } };
   const context = vm.createContext({
+    crypto: webcrypto,
     supabase: { createClient: () => db },
     document: {
       getElementById: getElement,
@@ -116,6 +118,43 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
       const url = String(input);
       const response = (status, body) => Promise.resolve({ ok: status >= 200 && status < 300, status, json: async () => body });
       if (url.includes('/attendance/workhours?')) return failures.workhours ? response(503, {error:'Synthetic workhours unavailable'}) : response(200, actualAttendance);
+      const path=new URL(url).pathname, request=JSON.parse(String(options.body||'{}'));
+      if(url.includes('/rollcalls?')) {
+        queries.push({table:'roll_calls',filters:[]});
+        if(failures['roll_calls.select'])return response(503,{error:failures['roll_calls.select']});
+        return response(200,{records:rollCallRows,revision:'0'});
+      }
+      if(path.endsWith('/rollcalls')) {
+        if(failures['roll_calls.upsert'])return response(400,{error:failures['roll_calls.upsert']});
+        writes.push({table:'roll_calls',method:'atomic-save',payload:request.rows,revision:request.revision,request_id:request.request_id});
+        for(const row of request.rows){const existing=rollCallRows.find(r=>r.student_id===row.student_id&&String(r.class_date||r.created_at).slice(0,10)===request.day);
+          if(existing)Object.assign(existing,row,{class_date:request.day});else rollCallRows.push({...row,id:Math.max(0,...rollCallRows.map(r=>Number(r.id)))+1,class_date:request.day,created_at:request.day+'T16:00:00Z'});}
+        return response(200,{ok:true,revision:'1'});
+      }
+      if(path.endsWith('/schedules/preview'))return response(200,{ok:!failures.schedule_conflict,count:request.method==='DELETE'?1:request.rows.length,conflicts:failures.schedule_conflict?[{existing_date:'2026-10-12',shift:'16:00-18:00'}]:[]});
+      if(path.endsWith('/schedules/save')) {
+        const method={POST:'insert',PATCH:'update',DELETE:'delete'}[request.method];
+        if(failures['schedules.'+method])return response(400,{error:failures['schedules.'+method]});
+        writes.push({table:'schedules',method,payload:method==='update'?request.rows[0]:request.rows});
+        if(method==='insert')for(const row of request.rows)scheduleRows.push({...row,id:Math.max(0,...scheduleRows.map(r=>Number(r.id)))+1});
+        else if(method==='update')Object.assign(scheduleRows.find(r=>String(r.id)===String(request.id)),request.rows[0]);
+        else {const i=scheduleRows.findIndex(r=>String(r.id)===String(request.id));if(i>=0)scheduleRows.splice(i,1);}
+        return response(200,{ok:true});
+      }
+      if(path.endsWith('/points/adjust')) {
+        if(failures['users.update'])return response(400,{error:failures['users.update']});
+        const target=users.find(r=>r.id===request.id);target.points=(target.points||0)+request.delta;
+        writes.push({table:'points',method:'adjust',payload:request});return response(200,{balance:target.points});
+      }
+      if(path.endsWith('/imports')) {
+        const results=[];
+        for(const row of request.rows){const method=row.kind==='insert'?'insert':'update',error=failures['users.'+method];
+          if(error){results.push({row:row.row,id:row.id,ok:false,error});continue;}
+          writes.push({table:'users',method,payload:method==='insert'?[row.payload]:row.payload});
+          if(method==='insert')users.push({...row.payload});else Object.assign(users.find(r=>r.id===row.id),row.payload);
+          results.push({row:row.row,id:row.id,ok:true});}
+        return response(200,{results,success:results.filter(r=>r.ok).length});
+      }
       if (url.endsWith('/kiosk/check-in')) {
         const request = JSON.parse(String(options.body || '{}'));
         const target = users.find((entry) => String(entry.id) === String(request.id));
@@ -146,7 +185,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
     clearTimeout() {},
     alert(message) { alerts.push(message); },
     confirm: () => true,
-    prompt: () => null,
+    prompt: () => 'Synthetic reason',
   });
   context.window.fetch = context.fetch;
   context.Request = class Request {};
@@ -380,7 +419,7 @@ test('new person forms generate the next Taipei-year role ID and insert without 
   assert.equal(insert.payload[0].id, `${currentYear}S0008`);
   assert.equal(insert.payload[0].role_type, '學生');
   assert.equal(JSON.stringify(insert.payload[0].face_descriptor), JSON.stringify(syntheticDescriptor));
-  assert.equal(writes.some((write) => write.table === 'users' && write.method === 'upsert'), false);
+  assert.equal(writes.some((write) => write.table === 'users' && write.method === 'atomic-save'), false);
 });
 
 test('invalid face descriptor is rejected without writing a person record', async () => {
@@ -466,6 +505,7 @@ test('roster delete and point update failures are reported without claiming succ
 
   const updateHarness = createHarness({ users: [{ ...person }], failures: { 'users.update': 'mock point update denied' } });
   await vm.runInContext("allUsers = [{ id: 'S-QA-001', name: 'Synthetic Student', points: 2 }]", updateHarness.context);
+  vm.runInContext("currentUser={id:'M-QA',role_type:'同工'}",updateHarness.context);
   await vm.runInContext("changePoints('S-QA-001', 1)", updateHarness.context);
   assert.match(updateHarness.alerts.at(-1), /mock point update denied/u);
 });
@@ -584,8 +624,8 @@ test('saving the same roll call day twice updates its rows without duplicates', 
   assert.equal(rollCallRows.length, 1);
   assert.equal(rollCallRows[0].id, firstId);
   assert.equal(rollCallRows[0].attendance_status, '出席');
-  assert.equal(writes.filter(write => write.table === 'roll_calls' && write.method === 'upsert').length, 2);
-  assert.equal(writes[0].options.onConflict, 'id');
+  assert.equal(writes.filter(write => write.table === 'roll_calls' && write.method === 'atomic-save').length, 2);
+  assert.equal(writes[0].revision, '0'); assert.match(writes[0].request_id, /^[0-9a-f-]{36}$/);
 });
 
 test('failed roll call writes report failure without claiming success', async () => {
@@ -612,7 +652,7 @@ test('part-time staff can view roll call but cannot edit or save it', async () =
   assert.match(elements.get('rollcall-table-body').innerHTML, /<select disabled/u);
   assert.equal(elements.get('rollcall-save').classList.contains('hidden'), true);
   await vm.runInContext('saveRollCallSheet()', context);
-  assert.equal(writes.some(write => write.table === 'roll_calls' && write.method === 'upsert'), false);
+  assert.equal(writes.some(write => write.table === 'roll_calls' && write.method === 'atomic-save'), false);
   assert.match(alerts.at(-1), /查看點名紀錄的權限/u);
 });
 
@@ -861,3 +901,52 @@ test('monthly roll call keeps legacy course history and does not silently render
  const denied=createHarness({failures:{'roll_calls.select':'Synthetic read failed'}});denied.context.document.getElementById('print-report-type').value='month_rollcall';denied.context.document.getElementById('print-month-filter').value='2026-10';
  await vm.runInContext('renderSelectedReport()',denied.context);assert.match(denied.elements.get('print-paper-content').innerHTML,/載入失敗/);assert.doesNotMatch(denied.elements.get('print-paper-content').innerHTML,/0%/);
 });
+
+test('late face and photo camera permissions are stopped after cancellation',async()=>{
+ for(const [start,stop,generation] of [['startFaceRecognition','stopFaceRecognition','faceGeneration'],['startCameraSnapForFace','stopCameraSnap','snapGeneration']]){
+  const h=createHarness();let resolve,stopped=0;const pending=new Promise(r=>resolve=r);
+  h.context.navigator={mediaDevices:{getUserMedia:()=>pending}};
+  vm.runInContext('isFaceModelsLoaded=true',h.context);
+  const task=vm.runInContext(start+'()',h.context);await new Promise(r=>setImmediate(r));
+  vm.runInContext(stop+'()',h.context);resolve({getTracks:()=>[{stop(){stopped++;}}]});await task;
+  assert.equal(stopped,1,start);assert.equal(vm.runInContext(start==='startFaceRecognition'?'faceStream':'snapStream',h.context),null);
+ }
+});
+test('model failure never opens the face camera and restores the start button',async()=>{
+ const h=createHarness();let calls=0;h.context.navigator={mediaDevices:{getUserMedia(){calls++;throw new Error('must not open');}}};
+ h.context.faceapi={nets:{tinyFaceDetector:{loadFromUri:()=>Promise.reject(new Error('offline'))},faceLandmark68TinyNet:{loadFromUri:()=>Promise.resolve()},faceRecognitionNet:{loadFromUri:()=>Promise.resolve()}}};
+ await vm.runInContext('startFaceRecognition()',h.context);assert.equal(calls,0);assert.equal(vm.runInContext('faceStarting',h.context),false);assert.match(h.alerts.at(-1),/模型載入失敗/);
+});
+test('stale profile form omits points and read-only roster hides every write action',async()=>{
+ const h=createHarness({users:[{id:'S-QA',name:'<img onerror="bad()">',role_type:'學生',points:8,status:'在班',avatar_url:'javascript:bad()'}]});
+ vm.runInContext("currentUser={id:'M-QA',role_type:'同工'}",h.context);await vm.runInContext('loadUsers();',h.context);await vm.runInContext("openUserModal('edit','S-QA')",h.context);
+ assert.equal(h.elements.get('form-points').readOnly,true);h.elements.get('form-points').value=0;await vm.runInContext('handleUserSubmit({preventDefault(){}})',h.context);
+ assert.equal(Object.hasOwn(h.writes.find(w=>w.table==='users').payload,'points'),false);
+ vm.runInContext("currentUser={id:'P-QA',role_type:'工讀生'};renderUsers(allUsers)",h.context);
+ for(const id of ['students-table','students-cards-mobile']){const html=h.elements.get(id).innerHTML;assert.doesNotMatch(html,/onclick="(?:openUserModal|changePoints|deleteUser)/);assert.doesNotMatch(html,/<img onerror|javascript:bad/);assert.match(html,/&lt;img/);assert.match(html,/點數紀錄/);}
+});
+test('schedule conflicts stop before confirmation or mutation and preserve the entered form',async()=>{
+ const h=createHarness({failures:{schedule_conflict:true}});vm.runInContext("currentUser={id:'M-QA',role_type:'同工'};staffList=[{id:'P-QA',name:'Worker',role_type:'工讀生'}]",h.context);
+ for(const [id,value]of [['sch-date','2026-10-12'],['sch-worker-select','P-QA'],['sch-start-time','16:00'],['sch-end-time','18:00'],['sch-hours-val','2'],['sch-job','Keep']])h.context.document.getElementById(id).value=value;
+ await vm.runInContext('handleScheduleSubmit({preventDefault(){}})',h.context);assert.equal(h.writes.length,0);assert.equal(h.elements.get('sch-job').value,'Keep');assert.equal(vm.runInContext('scheduleSaving',h.context),false);assert.match(h.alerts.at(-1),/重疊/);
+});
+test('uncertain rollcall retries reuse the same operation ID; confirmed failure preserves the draft',async()=>{
+ const h=createHarness({users:[{id:'S-QA',name:'Student',role_type:'學生',status:'在班'}]});vm.runInContext("currentUser={id:'T-QA',role_type:'老師'}",h.context);h.context.document.getElementById('rollcall-date-picker').value='2026-10-12';await vm.runInContext('loadRollCallsForDate()',h.context);
+ const requests=[];h.context.window.fetch=()=>{};
+ // nativeFetch is deliberately replaced only in the isolated VM; no real network.
+ vm.runInContext("callMschoolApi=async(path,options)=>{testRequests.push(JSON.parse(options.body));throw new Error('Synthetic uncertain response');}",Object.assign(h.context,{testRequests:requests}));
+ await vm.runInContext('saveRollCallSheet();',h.context);await vm.runInContext('saveRollCallSheet();',h.context);assert.equal(requests.length,2);assert.equal(requests[0].request_id,requests[1].request_id);assert.equal(vm.runInContext('activeRollCallList.length',h.context),1);assert.equal(h.elements.get('rollcall-save').disabled,false);
+});
+
+test('QR cancellation releases a late scanner without reactivating or clearing its replacement',async()=>{
+ const h=createHarness(),scanners=[];
+ h.context.Html5Qrcode=class{constructor(id){this.id=id;this.stopped=0;this.cleared=0;this.pending=new Promise(r=>this.resolve=r);scanners.push(this);}start(){return this.pending;}async stop(){this.stopped++;}clear(){this.cleared++;}};
+ const first=vm.runInContext('startCameraScanner()',h.context);await new Promise(r=>setImmediate(r));vm.runInContext('stopCameraScanner()',h.context);
+ const second=vm.runInContext('startCameraScanner()',h.context);await new Promise(r=>setImmediate(r));assert.equal(scanners.length,2);assert.notEqual(scanners[0].id,scanners[1].id);
+ scanners[0].resolve();await first;await new Promise(r=>setImmediate(r));assert.equal(scanners[0].stopped,1);assert.equal(scanners[1].stopped,0);assert.equal(vm.runInContext('isCameraScanning',h.context),false);
+ scanners[1].resolve();await second;assert.equal(vm.runInContext('isCameraScanning',h.context),true);
+});
+
+test('zero-wage schedules remain zero in totals and payroll reference',async()=>{const h=createHarness({schedules:[{id:1,date:'2026-10-12',worker_id:'P-QA',worker_name:'Volunteer',shift:'16:00-18:00',hours:2,hourly_wage:0}]});h.context.plans=[{id:1,date:'2026-10-12',worker_id:'P-QA',worker_name:'Volunteer',shift:'16:00-18:00',hours:2,hourly_wage:0}];vm.runInContext("rawSchedules=plans;currentCalYear=2026;currentCalMonth=10;renderActiveScheduleView()",h.context);assert.equal(h.elements.get('total-wage-badge').textContent,'$0');h.context.document.getElementById('print-report-type').value='workhours';h.context.document.getElementById('print-month-filter').value='2026-10';await vm.runInContext('renderSelectedReport()',h.context);assert.match(h.elements.get('print-paper-content').innerHTML,/\$0\/h/);assert.doesNotMatch(h.elements.get('print-paper-content').innerHTML,/\$380/);});
+
+test('missing QR library restores controls and permits retry',async()=>{const h=createHarness();await vm.runInContext('startCameraScanner()',h.context);assert.equal(vm.runInContext('qrStarting',h.context),false);assert.equal(vm.runInContext('isCameraScanning',h.context),false);assert.equal(h.elements.get('camera-scanner-container').classList.contains('hidden'),true);assert.ok(h.alerts.length);});

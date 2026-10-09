@@ -6,9 +6,9 @@ import {stripTypeScriptTypes} from 'node:module';
 import {webcrypto} from 'node:crypto';
 const source=await readFile(new URL('../supabase/functions/mschool-api/index.ts',import.meta.url),'utf8');
 const js=stripTypeScriptTypes(source.replace(/^import .*;\n/m,''),{mode:'strip'});
-function harness({role='同工',active=true,verify=true,mutationError=null,upstreamStatus=200,stationRpc=null}={}){
+function harness({role='同工',active=true,verify=true,mutationError=null,upstreamStatus=200,stationRpc=null,faceUsers=[]}={}){
  let handler; const calls=[],upstream=[]; const token='a'.repeat(64);
- const db={schema(){return this;},auth:{getUser:async()=>({data:{user:verify?{id:'11111111-1111-4111-8111-111111111111'}:null},error:verify?null:{message:'invalid'}})},
+ const db={from(table){const query={select(){return this},not(){return this},order(){return this},limit(){return this},then(resolve){return Promise.resolve({data:table==='users'?faceUsers:[],error:null}).then(resolve)}};return query;},schema(){return this;},auth:{getUser:async()=>({data:{user:verify?{id:'11111111-1111-4111-8111-111111111111'}:null},error:verify?null:{message:'invalid'}})},
   rpc:async(name,payload)=>{calls.push({name,payload});if(stationRpc&&name.startsWith('school_station_'))return {data:await stationRpc(name,payload),error:null};
    if(name==='school_resolve_session')return {data:active?{id:'M-QA',role_type:role,status:'在班'}:null,error:null};
    if(name==='school_issue_session')return {data:active?{id:'M-QA',role_type:role}:null,error:null};
@@ -19,7 +19,7 @@ function harness({role='同工',active=true,verify=true,mutationError=null,upstr
   TextEncoder,Response,Request,URL,Headers,Uint8Array,crypto:webcrypto,atob,console,
   fetch:async(url,init)=>{assert.equal(new URL(url).hostname,'isolated.invalid');upstream.push({url:String(url),...init});return new Response(upstreamStatus===204?null:'[]',{status:upstreamStatus,headers:{'content-type':'application/json'}})}
  });
- const request=(path='/',method='GET',body,proxy='/schedules',headers={})=>handler(new Request('https://isolated.invalid/mschool-api'+path,{method,headers:{'content-type':'application/json','x-mschool-session':token,'x-proxy-path':proxy,...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}));
+ const request=(path='/',method='GET',body,proxy='/counseling_logs',headers={})=>handler(new Request('https://isolated.invalid/mschool-api'+path,{method,headers:{'content-type':'application/json','x-mschool-session':token,'x-proxy-path':proxy,...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}));
  return {request,calls,upstream};
 }
 for(const [role,methods] of [['同工',['GET','POST','PATCH','DELETE']],['老師',['GET','POST','PATCH']],['工讀生',['GET']]]){
@@ -66,7 +66,7 @@ test('public kiosk distance threshold remains the production value',()=>assert.m
 test('flat selects cannot embed private authentication relationships',async()=>{for(const select of ['*,staff_access(*)','*,api_sessions(*)','x:staff_access(*)'])assert.equal((await harness().request('/','GET',undefined,'/users?select='+encodeURIComponent(select))).status,400)});
 test('single-row mutation responses preserve Supabase maybeSingle behavior',async()=>{const r=await harness().request('/','PATCH',{name:'Synthetic'},'/users?id=eq.S-QA&select=id',{accept:'application/vnd.pgrst.object+json'});assert.equal(r.status,200);assert.equal((await r.json()).id,'S-QA')});
 
-test('empty successful REST deletes retain HTTP 204 without throwing',async()=>{assert.equal((await harness({upstreamStatus:204}).request('/','DELETE',undefined,'/schedules?id=eq.1')).status,204)});
+test('empty successful generic REST deletes retain HTTP 204 without throwing',async()=>{assert.equal((await harness({upstreamStatus:204}).request('/','DELETE',undefined,'/counseling_logs?id=eq.1')).status,204)});
 
  test('station tokens never authorize general school management or provisioning',async()=>{
  const h=harness({active:false});assert.equal((await h.request('/','GET',undefined,'/users',{'x-mschool-session':'','x-enrollment-session':'b'.repeat(64)})).status,401);
@@ -90,4 +90,45 @@ test('workhours endpoint requires manager, validates month and calls a bounded s
  for(const month of ['','2026-00','2026-13','0000-09','invalid'])assert.equal((await harness().request('/attendance/workhours?month='+month)).status,400);
  assert.equal((await harness().request('/attendance/workhours?month=2026-09','POST',{})).status,405);
  const h=harness();assert.equal((await h.request('/attendance/workhours?month=2028-02')).status,200);assert.equal(h.calls.at(-1).name,'school_workhours_report');assert.equal(h.calls.at(-1).payload.p_month,'2028-02-01');assert.equal(h.upstream.length,0);
+});
+
+test('atomic daily endpoints validate method/request and stay behind a current school session',async()=>{
+ const request_id=webcrypto.randomUUID();
+ for(const [path,body,name] of [
+ ['/rollcalls',{day:'2026-10-12',rows:[],revision:'0'},'school_save_rollcall'],
+ ['/points/adjust',{id:'S-QA',delta:1,reason:'Synthetic'},'school_adjust_points'],
+ ['/schedules/save',{method:'POST',rows:[]},'school_mutate_schedules'],
+ ['/imports',{rows:[]},'school_import_rows']]){
+  assert.equal((await harness({active:false}).request(path,'POST',{...body,request_id})).status,401);
+  assert.equal((await harness().request(path,'POST',body)).status,400);
+  const h=harness();assert.equal((await h.request(path,'POST',{...body,request_id})).status,200);assert.equal(h.calls.at(-1).name,name);assert.equal(h.calls.at(-1).payload.p_request,request_id);assert.equal(h.upstream.length,0);
+ }
+ const h=harness();assert.equal((await h.request('/rollcalls?month=2028-02')).status,200);assert.equal(h.calls.at(-1).payload.p_end,'2028-02-29');
+ assert.equal((await h.request('/rollcalls?day=bad')).status,400);
+});
+test('old schedule and rollcall clients use RPCs, while ledger writes and ambiguous filters are denied',async()=>{
+ const h=harness();assert.equal((await h.request('/','POST',[{date:'2026-10-12',worker_id:'P-QA',shift:'16:00-18:00'}],'/schedules')).status,200);assert.equal(h.calls.at(-1).name,'school_mutate_schedules');
+ assert.equal((await h.request('/','POST',[{created_at:'2026-10-12T16:00Z',course_name:'課後輔導',student_id:'S-QA'}],'/roll_calls')).status,200);assert.equal(h.calls.at(-1).name,'school_save_rollcall');assert.equal(h.calls.at(-1).payload.p_revision,null);
+ for(const table of ['points_logs','check_in_logs'])assert.equal((await h.request('/','POST',{},'/'+table)).status,403);
+ assert.equal((await h.request('/','DELETE',undefined,'/schedules')).status,400);assert.equal(h.upstream.length,0);
+});
+test('kiosk punch retries carry a UUID and device gate never authorizes management',async()=>{
+ const h=harness({active:false}),request_id=webcrypto.randomUUID();const response=await h.request('/kiosk/check-in','POST',{id:'S-QA',request_id},undefined,{'x-kiosk-device':'b'.repeat(64)});assert.equal(response.status,200);
+ assert.ok(h.calls.some(c=>c.name==='school_kiosk_gate'));assert.equal(h.calls.at(-1).name,'school_kiosk_punch');assert.equal(h.calls.at(-1).payload.p_request,request_id);assert.match(h.calls.at(-1).payload.p_scope,/^[a-f0-9]{64}$/);
+ assert.equal((await h.request('/','GET',undefined,'/users',{'x-kiosk-device':'b'.repeat(64)})).status,401);
+ assert.equal((await harness({role:'老師'}).request('/kiosk/devices','POST',{action:'register',label:'Synthetic'})).status,403);
+});
+
+test('public face matching skips withdrawn/graduated/unknown people and never returns templates',async()=>{
+ const faceUsers=[{id:'S-GRAD',name:'Graduated',role_type:'學生',status:'畢業',face_descriptor:Array(128).fill(0)},
+ {id:'S-LEFT',name:'Withdrawn',role_type:'學生',status:'退班',face_descriptor:Array(128).fill(0)},
+ {id:'UNKNOWN',name:'Unknown',role_type:'unknown',status:'在班',face_descriptor:Array(128).fill(0)},
+ {id:'S-ACTIVE',name:'Synthetic Active',role_type:'學生',status:'在班',face_descriptor:Array(128).fill(.01)}];
+ const h=harness({active:false,faceUsers});let r=await h.request('/kiosk/face-match','POST',{descriptor:Array(128).fill(0)});assert.equal(r.status,200);const data=await r.json();assert.equal(data.match.id,'S-ACTIVE');assert.equal(data.match.face_descriptor,undefined);
+ r=await h.request('/kiosk/face-match','POST',{descriptor:Array(128).fill(1)});assert.equal((await r.json()).match,null);
+});
+test('face probes reject null, string, invalid length and out-of-range data before matching',async()=>{
+ for(const descriptor of [Array(127).fill(0),Array(128).fill(null),Array(128).fill('0'),Array(128).fill(11)])assert.equal((await harness({active:false}).request('/kiosk/face-match','POST',{descriptor})).status,400);
+ assert.equal((await harness().request('/kiosk/face-match')).status,405);
+ assert.equal((await harness().request('/kiosk/logs','POST',{})).status,405);
 });

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const html = await readFile(new URL('../'+(process.env.MSCHOOL_FRONTEND_FILE||'index.html'), import.meta.url), 'utf8');
 const staticIds = [...html.matchAll(/\bid="([^"$]+)"/gu)].map(match => match[1]);
 const definedFunctions = new Set([...html.matchAll(/(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gu)].map(match => match[1]));
 const browserBuiltins = new Set(['Number', 'print', 'stopPropagation']);
