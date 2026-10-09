@@ -1,3 +1,9 @@
+# Current Phase 2 checks
+
+Release-candidate results on 2026-10-09: **126/126** full offline checks, **61/61** frontend/static checks for `index2.html`, and four isolated Chrome UI scenarios (index at 320/393/1440 CSS px, index2 at 393). The browser scenarios cover real clicks for roll call, import success/failure, reasoned point adjustment/history, read-only actions, schedule conflict preservation and device pairing without auto-enforcement. These are synthetic checks, not production or physical-device acceptance.
+
+The latest daily-data contract and ordered rollout are documented in [DAILY_FLOWS.md](DAILY_FLOWS.md) and [PHASE2_RELEASE.md](PHASE2_RELEASE.md). Run `node --test` with pinned PGlite installed under `tests/`; repeat the frontend suite for `index2.html` using `MSCHOOL_FRONTEND_FILE=index2.html`. All business data and camera streams in automated checks are synthetic. Historical plans below describe earlier baselines and are not current implementation claims. Physical iPhone/Safari/camera acceptance is pending 2026-10-12.
+
 # Phase 1 test plan
 
 ## 2026-10-09：課輔登入與權限第一階段

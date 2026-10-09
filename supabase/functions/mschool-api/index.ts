@@ -1,6 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-const cors={"access-control-allow-origin":"*","access-control-allow-headers":"authorization,apikey,content-type,x-mschool-session,x-enrollment-session,x-proxy-path,x-file-name,prefer,range,x-client-info,accept-profile,content-profile","access-control-allow-methods":"GET,HEAD,POST,PATCH,DELETE,OPTIONS","access-control-expose-headers":"content-range,range-unit,preference-applied","cache-control":"no-store","content-type":"application/json; charset=utf-8"};
+const cors={"access-control-allow-origin":"*","access-control-allow-headers":"authorization,apikey,content-type,x-mschool-session,x-kiosk-device,x-request-id,x-enrollment-session,x-proxy-path,x-file-name,prefer,range,x-client-info,accept-profile,content-profile","access-control-allow-methods":"GET,HEAD,POST,PATCH,DELETE,OPTIONS","access-control-expose-headers":"content-range,range-unit,preference-applied","cache-control":"no-store","content-type":"application/json; charset=utf-8"};
 const allowed=new Set(["users","students","system_settings","staff_members","courses","student_course_enrollments","rollcall_logs","counseling_records","elective_courses","check_in_logs","schedules","points_logs","roll_calls","counseling_logs","parent_messages","line_bindings"]);
 const encoder=new TextEncoder();
 const FACE_MATCH_MAX_DISTANCE=0.25; // Existing production distance threshold.
@@ -8,6 +8,7 @@ function json(v:any,status=200,extra={}){return new Response(JSON.stringify(v),{
 async function sha256(v:string){const d=await crypto.subtle.digest("SHA-256",encoder.encode(v));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("")}
 function token(){const b=new Uint8Array(32);crypto.getRandomValues(b);return Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("")}
 const staffRoles = new Set(["同工", "老師", "工讀生"]);
+function personCanCheckin(role:string|null,status:string|null){return (!role||role==="學生")?(!status||status==="在班"):staffRoles.has(role)&&(!status||["在班","在職"].includes(status));}
 function authSessionId(bearer:string) {
  try {
   const encoded=bearer.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
@@ -156,6 +157,61 @@ Deno.serve(async(req)=>{
    if(report.error)throw report.error;return json(report.data);
   }
 
+  const route=u.pathname.split("/mschool-api")[1]||"";
+  const uuid=(value:any)=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)?value:null;
+  const flowRpc=async(name:string,args:any)=>{
+   const r=await db.rpc(name,args);if(!r.error)return json(r.data);
+   const denied=r.error.code==="42501",conflict=r.error.code==="40001"||r.error.code==="23505";
+   const messages:any={rollcall_conflict:"這天的點名已由另一位同工更新。輸入已保留，請重新載入核對後再儲存。",schedule_conflict:"時段有重疊，請重新預覽並調整。",use_points_ledger:"點數已變動，請使用點數增減功能。",invalid_points_balance:"點數不足或超出範圍。",request_payload_changed:"重試內容已變更，請重新確認。"};
+   const message=denied?"目前帳號沒有這項操作權限。":messages[r.error.message]||"資料未儲存，請確認欄位或重新載入後再試。";
+   return json({error:message,message,code:r.error.code},denied?403:conflict?409:400);
+  };
+  if(["/rollcalls","/points/adjust","/points/history","/schedules/preview","/schedules/save","/imports","/imports/history","/kiosk/devices","/students/face"].includes(route)){
+   if(!caller)return json({error:"請先由教會 OS 登入"},401);
+   if(route==="/rollcalls"&&req.method==="GET"){
+    const day=u.searchParams.get("day"),month=u.searchParams.get("month");let start="",end="",course=null;
+    if(day&&/^\d{4}-\d{2}-\d{2}$/.test(day)){start=end=day;course="課後輔導";}
+    else if(month&&/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){start=month+"-01";end=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).toISOString().slice(0,10);}
+    else return json({error:"請選擇有效日期或月份"},400);
+    return flowRpc("school_rollcall_read",{p_actor:sessionHash,p_start:start,p_end:end,p_course:course});
+   }
+   if(route==="/points/history"&&req.method==="GET")return flowRpc("school_points_history",{p_actor:sessionHash,p_student:u.searchParams.get("student_id")||""});
+   if(route==="/imports/history"&&req.method==="GET")return flowRpc("school_import_history",{p_actor:sessionHash});
+   if(route==="/kiosk/devices"){
+    if(req.method==="GET")return flowRpc("school_kiosk_manage",{p_actor:sessionHash,p_action:"list"});
+    if(req.method!=="POST")return json({error:"method not allowed"},405);
+    if(caller.role_type!=="同工")return json({error:"此功能限管理同工使用"},403);
+    const b=await req.json(),raw=b.action==="register"?token():null;
+    const r=await db.rpc("school_kiosk_manage",{p_actor:sessionHash,p_action:b.action,p_label:b.label||null,p_hash:raw?await sha256(raw):null,p_id:b.id||null,p_enforce:b.enforce??null});
+    if(r.error)return json({error:"設備設定未儲存，請確認設備名稱與管理權限。"},400);
+    return json({...r.data,...(raw?{device_token:raw}:{})});
+   }
+   if(req.method!=="POST")return json({error:"method not allowed"},405);
+   const b=await req.json(),request=uuid(b.request_id);
+   if(route!=="/schedules/preview"&&!request)return json({error:"請重新確認操作"},400);
+   if(route==="/rollcalls")return flowRpc("school_save_rollcall",{p_actor:sessionHash,p_day:b.day,p_course:"課後輔導",p_rows:b.rows,p_revision:b.revision,p_request:request});
+   if(route==="/points/adjust")return flowRpc("school_adjust_points",{p_actor:sessionHash,p_student:b.id,p_delta:b.delta,p_reason:b.reason,p_request:request});
+   if(route.startsWith("/schedules/"))return flowRpc("school_mutate_schedules",{p_actor:sessionHash,p_method:b.method,p_id:b.id||null,p_rows:b.rows||[],p_request:request,p_preview:route.endsWith("/preview")});
+   if(route==="/students/face"){
+    let avatar=b.avatar;
+    const marker="/storage/v1/object/sign/mschool-avatars/";
+    if(typeof avatar==="string"&&avatar.startsWith(base+marker))avatar="mschool-avatar://"+decodeURIComponent(avatar.slice((base+marker).length).split("?")[0]);
+    return flowRpc("school_backfill_face",{p_actor:sessionHash,p_id:b.id,p_avatar:avatar,p_status:b.status??null,p_descriptor:b.descriptor});
+   }
+   if(route==="/imports")return flowRpc("school_import_rows",{p_actor:sessionHash,p_rows:b.rows,p_request:request});
+   return json({error:"method not allowed"},405);
+  }
+  let kioskScope:string|null=null;
+  if(route.startsWith("/kiosk/")&&["check-in","face-match","logs"].includes(route.split("/").pop()||"")){
+   const device=req.headers.get("x-kiosk-device")||"",hash=/^[a-f0-9]{64}$/.test(device)?await sha256(device):null;
+   // Hash the edge-observed connection hint with the service secret; never persist raw IPs.
+   // Compatibility mode is rate control only, not proof of a trusted physical device.
+   const bucket=await sha256(key+":"+(req.headers.get("cf-connecting-ip")||req.headers.get("x-forwarded-for")||"unknown"));
+   const gate=await db.rpc("school_kiosk_gate",{p_hash:hash,p_bucket:bucket,p_route:route.split("/").pop()});
+   if(gate.error)throw gate.error;
+   kioskScope=gate.data?.trusted?hash:bucket;
+   if(!gate.data?.ok)return json({error:gate.data?.code==="device_required"?"這台設備尚未啟用簽到，請聯絡管理同工。":"操作太頻繁，請稍後再試。",code:gate.data?.code},gate.data?.code==="device_required"?403:429);
+  }
   if(u.pathname.endsWith("/session")){
    if(req.method!=="GET")return json({error:"method not allowed"},405);
    if(!caller)return json({error:"工作階段已失效"},401);
@@ -165,19 +221,20 @@ Deno.serve(async(req)=>{
    if(req.method!=="POST")return json({error:"method not allowed"},405);
    const b=await req.json(),id=String(b.id||"").trim().toUpperCase();
    if(!/^[A-Z0-9_-]{2,32}$/.test(id))return json({ok:false,code:"invalid"},400);
-   const {data,error}=await school.rpc("kiosk_checkin",{p_user_id:id});if(error)throw error;return json(data);
+   const {data,error}=await db.rpc("school_kiosk_punch",{p_scope:kioskScope,p_id:id,p_request:uuid(b.request_id)||crypto.randomUUID()});if(error)throw error;return json(data);
   }
   if(u.pathname.endsWith("/kiosk/logs")){
+   if(req.method!=="GET")return json({error:"method not allowed"},405);
    const {data,error}=await school.from("check_in_logs").select("check_time,target_id,target_name,role,action_text").order("check_time",{ascending:false}).limit(10);
    if(error)throw error;return json(data||[]);
   }
   if(u.pathname.endsWith("/kiosk/face-match")){
    if(req.method!=="POST")return json({error:"method not allowed"},405);
-   const b=await req.json(),probe=Array.isArray(b.descriptor)?b.descriptor.map(Number):[];
-   if(probe.length!==128||probe.some((x:number)=>!Number.isFinite(x)))return json({match:null},400);
-   const {data,error}=await school.from("users").select("id,name,face_descriptor").not("face_descriptor","is",null).neq("status","離職");
+   const b=await req.json(),probe=Array.isArray(b.descriptor)?b.descriptor:[];
+   if(probe.length!==128||probe.some((x:any)=>typeof x!=="number"||!Number.isFinite(x)||Math.abs(x)>10))return json({match:null},400);
+   const {data,error}=await school.from("users").select("id,name,role_type,status,face_descriptor").not("face_descriptor","is",null);
    if(error)throw error;let best:any=null,bestDistance=Infinity;
-   for(const row of data||[]){let d=row.face_descriptor;if(typeof d==="string"){try{d=JSON.parse(d)}catch{continue}}if(!Array.isArray(d)||d.length!==128)continue;let sum=0;for(let i=0;i<128;i++){const diff=probe[i]-Number(d[i]);sum+=diff*diff}const distance=Math.sqrt(sum);if(distance<bestDistance){bestDistance=distance;best=row}}
+   for(const row of data||[]){if(!personCanCheckin(row.role_type,row.status))continue;let d=row.face_descriptor;if(typeof d==="string"){try{d=JSON.parse(d)}catch{continue}}if(!Array.isArray(d)||d.length!==128||d.some((v:any)=>!Number.isFinite(Number(v))))continue;let sum=0;for(let i=0;i<128;i++){const diff=probe[i]-Number(d[i]);sum+=diff*diff}const distance=Math.sqrt(sum);if(distance<bestDistance){bestDistance=distance;best=row}}
    if(!best||bestDistance>FACE_MATCH_MAX_DISTANCE)return json({match:null});
    return json({match:{id:best.id,name:best.name,distance:bestDistance}});
   }
@@ -245,8 +302,8 @@ Deno.serve(async(req)=>{
    if(purl.searchParams.has("on_conflict")&&purl.searchParams.get("on_conflict")!=="id")return json({error:"不支援此合併方式"},400);
    const result=await db.rpc("school_mutate_users",{p_actor_hash:sessionHash,p_method:method,p_id:idFilter?.slice(3)||null,p_payload:payload,p_upsert:/(?:^|,)\s*resolution=merge-duplicates(?:,|$)/.test(req.headers.get("prefer")||"")});
    if(result.error){
-    const conflict=result.error.code==="23505",denied=result.error.code==="42501";
-    return json({code:result.error.code,error:denied?"登入角色與同工停權須由管理同工另行設定，不能透過一般人員資料修改。":conflict?"人員編號已存在":"人員資料儲存失敗，請檢查欄位後重試。",message:denied?"沒有這項修改權限":conflict?"人員編號已存在":"人員資料儲存失敗"},denied?403:conflict?409:400);
+    const conflict=["23505","40001"].includes(result.error.code),denied=result.error.code==="42501";
+    return json({code:result.error.code,error:denied?"登入角色與同工停權須由管理同工另行設定，不能透過一般人員資料修改。":conflict?(result.error.code==="40001"?"點數已變動，請重新載入，並由點數增減功能調整。":"人員編號已存在"):"人員資料儲存失敗，請檢查欄位後重試。",message:denied?"沒有這項修改權限":conflict?"人員編號已存在":"人員資料儲存失敗"},denied?403:conflict?409:400);
    }
    // Use the same signed-media response conversion below.
    let data=result.data||[];
@@ -256,6 +313,28 @@ Deno.serve(async(req)=>{
    }
    const txt=JSON.stringify(data);
    return await proxyResult(new Response(txt,{status:200,headers:{"content-type":"application/json"}}));
+  }
+  if(!["GET","HEAD"].includes(method)&&["points_logs","check_in_logs"].includes(resource))return json({error:"請使用簽到或點數調整功能；帳本不可直接改寫。"},403);
+  if(!["GET","HEAD"].includes(method)&&["roll_calls","schedules"].includes(resource)){
+   const idFilter=purl.searchParams.get("id"),params=[...purl.searchParams.keys()];
+   if(params.some(k=>!["id","select","on_conflict"].includes(k))||(idFilter&&!/^eq\.[0-9]+$/.test(idFilter)))return json({error:"請逐筆修改"},400);
+   let parsed:any;try{parsed=body?JSON.parse(body):null;}catch{return json({error:"資料格式錯誤"},400);}
+   let rows=Array.isArray(parsed)?parsed:[parsed];const request=uuid(req.headers.get("x-request-id"))||crypto.randomUUID();
+   if(resource==="roll_calls"){
+    if(!["POST","PATCH"].includes(method)||!rows.length||rows.some((x:any)=>!x))return json({error:"請使用點名儲存功能"},400);
+    if(method==="PATCH"){
+     if(!idFilter)return json({error:"請選擇紀錄"},400);
+     const old=await school.from("roll_calls").select("*").eq("id",idFilter.slice(3)).single();if(old.error)return json({error:"紀錄不存在"},409);
+     rows=[{...old.data,...rows[0]}];
+    }
+    const day=String(rows[0].class_date||rows[0].created_at||"").slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||rows.some((x:any)=>String(x.class_date||x.created_at||"").slice(0,10)!==day||x.course_name!=="課後輔導"))return json({error:"請一次儲存同一天點名"},400);
+    const r=await db.rpc("school_save_rollcall",{p_actor:sessionHash,p_day:day,p_course:"課後輔導",p_rows:rows,p_revision:null,p_request:request});
+    if(r.error)return json({error:"點名未儲存，請重新開啟頁面",message:"點名未儲存，請重新開啟頁面"},400);return json([]);
+   }
+   if(method!=="POST"&&!idFilter)return json({error:"請選擇排班"},400);
+   if(purl.searchParams.has("on_conflict"))return json({error:"請逐筆調整排班"},400);
+   return flowRpc("school_mutate_schedules",{p_actor:sessionHash,p_method:method,p_id:idFilter?.slice(3)||null,p_rows:method==="DELETE"?[]:rows,p_request:request,p_preview:false});
   }
   const r=await fetch(upstream,{method,headers:h,body});
   return await proxyResult(r);
