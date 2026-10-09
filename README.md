@@ -43,3 +43,7 @@ M+ School 是目前正式使用中的課輔行政系統。
 - `DATABASE.md` — Supabase schema, grants, RLS, Storage, and write paths
 - `TESTING.md` — offline tests and safe synthetic test plan
 - `ACCESS_RECOVERY.md` — observed access gates, backup snapshot, and recovery decisions
+
+## 到班與工時
+
+學生每日一次到班、教職及工讀生每日上／下班各一次；實際工時與排班參考分列。詳見 [打卡與實際工時規則](ATTENDANCE_RULES.md)。

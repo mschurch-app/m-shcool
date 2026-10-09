@@ -83,3 +83,11 @@ test('empty successful REST deletes retain HTTP 204 without throwing',async()=>{
  const blocked=harness({stationRpc:async()=>({blocked:true})});assert.equal((await blocked.request('/workstation/login','POST',body)).status,429);
  });
  test('station session must be current for uploads and student requests',async()=>{const h=harness({stationRpc:async()=>null});assert.equal((await h.request('/workstation/students','GET',undefined,undefined,{'x-enrollment-session':'b'.repeat(64)})).status,401);assert.equal((await h.request('/workstation/students','GET')).status,401);});
+
+test('workhours endpoint requires manager, validates month and calls a bounded server report',async()=>{
+ assert.equal((await harness({active:false}).request('/attendance/workhours?month=2026-09')).status,401);
+ for(const role of ['老師','工讀生'])assert.equal((await harness({role}).request('/attendance/workhours?month=2026-09')).status,403);
+ for(const month of ['','2026-00','2026-13','0000-09','invalid'])assert.equal((await harness().request('/attendance/workhours?month='+month)).status,400);
+ assert.equal((await harness().request('/attendance/workhours?month=2026-09','POST',{})).status,405);
+ const h=harness();assert.equal((await h.request('/attendance/workhours?month=2028-02')).status,200);assert.equal(h.calls.at(-1).name,'school_workhours_report');assert.equal(h.calls.at(-1).payload.p_month,'2028-02-01');assert.equal(h.upstream.length,0);
+});
