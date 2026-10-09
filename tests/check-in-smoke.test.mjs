@@ -10,7 +10,7 @@ const appScriptEnd = html.indexOf('</script>', appMarker);
 assert.ok(appMarker >= 0 && appScriptStart >= 0 && appScriptEnd > appMarker, 'could not locate inline application script');
 const appScript = html.slice(html.indexOf('>', appScriptStart) + 1, appScriptEnd);
 
-function createHarness({ user = null, users = user ? [user] : [], logs = [], counseling = [], schedules = [], rollCalls = [], parentMessages = [], failures = {} } = {}) {
+function createHarness({ user = null, users = user ? [user] : [], logs = [], counseling = [], schedules = [], rollCalls = [], parentMessages = [], actualAttendance = {summary: [], days: []}, failures = {} } = {}) {
   const writes = [];
   const elements = new Map();
   const storage = new Map();
@@ -115,6 +115,7 @@ function createHarness({ user = null, users = user ? [user] : [], logs = [], cou
       blockedRequests.push(String(input));
       const url = String(input);
       const response = (status, body) => Promise.resolve({ ok: status >= 200 && status < 300, status, json: async () => body });
+      if (url.includes('/attendance/workhours?')) return failures.workhours ? response(503, {error:'Synthetic workhours unavailable'}) : response(200, actualAttendance);
       if (url.endsWith('/kiosk/check-in')) {
         const request = JSON.parse(String(options.body || '{}'));
         const target = users.find((entry) => String(entry.id) === String(request.id));
@@ -770,4 +771,14 @@ test('interrupted logout cannot restore a pending token when offline', async () 
  assert.equal(storage.has('mplus_mschool_session'),false);
  assert.equal(vm.runInContext('mschoolSessionToken',context),null);
  assert.equal(storage.get('mplus_pending_logout'),'a'.repeat(64));
+});
+
+test('face presence stays claimed while visible, even after a minute, and rearms only after observed absence',()=>{const {context}=createHarness();assert.equal(vm.runInContext("claimFacePunch('P-QA')",context),true);for(const time of [1000,65000,120000]){context.testNow=time;vm.runInContext("updateFacePresence(['P-QA'],testNow)",context);assert.equal(vm.runInContext("claimFacePunch('P-QA')",context),false);}vm.runInContext('updateFacePresence([],121000);updateFacePresence([],124000)',context);assert.equal(vm.runInContext("claimFacePunch('P-QA')",context),false);vm.runInContext('updateFacePresence([],126001)',context);assert.equal(vm.runInContext("claimFacePunch('P-QA')",context),true);});
+test('actual workhours render separately from planned payroll and missing hours never display zero',async()=>{const {context,elements}=createHarness({schedules:[{date:'2026-09-10',worker_id:'P-QA',worker_name:'Synthetic',hours:7,hourly_wage:250}],actualAttendance:{summary:[{worker_id:'P-QA',name:'<b>Synthetic</b>',planned_hours:7,actual_hours:3.5,completed_days:1,pending_days:1}],days:[{day:'2026-09-10',name:'Synthetic',clock_in:'2026-09-10T01:00Z',clock_out:'2026-09-10T04:30Z',actual_hours:3.5,status:'已完成'},{day:'2026-09-11',name:'Synthetic',clock_in:'2026-09-11T01:00Z',clock_out:null,actual_hours:null,status:'待補下班卡'}]}});context.document.getElementById('print-report-type').value='workhours';context.document.getElementById('print-month-filter').value='2026-09';await vm.runInContext('renderSelectedReport()',context);const html=elements.get('print-paper-content').innerHTML;assert.match(html,/3\.50 小時/);assert.match(html,/7\.00 小時/);assert.match(html,/待補下班卡/);assert.match(html,/待確認<\/td>/);assert.match(html,/&lt;b&gt;Synthetic&lt;\/b&gt;/);assert.doesNotMatch(html,/<b>Synthetic<\/b>/);assert.match(html,/排班時數與金額參考/);});
+test('failed actual-hours query shows a retry action, never a misleading empty report',async()=>{const {context,elements}=createHarness({failures:{workhours:true}});context.document.getElementById('print-report-type').value='workhours';context.document.getElementById('print-month-filter').value='2026-09';await vm.runInContext('renderSelectedReport()',context);assert.match(elements.get('print-paper-content').innerHTML,/載入失敗/);assert.match(elements.get('print-paper-content').innerHTML,/重新載入/);assert.doesNotMatch(elements.get('print-paper-content').innerHTML,/本月無/);});
+
+test('late report queries cannot overwrite the most recently selected month',async()=>{
+ const pending=[];const thenable={then(resolve){pending.push(resolve)}};const {context,elements}=createHarness({actualAttendance:thenable});context.document.getElementById('print-report-type').value='workhours';context.document.getElementById('print-month-filter').value='2026-09';const older=vm.runInContext('renderSelectedReport()',context);await new Promise(r=>setImmediate(r));assert.equal(pending.length,1);
+ context.document.getElementById('print-month-filter').value='2026-10';const newer=vm.runInContext('renderSelectedReport()',context);await new Promise(r=>setImmediate(r));assert.equal(pending.length,2);
+ const report=name=>({days:[],summary:[{worker_id:'P-QA',name,planned_hours:2,actual_hours:1,completed_days:1,pending_days:0}]});pending[1](report('Newest month'));await newer;pending[0](report('Older month'));await older;assert.match(elements.get('print-paper-content').innerHTML,/Newest month/);assert.doesNotMatch(elements.get('print-paper-content').innerHTML,/Older month/);
 });

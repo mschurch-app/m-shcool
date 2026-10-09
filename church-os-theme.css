@@ -86,3 +86,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 
 @media print{body{background:#fff!important}}
+
+
+/* Actual workhours: readable screen tables, full-width printed reports. */
+@media screen {
+  .workhours-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; margin-block: 10px; }
+  .workhours-report table { min-width: 640px; }
+  .workhours-report table th:first-child, .workhours-report table td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; }
+  .workhours-report table th:first-child { background: #f1f5f9; }
+  .workhours-scroll:focus-visible { outline: 3px solid #147ba0; outline-offset: 3px; }
+}
+@media print {
+  .workhours-scroll { overflow: visible; }
+  .workhours-report table { min-width: 0; width: 100%; }
+}

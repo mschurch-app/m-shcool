@@ -188,7 +188,7 @@
     }
   </style>
   <link rel="stylesheet" href="church-palette.css?v=20261003-components1">
-  <link rel="stylesheet" href="church-os-theme.css?v=20261006-unified1">
+  <link rel="stylesheet" href="church-os-theme.css?v=20261009-attendance1">
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
@@ -276,6 +276,7 @@
           </div>
         </div>
 
+        <p class="text-xs text-slate-700 leading-relaxed mb-4">學生每天記錄一次到班；工讀生第一次上班、第二次下班。辨識成功後請離開鏡頭至少 5 秒，避免連續打卡。</p>
         <p class="text-center mb-4"><a href="enrollment.html" class="inline-block px-4 py-3 rounded-xl bg-white text-teal-800 font-bold border border-teal-200">學生建檔工作站</a></p>
         <div id="camera-scanner-container" class="hidden mb-4 overflow-hidden rounded-2xl border-2 border-emerald-500 bg-black relative shadow-lg">
           <div id="qr-reader" class="w-full"></div>
@@ -910,7 +911,7 @@
     let isFaceModelsLoaded = false;
     let isFaceDetecting = false;
     let faceVideoEl = null, faceCanvasEl = null, faceStream = null;
-    let labeledFaceDescriptors = [], faceMatcher = null, lastFaceMatchTime = {}, faceMatchRequestPending = false;
+    let labeledFaceDescriptors = [], faceMatcher = null, faceMatchRequestPending = false;
     let html5QrScanner = null, isCameraScanning = false, lastScanTime = 0;
     let snapStream = null;
     let activeBatchDates = [];
@@ -1293,45 +1294,69 @@
       if (faceVideoEl) faceVideoEl.srcObject = null; document.getElementById('face-recognition-container').classList.add('hidden'); document.getElementById('btn-face-text').textContent = "👤 開啟人臉相機";
     }
 
+    // A successful camera observation is required to re-arm; network delays do not count as absence.
+    const facePresence = new Map();
+    let facePresenceDay = null;
+    function ensureFacePresenceDay() {
+      const day = taipeiDateKey(Date.now());
+      if (day !== facePresenceDay) { facePresence.clear(); facePresenceDay = day; }
+    }
+    function updateFacePresence(visibleIds, now = Date.now()) {
+      ensureFacePresenceDay();
+      const visible = new Set(visibleIds);
+      for (const [id, state] of facePresence) {
+        if (visible.has(id)) state.absentSince = null;
+        else if (state.absentSince === null) state.absentSince = now;
+        else if (now - state.absentSince >= 5000) facePresence.delete(id);
+      }
+    }
+    function claimFacePunch(id) {
+      ensureFacePresenceDay();
+      if (facePresence.has(id)) return false;
+      facePresence.set(id, { absentSince: null });
+      return true;
+    }
+
     async function startFaceDetectionLoop() {
       if (!isFaceDetecting || !faceVideoEl) return;
+      const currentStream = faceStream;
       const size = { width: faceVideoEl.videoWidth, height: faceVideoEl.videoHeight };
       faceapi.matchDimensions(faceCanvasEl, size);
-
       const timer = setInterval(async () => {
-        if (!isFaceDetecting) { clearInterval(timer); return; }
+        if (!isFaceDetecting || faceStream !== currentStream) { clearInterval(timer); return; }
+        if (faceMatchRequestPending) return;
+        faceMatchRequestPending = true;
         try {
           const dets = await faceapi.detectAllFaces(faceVideoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.55 })).withFaceLandmarks(true).withFaceDescriptors();
+          if (!isFaceDetecting || faceStream !== currentStream) return;
           const resized = faceapi.resizeResults(dets, size);
           const ctx = faceCanvasEl.getContext('2d'); ctx.clearRect(0, 0, faceCanvasEl.width, faceCanvasEl.height);
-
-          if (faceMatchRequestPending) return;
-          faceMatchRequestPending = true;
-          for (const d of resized) {
+          const matches = [];
+          for (const d of resized) matches.push({ detection: d, result: await matchFaceDescriptor(d.descriptor) });
+          if (!isFaceDetecting || faceStream !== currentStream) return;
+          // If any comparison fails, the catch leaves presence unchanged.
+          const visibleIds = matches.filter(item => item.result.match).map(item => item.result.match.id);
+          // A visible face with an uncertain match is not evidence that a worker left.
+          if (matches.some(item => !item.result.match)) visibleIds.push(...facePresence.keys());
+          updateFacePresence(visibleIds);
+          for (const { detection: d, result } of matches) {
             const box = d.detection.box;
-            let name = "比對中...";
-            let color = "#38bdf8";
-
-            const result = await matchFaceDescriptor(d.descriptor);
+            let name = '未比對出特徵 (請對準或重採)', color = '#f59e0b';
             if (result.match) {
-                const confidence = Math.round((1 - result.match.distance) * 100);
-                name = `${result.match.name} (${confidence}%)`;
-                color = "#10b981";
-
-                const now = Date.now();
-                if (!lastFaceMatchTime[result.match.id] || now - lastFaceMatchTime[result.match.id] > 8000) {
-                  lastFaceMatchTime[result.match.id] = now;
-                  if (navigator.vibrate) navigator.vibrate(100);
-                  processScanCode(result.match.id);
-                }
-            } else {
-                name = "未比對出特徵 (請對準或重採)";
-                color = "#f59e0b";
+              name = `${result.match.name} (${Math.round((1 - result.match.distance) * 100)}%)`;
+              color = '#10b981';
+              if (claimFacePunch(result.match.id)) {
+                if (navigator.vibrate) navigator.vibrate(100);
+                await processScanCode(result.match.id);
+              }
             }
             ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(box.x, box.y, box.width, box.height);
-            ctx.fillStyle = color; ctx.font = "bold 13px sans-serif"; ctx.fillText(name, box.x + 4, box.y > 20 ? box.y - 6 : box.y + 16);
+            ctx.fillStyle = color; ctx.font = 'bold 13px sans-serif'; ctx.fillText(name, box.x + 4, box.y > 20 ? box.y - 6 : box.y + 16);
           }
-        } catch (e) {} finally { faceMatchRequestPending = false; }
+        } catch (e) {
+          const status = document.getElementById('face-status-text');
+          if (status) status.textContent = '辨識連線暫時中斷，請稍後再試。';
+        } finally { faceMatchRequestPending = false; }
       }, 250);
     }
 
@@ -1417,7 +1442,10 @@
         const result = await callMschoolApi('/kiosk/check-in', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: val }) });
         if (!result.ok) {
           if (result.code === 'already') showQuickNotice(`⚠️【${result.name}】今日已簽到過！`);
-          else if (result.code === 'too_soon') showQuickNotice('⚠️ 剛打過卡！');
+          else if (result.code === 'too_soon') showQuickNotice('⚠️ 剛打過卡，請離開鏡頭；下班時再打卡。');
+          else if (result.code === 'already_completed') showQuickNotice(`【${result.name}】今日上、下班已記錄，不再新增打卡。`);
+          else if (result.code === 'needs_review') showQuickNotice('今日打卡紀錄需要確認，請聯絡管理同工。');
+          else showQuickNotice('找不到可打卡的人員，請聯絡管理同工。');
           return;
         }
         if (window.confetti) confetti({ particleCount: result.kind === 'student' ? 70 : 50, spread: 60, origin: { y: 0.6 } });
@@ -2235,11 +2263,30 @@
       return `${parts.year}-${parts.month}-${parts.day}`;
     }
 
+    function renderActualWorkhours(report) {
+      const esc = escapeCounselingHtml;
+      const hours = value => value === null || value === undefined ? '待確認' : `${Number(value).toFixed(2)} 小時`;
+      const time = value => value ? new Date(value).toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }) : '—';
+      const summary = report.summary || [], days = report.days || [];
+      return `<h3 class="font-bold text-sm">一、實際打卡工時</h3>
+        <p class="text-xs text-slate-800 leading-relaxed">依台北日期的上、下班卡計算。待補卡、重複或時間異常不計入已確認工時，也不當成零小時；跨日打卡需由管理同工確認。以下工時不直接轉為薪資。</p>
+        <div class="workhours-scroll" tabindex="0" role="region" aria-label="實際工時表格，可左右捲動"><table class="w-full text-center border-collapse border-2 border-slate-900 text-xs"><thead><tr class="bg-slate-100"><th class="border p-2">姓名／編號</th><th class="border p-2">排班時數</th><th class="border p-2">已確認實際工時</th><th class="border p-2">完整出勤</th><th class="border p-2">待確認</th></tr></thead><tbody>
+        ${summary.length ? summary.map(w => `<tr><td class="border p-2 font-bold">${esc(w.name)}<br>${esc(w.worker_id)}</td><td class="border p-2">${hours(w.planned_hours)}</td><td class="border p-2 font-bold">${w.actual_hours == null && Number(w.pending_days) === 0 ? '尚無完整打卡' : hours(w.actual_hours)}</td><td class="border p-2">${Number(w.completed_days)} 天</td><td class="border p-2">${Number(w.pending_days)} 天</td></tr>`).join('') : '<tr><td colspan="5" class="p-4">本月無教職與工讀生排班或打卡紀錄</td></tr>'}
+        </tbody></table></div><h3 class="font-bold text-sm mt-4">二、每日打卡與待確認紀錄</h3>
+        <div class="workhours-scroll" tabindex="0" role="region" aria-label="實際工時表格，可左右捲動"><table class="w-full text-center border-collapse border-2 border-slate-900 text-xs"><thead><tr class="bg-slate-100"><th class="border p-2">日期</th><th class="border p-2">姓名</th><th class="border p-2">上班</th><th class="border p-2">下班</th><th class="border p-2">實際工時</th><th class="border p-2">狀態</th></tr></thead><tbody>
+        ${days.length ? days.map(d => `<tr><td class="border p-2">${esc(d.day)}</td><td class="border p-2 font-bold">${esc(d.name)}</td><td class="border p-2">${time(d.clock_in)}</td><td class="border p-2">${time(d.clock_out)}</td><td class="border p-2">${d.status === '尚未到班日' ? '尚未到班日' : hours(d.actual_hours)}</td><td class="border p-2 font-bold ${d.actual_hours === null ? 'text-amber-900' : 'text-slate-900'}">${esc(d.status)}</td></tr>`).join('') : '<tr><td colspan="6" class="p-4">無每日明細</td></tr>'}</tbody></table></div>`;
+    }
+
+    let reportRenderSequence = 0;
     async function renderSelectedReport() {
       const type = document.getElementById('print-report-type').value;
       const targetMonth = document.getElementById('print-month-filter').value || '2026-09';
       const classOption = document.getElementById('print-class-filter').value;
-      const container = document.getElementById('print-paper-content');
+      const renderId = ++reportRenderSequence;
+      const targetContainer = document.getElementById('print-paper-content');
+      const container = document.createElement('div');
+      targetContainer.innerHTML = '<p class="p-6 text-slate-900">正在載入報表…</p>';
+      try {
 
       if (allUsers.length === 0) {
         const { data } = await db.from('users').select('*').order('id');
@@ -2441,10 +2488,20 @@
 
         const lastDayOfMonth = new Date(y, m, 0).getDate();
         const lastDate = `${targetMonth}-${String(lastDayOfMonth).padStart(2, '0')}`;
-        const { data: monthSchedules } = await db.from('schedules').select('*')
-          .gte('date', `${targetMonth}-01`)
-          .lte('date', lastDate)
-          .order('date', { ascending: true });
+        let monthSchedules, attendance;
+        container.innerHTML = '<p class="p-6 text-slate-800">正在載入工時與打卡紀錄…</p>';
+        try {
+          const [plans, actual] = await Promise.all([
+            db.from('schedules').select('*').gte('date', `${targetMonth}-01`).lte('date', lastDate).order('date', { ascending: true }),
+            callMschoolApi('/attendance/workhours?month=' + encodeURIComponent(targetMonth))
+          ]);
+          if (plans.error) throw plans.error;
+          monthSchedules = plans.data; attendance = actual;
+        } catch (error) {
+          container.innerHTML = `<div class="p-6 text-slate-900"><p>工時資料載入失敗，尚未產生報表。</p><p>${escapeCounselingHtml(error?.message || '請檢查連線')}</p><button type="button" onclick="renderSelectedReport()" class="mt-3 min-h-[44px] px-4 py-3 bg-white border rounded-xl font-bold text-slate-900">重新載入</button></div>`;
+          return;
+        }
+
 
         const shifts = monthSchedules || [];
         const summary = {};
@@ -2460,9 +2517,9 @@
         const workers = Object.values(summary);
 
         container.innerHTML = `
-          <div class="space-y-4">
+          <div class="workhours-report space-y-4">
             <div class="text-center border-b-2 border-slate-900 pb-2">
-              <h1 class="text-xl font-black font-serif">M+ 大雅教會 課輔班 教職員與工讀同工每月工時領據明細表</h1>
+              <h1 class="text-xl font-black font-serif">M+ 大雅教會 課輔班 教職員與工讀同工每月出勤工時明細表</h1>
               <div class="flex justify-between text-xs font-bold pt-1">
                 <span>月份：中華民國 ${rocY} 年 ${m} 月</span>
                 <span>執事/主管核簽：____________________</span>
@@ -2471,25 +2528,27 @@
             </div>
 
             <div class="space-y-2">
-              <h3 class="font-bold text-sm">一、本月同工工時與薪資彙總</h3>
-              <table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
+              <p class="print:hidden text-xs text-slate-800">手機上的表格可左右滑動查看。</p>
+              ${renderActualWorkhours(attendance)}
+              <h3 class="font-bold text-sm mt-6">三、排班時數與金額參考（非實際工時）</h3>
+              <div class="workhours-scroll" tabindex="0" role="region" aria-label="排班參考表格，可左右捲動"><table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
                 <thead>
                   <tr class="bg-slate-100 font-bold border-b border-slate-900">
                     <th class="border p-2">編號</th>
                     <th class="border p-2">同工姓名</th>
                     <th class="border p-2">排班班次</th>
-                    <th class="border p-2">核算工時</th>
+                    <th class="border p-2">排班時數</th>
                     <th class="border p-2">時薪標準</th>
-                    <th class="border p-2">預估支領金額</th>
+                    <th class="border p-2">排班估算金額</th>
                     <th class="border p-2 w-32">同工簽名或蓋章</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${workers.length === 0 ? `<tr><td colspan="7" class="py-4 text-slate-400">本月無排班出勤紀錄</td></tr>` :
+                  ${workers.length === 0 ? `<tr><td colspan="7" class="py-4 text-slate-400">本月無排班紀錄</td></tr>` :
                     workers.map(w => `
                       <tr>
-                        <td class="border p-2 font-mono">${w.id}</td>
-                        <td class="border p-2 font-bold">${w.name}</td>
+                        <td class="border p-2 font-mono">${escapeCounselingHtml(w.id)}</td>
+                        <td class="border p-2 font-bold">${escapeCounselingHtml(w.name)}</td>
                         <td class="border p-2">${w.shifts.length} 班</td>
                         <td class="border p-2 font-mono font-bold">${w.hours} 小時</td>
                         <td class="border p-2 font-mono">$${(w.hours ? w.wage / w.hours : 0).toLocaleString()} /h 平均</td>
@@ -2497,12 +2556,12 @@
                         <td class="border p-2"></td>
                       </tr>`).join('')}
                 </tbody>
-              </table>
+              </table></div>
             </div>
 
             <div class="space-y-2 pt-4">
-              <h3 class="font-bold text-sm">二、每日排班明細</h3>
-              <table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
+              <h3 class="font-bold text-sm">四、每日排班明細（參考）</h3>
+              <div class="workhours-scroll" tabindex="0" role="region" aria-label="排班參考表格，可左右捲動"><table class="w-full text-center border-collapse border-2 border-slate-900 text-xs">
                 <thead>
                   <tr class="bg-slate-100 font-bold border-b border-slate-900">
                     <th class="border p-1.5 w-24">日期</th>
@@ -2519,15 +2578,15 @@
                     shifts.map(s => `
                       <tr>
                         <td class="border p-1.5 font-mono">${s.date}</td>
-                        <td class="border p-1.5 font-bold">${s.worker_name}</td>
-                        <td class="border p-1.5 font-mono">${s.shift}</td>
+                        <td class="border p-1.5 font-bold">${escapeCounselingHtml(s.worker_name)}</td>
+                        <td class="border p-1.5 font-mono">${escapeCounselingHtml(s.shift)}</td>
                         <td class="border p-1.5 font-mono">${s.hours}h</td>
                         <td class="border p-1.5 font-mono">$${Number(s.hourly_wage || 190).toLocaleString()}/h</td>
                         <td class="border p-1.5 font-mono">$${((Number(s.hours) || 0) * (Number(s.hourly_wage) || 190)).toLocaleString()}</td>
-                        <td class="border p-1.5 text-left">${s.job_desc || '課輔陪伴'}</td>
+                        <td class="border p-1.5 text-left">${escapeCounselingHtml(s.job_desc || '課輔陪伴')}</td>
                       </tr>`).join('')}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           </div>`;
       }
@@ -2582,6 +2641,11 @@
               </tbody>
             </table>
           </div>`;
+      }
+      } catch (error) {
+        container.innerHTML = `<div class="p-6 text-slate-900"><p>報表載入失敗，請重新載入。</p><p>${escapeCounselingHtml(error?.message || '請檢查連線')}</p><button type="button" onclick="renderSelectedReport()" class="mt-3 min-h-[44px] px-4 py-3 bg-white border rounded-xl font-bold text-slate-900">重新載入</button></div>`;
+      } finally {
+        if (renderId === reportRenderSequence) targetContainer.innerHTML = container.innerHTML;
       }
     }
 

@@ -146,6 +146,16 @@ Deno.serve(async(req)=>{
    return json(result.data);
   }
 
+  if(u.pathname.endsWith("/attendance/workhours")){
+   if(!caller)return json({error:"請先由教會 OS 登入"},401);
+   if(caller.role_type!=="同工")return json({error:"只有管理同工可以查看工時報表"},403);
+   if(req.method!=="GET")return json({error:"method not allowed"},405);
+   const month=u.searchParams.get("month")||"";
+   if(!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(month)||month.startsWith("0000"))return json({error:"請選擇有效月份"},400);
+   const report=await db.rpc("school_workhours_report",{p_actor:sessionHash,p_month:month+"-01"});
+   if(report.error)throw report.error;return json(report.data);
+  }
+
   if(u.pathname.endsWith("/session")){
    if(req.method!=="GET")return json({error:"method not allowed"},405);
    if(!caller)return json({error:"工作階段已失效"},401);
