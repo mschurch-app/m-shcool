@@ -22,6 +22,13 @@ Gradually take over and improve the production M+ School tutoring administration
 ## Current architecture
 The current application is primarily a single index.html containing UI, styles, business logic and direct Supabase calls. External browser/CDN dependencies include Tailwind, Supabase JS, QR scanning, face recognition and related UI libraries.
 
+## Environment identity (verified 2026-10-09)
+- Production entry: `https://school.mchurch.online/`.
+- Active Supabase project shared with Church OS: `aqanuwilmvdtlzuqlrau`.
+- School data schema: `mschool`; private media bucket: `mschool-avatars`.
+- Browser REST calls are mediated by `mschool-api`; confirm its deployed version before server changes. Repository server source can differ from the deployed function.
+- `othgvewffvkkafbezejy` is a legacy project pending retirement. Do not use it for production school writes, tests or new integrations. Historical documentation describes older architecture; verify the live domain and deployed API before using it as current evidence.
+
 ## Known high-risk area
 Current staff session/authorization logic is client-side and must be redesigned carefully. Do not abruptly replace it in production. First document existing behavior, design backward-compatible authentication/RBAC, test it separately, then migrate.
 
@@ -39,3 +46,6 @@ Before any schema change:
 
 ## Definition of done
 A change is not done merely because code works locally. Existing daily workflows must continue to work and rollback must be possible.
+
+## Shared church design framework
+For all new features and page changes, read `docs/design/school-interface.md` and extend `school-homepage.css`. The user requires the entire school system to follow the church homepage design framework, with iPhone mobile interaction and Mac desktop presentation. Keep printing styles separate, preserve data and authorization contracts, and record unverified real-device checks explicitly.
