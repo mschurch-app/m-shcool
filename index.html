@@ -188,7 +188,7 @@
   <meta name="theme-color" content="#faf8f6">
   <link rel="icon" href="school-mark.svg" type="image/svg+xml">
   <script defer src="school-icons.js?v=20261009-stage3"></script>
-  <script defer src="school-ui.js?v=20261009-stage3"></script>
+  <script defer src="school-ui.js?v=20261020-face-reload1"></script>
 </head>
 <body class="school-app min-h-screen flex flex-col antialiased">
 
@@ -1377,7 +1377,7 @@
         await buildFaceMatcher();
         const stream = await requestCamera({video:{facingMode:'user',width:640,height:480},audio:false},()=>generation===faceGeneration);
         if (generation !== faceGeneration) { stream.getTracks().forEach(track => track.stop()); return; }
-        faceStream = stream; faceVideoEl.srcObject = stream; isFaceDetecting = true;
+        faceStream = stream; faceVideoEl.srcObject = stream; isFaceDetecting = true; startFaceWatchdog();
         document.getElementById('btn-face-text').textContent = '關閉相機';
         faceVideoEl.onloadedmetadata = () => { if (generation !== faceGeneration) return; faceVideoEl.play().catch(() => {}); startFaceDetectionLoop(); };
       } catch (error) { if (generation === faceGeneration) { stopFaceRecognition(); schoolNotice(error.message || '無法開啟相機，請允許相機權限後重試。'); } }
@@ -1385,6 +1385,7 @@
     }
 
     function stopFaceRecognition() {
+      stopFaceWatchdog();
       faceGeneration++; faceStarting = false; isFaceDetecting = false; if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
       if (faceVideoEl) { faceVideoEl.onloadedmetadata = null; faceVideoEl.srcObject = null; } document.getElementById('face-recognition-container').classList.add('hidden'); document.getElementById('btn-face-text').textContent = "開啟人臉相機";
     }
@@ -1414,6 +1415,67 @@
       facePresence.set(id, { absentSince: null });
       return true;
     }
+
+    // Face liveness recovery: reloads the current page, never replays a write.
+    let faceWatchdogTimer = null, faceWatchdogLastProgress = 0, faceWatchdogVideoTime = null;
+    let activePunchRequests = 0;
+    const FACE_STALL_MS = 30000, FACE_RELOAD_COOLDOWN_MS = 600000;
+    function faceRecoveryStatus(message) {
+      const status = document.getElementById('face-status-text');
+      if (status) status.textContent = message;
+    }
+    function stopFaceWatchdog() {
+      if (faceWatchdogTimer !== null) clearInterval(faceWatchdogTimer);
+      faceWatchdogTimer = null;
+    }
+    function markFaceWatchdogProgress() {
+      const time = faceVideoEl?.currentTime;
+      if (Number.isFinite(time) && time !== faceWatchdogVideoTime) {
+        faceWatchdogVideoTime = time; faceWatchdogLastProgress = Date.now();
+      }
+    }
+    function checkFaceWatchdog() {
+      if (!isFaceDetecting || document.hidden || Date.now() - faceWatchdogLastProgress < FACE_STALL_MS) return;
+      if (activePunchRequests || pendingFlowOperations.size) {
+        faceRecoveryStatus('辨識暫停；打卡結果尚待確認，確認完成前不會自動重讀。'); return;
+      }
+      if (!window.SchoolUI?.canAutoReload?.()) {
+        faceRecoveryStatus('辨識暫停；請先完成或取消目前的編輯，系統再自動重讀。'); return;
+      }
+      try {
+        const previous = sessionStorage.getItem('mplus_face_auto_reload_at');
+        if (previous !== null && Date.now() - Number(previous) < FACE_RELOAD_COOLDOWN_MS) {
+          stopFaceWatchdog(); faceRecoveryStatus('已自動重讀一次，辨識仍未恢復。請手動重讀，或先使用條碼打卡。'); return;
+        }
+        ensureFacePresenceDay();
+        const resume = JSON.stringify({at:Date.now(),day:facePresenceDay,ids:[...facePresence.keys()]});
+        sessionStorage.setItem('mplus_face_resume',resume);
+        sessionStorage.setItem('mplus_face_auto_reload_at',String(Date.now()));
+        if (sessionStorage.getItem('mplus_face_resume') !== resume) throw new Error('storage unavailable');
+      } catch {
+        stopFaceWatchdog(); faceRecoveryStatus('瀏覽器無法保留復原狀態，請手動重讀，或先使用條碼打卡。'); return;
+      }
+      faceRecoveryStatus('辨識暫停超過 30 秒，正在自動重讀並恢復相機…');
+      stopFaceRecognition();
+      location.reload();
+    }
+    function startFaceWatchdog() {
+      stopFaceWatchdog(); faceWatchdogLastProgress = Date.now(); faceWatchdogVideoTime = null;
+      faceWatchdogTimer = setInterval(checkFaceWatchdog,2000);
+    }
+    function restoreFaceAutoResume() {
+      try {
+        const raw = sessionStorage.getItem('mplus_face_resume');
+        if (!raw) return false;
+        sessionStorage.removeItem('mplus_face_resume');
+        const resume = JSON.parse(raw),age=Date.now()-resume.at;
+        ensureFacePresenceDay();
+        if (!Number.isFinite(age) || age < 0 || age > 120000 || resume.day !== facePresenceDay || !Array.isArray(resume.ids)) return false;
+        for (const id of resume.ids.slice(0,2000)) if (typeof id === 'string' && id.length > 0 && id.length <= 128) facePresence.set(id,{absentSince:null});
+        return true;
+      } catch { return false; }
+    }
+    // End face liveness recovery.
 
     async function startFaceDetectionLoop() {
       if (!isFaceDetecting || !faceVideoEl) return;
@@ -1451,6 +1513,7 @@
             ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(box.x, box.y, box.width, box.height);
             ctx.fillStyle = color; ctx.font = 'bold 13px sans-serif'; ctx.fillText(name, box.x + 4, box.y > 20 ? box.y - 6 : box.y + 16);
           }
+          markFaceWatchdogProgress();
         } catch (e) {
           const status = document.getElementById('face-status-text');
           if (status) status.textContent = '辨識連線暫時中斷，請稍後再試。';
@@ -1575,6 +1638,7 @@
     // =============================================================
     async function handleScan(e) { e.preventDefault(); const inp = document.getElementById('scan-code-input'); const val = inp.value.trim().toUpperCase(); if (!val) return; processScanCode(val); inp.value = ""; }
     async function processScanCode(val) {
+      activePunchRequests++;
       try {
         const result = await postFlow('/kiosk/check-in', {id:val}, 'punch:' + taipeiDateKey(Date.now()) + ':' + val);
         if (!result.ok) {
@@ -1589,6 +1653,7 @@
         if (window.confetti) confetti({ particleCount: result.kind === 'student' ? 70 : 50, spread: 60, origin: { y: 0.6 } });
         showPunchSuccessModal(result.title, result.subtitle); loadLogs();
       } catch (e) { showQuickNotice(`⚠️ ${e.message}`); }
+      finally { activePunchRequests--; }
     }
 
     function showPunchSuccessModal(title, sub) {
@@ -3077,7 +3142,9 @@
         try { currentUser = (await callMschoolApi('/session')).user; }
         catch (e) { mschoolSessionToken = null; localStorage.removeItem('mplus_mschool_session'); }
       }
-      updateAuthUI(); openRequestedEntryTab();
+      updateAuthUI();
+      if (restoreFaceAutoResume()) { switchTab('checkin'); await startFaceRecognition(); }
+      else openRequestedEntryTab();
     });
   </script>
 </body>
