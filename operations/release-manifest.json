@@ -1,14 +1,14 @@
 {
-  "baseline": "5412e27fe83fc3113fc5381a46243f36a2efabdb",
+  "baseline": "a39a647b8eedf24d9ebb7d2a1383dacaefa1c9dc + face auto-reload recovery",
   "api": "mschool-api v18 (unchanged)",
   "assets": [
     {
       "path": "index.html",
-      "sha256": "1f342c953d0104c1084fb72174cb5022d6482250e52efa90199909dc48c1eb99"
+      "sha256": "7de6ff4c2ace25828ee5220004da5a79805e02e0b163085f3cee190e04ba1131"
     },
     {
       "path": "index2.html",
-      "sha256": "cdf45481bccd6250d29194400f3e605538736834fe53322dd917a08288343051"
+      "sha256": "2a05edae71d1429e47234716589642bb6ea99b8dfa275a3b413f1992c272e2d3"
     },
     {
       "path": "enrollment.html",
@@ -24,7 +24,7 @@
     },
     {
       "path": "school-ui.js",
-      "sha256": "659f7d0f082663272ec97c8047a631609c6a620c3c07ed38f41b27ff52366bcc"
+      "sha256": "8cd0925452c47d93db66e7ad69a54e3e3c0b9cdd0d62d2745892382d40f38c92"
     },
     {
       "path": "school-ui.css",

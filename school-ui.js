@@ -216,6 +216,6 @@
   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','open','hidden']});
   for(const dialog of roots().filter(element=>element instanceof HTMLDialogElement))dialog.addEventListener('close',refreshModals);
   enhance();
-  window.SchoolUI=Object.freeze({catalog,sync,onNavigate,notify,record,confirm:message=>question(message),prompt:message=>question(message,true),clearDraft});
+  window.SchoolUI=Object.freeze({catalog,sync,onNavigate,notify,record,canAutoReload:()=>drafts.size===0&&!busy()&&stack.length===0,confirm:message=>question(message),prompt:message=>question(message,true),clearDraft});
   sync(window.schoolInterface?.state().user);refreshModals();
 })();

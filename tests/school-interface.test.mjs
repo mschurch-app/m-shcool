@@ -23,7 +23,7 @@ test('presentation role catalog preserves M management and T/P basic entrances',
  assert.match(ui,/window\.schoolInterface\.navigate\(item\.route\)/);
 });
 test('every entry loads the same versioned tokens, SVG icons and UI adapter without blocking zoom',()=>{
- for(const entry of entries){for(const file of ['app-design-tokens.css','school-ui.css','school-icons.js','school-ui.js'])assert.match(entry,new RegExp(file.replaceAll('.','\\.')+'\\?v=20261009-stage3'));
+ for(const entry of entries){for(const file of ['app-design-tokens.css','school-ui.css','school-icons.js','school-ui.js'])assert.match(entry,new RegExp(file.replaceAll('.','\\.')+'\\?v='+(file==='school-ui.js'?'(?:20261009-stage3|20261020-face-reload1)':'20261009-stage3')));
  assert.doesNotMatch(entry,/user-scalable=no|maximum-scale=1/);assert.match(entry,/school-mark\.svg/);}
  assert.match(tokens,/--app-ink:#302823/);assert.match(tokens,/--app-accent:#a83929/);
  assert.match(css,/height:80px!important/);assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
