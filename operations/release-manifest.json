@@ -1,14 +1,14 @@
 {
-  "baseline": "a39a647b8eedf24d9ebb7d2a1383dacaefa1c9dc + face auto-reload recovery",
-  "api": "mschool-api v18 (unchanged)",
+  "baseline": "9fabf88 + school-only staff personnel management (candidate)",
+  "api": "mschool-api candidate with /staff-people",
   "assets": [
     {
       "path": "index.html",
-      "sha256": "7de6ff4c2ace25828ee5220004da5a79805e02e0b163085f3cee190e04ba1131"
+      "sha256": "b50cb0cc3c73ff1fddfdd431a65c4044246f019b81242eb2b2eeff6a972b1abc"
     },
     {
       "path": "index2.html",
-      "sha256": "2a05edae71d1429e47234716589642bb6ea99b8dfa275a3b413f1992c272e2d3"
+      "sha256": "b6a31d96be8b4b37aad9679d3a4136ca4d595d7cd355a4b6f48c51e0333104c1"
     },
     {
       "path": "enrollment.html",
@@ -24,11 +24,11 @@
     },
     {
       "path": "school-ui.js",
-      "sha256": "8cd0925452c47d93db66e7ad69a54e3e3c0b9cdd0d62d2745892382d40f38c92"
+      "sha256": "f198e348adbfe4e2e3bda93109c27f3d92aae7362d980d561611e3d79e0ef6a7"
     },
     {
       "path": "school-ui.css",
-      "sha256": "941385a0eb06a02f5fbc00d49877278edad5118ec53ed1a0e888dd3ea19d518d"
+      "sha256": "412e0f1266c877502907dd3b7d7e8d8610de71c8f4402f194fa3815b2161956c"
     },
     {
       "path": "school-icons.js",
@@ -49,6 +49,10 @@
     {
       "path": "church-palette.css",
       "sha256": "fb8ca4fea8de49b6fa3583647bb12b6102eb6bf20a3742359b8a6ad6506414fd"
+    },
+    {
+      "path": "school-staff-people.js",
+      "sha256": "23bea350da43a9cd3c5eacd9c6f657f57017ef0a5b24c2f985b8ddde205de70e"
     }
   ]
 }

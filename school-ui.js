@@ -8,6 +8,7 @@
     {key:'enrollment',title:'學生建檔',description:'公共工作站拍照建檔',group:'學生與到班',symbol:'camera',href:'enrollment.html',roles:['public',...roles]},
     {key:'rollcall',title:'課堂點名',description:'出席、作業與聯絡簿',group:'課堂紀錄',symbol:'clipboard',route:'rollcall',roles},
     {key:'schedules',title:'排班行事曆',description:'查看班表與安排時段',group:'同工與排班',symbol:'calendar',route:'schedules',roles},
+    {key:'staff-management',title:'老師與工讀生管理',description:'新增、編輯與刪除課輔人員',group:'同工與排班',symbol:'people',route:'schedules',action:'staff-people',roles:['同工']},
     {key:'staff',title:'教職同工',description:'老師、工讀生與同工名冊',group:'同工與排班',symbol:'people',route:'students',scope:'staff',roles},
     {key:'counseling',title:'個別輔導',description:'陪伴紀錄與後續追蹤',group:'關懷與聯繫',symbol:'heart',route:'counseling',roles},
     {key:'messages',title:'家長留言',description:'查看訊息與回覆家長',group:'關懷與聯繫',symbol:'chat',route:'messages',roles},
@@ -39,9 +40,10 @@
   }
   function sync(nextUser) {
     user=nextUser||null;
+    window.SchoolStaffPeople?.sync();
     if (!$('school-main')) return;
     const desktop=$('school-desktop-nav');desktop.replaceChildren();
-    for(const item of catalog.filter(permitted).filter(item=>!item.href && item.key!=='staff')) {
+    for(const item of catalog.filter(permitted).filter(item=>!item.href && !['staff','staff-management'].includes(item.key))) {
       const button=featureButton(item,'nav');button.id='nav-'+item.key;desktop.append(button);
     }
     // Legacy authorization UI still references these IDs even for unauthenticated users.
@@ -79,7 +81,7 @@
     }
     $('m-nav-students')?.toggleAttribute('data-current',route==='students');
   }
-  function dirtyOwner(element) {return element.closest('[id^="modal-"], #tab-rollcall, #tab-import, #student-form, #device-form');}
+  function dirtyOwner(element) {return element.closest('[id^="modal-"], #tab-rollcall, #tab-import, #student-form, #device-form, #school-staff-form');}
   function clearDraft(id) {drafts.delete(id);}
   async function allowLeave(owner) {
     if(busy()){notify('正在處理，請稍候。');return false;}
@@ -93,6 +95,7 @@
     if(!await allowLeave(panel))return;
     $('school-tools').close();
     if(item.href){location.assign(item.href);return;}
+    if(item.action==='staff-people'){await window.SchoolStaffPeople.open();return;}
     if(item.scope)window.schoolInterface.roster(item.scope);else window.schoolInterface.navigate(item.route);
     window.scrollTo({top:0,behavior:'auto'});
   }

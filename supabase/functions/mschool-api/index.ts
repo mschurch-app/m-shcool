@@ -166,6 +166,18 @@ Deno.serve(async(req)=>{
    const message=denied?"目前帳號沒有這項操作權限。":messages[r.error.message]||"資料未儲存，請確認欄位或重新載入後再試。";
    return json({error:message,message,code:r.error.code},denied?403:conflict?409:400);
   };
+  if(route==="/staff-people"){
+   if(!caller)return json({error:"請先由教會 OS 登入"},401);
+   if(caller.role_type!=="同工")return json({error:"僅限課輔管理同工管理老師與工讀生。"},403);
+   if(req.method==="GET")return flowRpc("school_staff_people",{p_actor:sessionHash});
+   if(req.method!=="POST")return json({error:"method not allowed"},405);
+   const b=await req.json();
+   if(!uuid(b.request_id)||!["create","update","delete"].includes(b.action))return json({error:"請重新確認操作"},400);
+   const r=await db.rpc("school_manage_staff_person",{p_actor:sessionHash,p_action:b.action,p_id:b.id??null,p_input:b.input??{},p_expected:b.expected??null,p_request:b.request_id});
+   if(r.error){const denied=r.error.code==="42501",conflict=["40001","23505"].includes(r.error.code);
+    return json({error:denied?"僅可管理課輔老師與工讀生，不能調整管理同工或其他模組權限。":conflict?"人員資料已變動，已保留輸入；請重新載入名單核對後再儲存。":"尚未儲存，請確認姓名、類別及狀態。",code:r.error.code},denied?403:conflict?409:400);}
+   return json(r.data);
+  }
   if(["/rollcalls","/points/adjust","/points/history","/schedules/preview","/schedules/save","/imports","/imports/history","/kiosk/devices","/students/face"].includes(route)){
    if(!caller)return json({error:"請先由教會 OS 登入"},401);
    if(route==="/rollcalls"&&req.method==="GET"){
