@@ -179,3 +179,18 @@
 .school-app .bg-emerald-500.text-white{background:var(--app-success)!important;color:#fff!important}
 .school-app ::placeholder{color:var(--app-secondary)!important;opacity:1}
 }
+
+/* School-only personnel sheet. */
+.school-app .school-sheet.school-staff-people{background:#fff;width:min(96vw,980px);max-width:980px;color:var(--app-ink,#302823)}
+.school-staff-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0}
+.school-staff-toolbar label{display:flex;gap:8px;align-items:center}.school-staff-toolbar input[type=search]{max-width:240px}
+.school-staff-columns{display:grid;grid-template-columns:minmax(200px,1fr) minmax(260px,1.3fr);gap:24px}
+.school-staff-columns form>label{display:block;font-weight:600;margin-top:12px}
+.school-staff-columns form>input,.school-staff-columns form>select,.school-staff-columns form>textarea{width:100%;font-size:16px;min-height:44px}
+.school-staff-person{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;width:100%;min-height:64px;padding:12px;margin:8px 0;border:1px solid var(--app-border,#d5d9d6);border-radius:14px;background:#fff;color:var(--app-ink,#302823)}
+.school-staff-person[aria-pressed=true]{border:2px solid #173f34;background:#edf4ef}.school-staff-person small{color:var(--app-secondary,#65574f)}
+@media screen and (max-width:640px){.school-staff-columns{grid-template-columns:1fr}.school-staff-columns>section{max-height:230px;overflow:auto}.school-staff-toolbar{align-items:stretch}.school-staff-toolbar label:first-child{width:100%;flex-wrap:wrap}.school-staff-toolbar input[type=search]{width:100%;max-width:none}}
+
+.school-staff-toolbar button{min-height:44px;padding:10px 16px;border:1px solid var(--app-border,#d5d9d6);border-radius:14px;font-weight:600}.school-staff-toolbar input[type=checkbox]{width:22px;height:22px;padding:0;flex:none}.school-staff-toolbar label{color:var(--app-ink,#302823)}
+
+.school-staff-toolbar label{min-height:44px;cursor:pointer}

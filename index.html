@@ -184,11 +184,12 @@
   <link rel="stylesheet" href="church-palette.css?v=20261003-components1">
   <link rel="stylesheet" href="church-os-theme.css?v=20261009-dailyflows1">
   <link rel="stylesheet" href="app-design-tokens.css?v=20261009-stage3">
-  <link rel="stylesheet" href="school-ui.css?v=20261009-stage3">
+  <link rel="stylesheet" href="school-ui.css?v=20261026-staff1">
   <meta name="theme-color" content="#faf8f6">
   <link rel="icon" href="school-mark.svg" type="image/svg+xml">
   <script defer src="school-icons.js?v=20261009-stage3"></script>
-  <script defer src="school-ui.js?v=20261020-face-reload1"></script>
+  <script defer src="school-staff-people.js?v=20261026-staff1"></script>
+  <script defer src="school-ui.js?v=20261026-staff1"></script>
 </head>
 <body class="school-app min-h-screen flex flex-col antialiased">
 
@@ -327,6 +328,7 @@
               <button onclick="setScheduleView('list')" id="btn-view-list" class="px-3 py-1.5 rounded-lg text-slate-600 font-bold"><i class="fa-solid fa-list-ul mr-1"></i>清單</button>
             </div>
             <select id="schedule-worker-filter" onchange="renderActiveScheduleView()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"></select>
+            <button type="button" id="btn-school-staff-people" hidden onclick="openSchoolStaffPeople()" class="school-secondary">老師與工讀生管理</button>
             <button id="btn-batch-schedule" onclick="openBatchScheduleModal()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-calendar-plus"></i><span>安排多週班表</span></button>
             <button id="btn-add-schedule" onclick="openScheduleModal('add')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition active:scale-95"><i class="fa-solid fa-plus"></i><span>單日排班</span></button>
           </div>
@@ -1083,7 +1085,9 @@
       status.textContent = message;
       status.classList.toggle('hidden', !message);
     }
+    function openSchoolStaffPeople() { window.SchoolStaffPeople?.open(); }
     function updateScheduleActionUI() {
+      window.SchoolStaffPeople?.sync();
       const canManage = canManageSchedules();
       document.getElementById('btn-batch-schedule')?.classList.toggle('hidden', !canManage);
       document.getElementById('btn-add-schedule')?.classList.toggle('hidden', !canManage);
@@ -3128,7 +3132,8 @@
     }
 
     window.schoolInterface = {
-      state: () => ({user: currentUser, rollCallDate: rollCallLoadedDate, busy: userSaving || scheduleSaving || rollCallSaving || csvImportBusy || kioskDeviceBusy}),
+      staffPeople: {allowed: () => currentUser?.role_type === '同工', request: callMschoolApi, refresh: async () => { await loadScheduleStaffOptions(); await loadSchedules(); }},
+      state: () => ({user: currentUser, rollCallDate: rollCallLoadedDate, busy: userSaving || scheduleSaving || rollCallSaving || csvImportBusy || kioskDeviceBusy || Boolean(window.SchoolStaffPeople?.busy)}),
       reloadRollCall: async (day) => { document.getElementById('rollcall-date-picker').value=day; return loadRollCallsForDate(); },
       navigate: (tab) => tab === 'print-center' ? requireStaffPrintTab() : tab === 'import' ? requireImportTab() : requireTab(tab),
       roster: (scope) => { document.getElementById('user-role-scope').value = scope; document.getElementById('user-status-filter').value = scope === 'staff' ? '全部' : '在班'; requireTab('students'); },

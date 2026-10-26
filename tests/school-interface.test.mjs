@@ -8,7 +8,7 @@ const registrySource=ui.slice(ui.indexOf('  const roles'),ui.indexOf('  const $'
 const catalog=vm.runInNewContext(registrySource+'; catalog;');
 const context={window:{}};vm.runInNewContext(icons,context);
 test('one school feature catalog covers every existing panel and the public workstation',()=>{
- assert.equal(new Set(catalog.map(item=>item.key)).size,10);
+ assert.equal(new Set(catalog.map(item=>item.key)).size,11);
  assert.deepEqual([...new Set(catalog.filter(item=>item.route).map(item=>item.route))].sort(),['checkin','counseling','import','messages','print-center','rollcall','schedules','students']);
  for(const item of catalog){for(const field of ['key','title','description','group','symbol'])assert.ok(item[field],`${item.key}: ${field}`);assert.ok(context.window.SCHOOL_ICON_PATHS[item.symbol]);}
  assert.equal(catalog.find(item=>item.key==='enrollment').href,'enrollment.html');
@@ -16,14 +16,14 @@ test('one school feature catalog covers every existing panel and the public work
 test('presentation role catalog preserves M management and T/P basic entrances',()=>{
  for(const role of ['同工','老師','工讀生','public']){
   const available=catalog.filter(item=>item.roles.includes(role));
-  assert.equal(available.length,role==='同工'?10:role==='public'?2:8);
+  assert.equal(available.length,role==='同工'?11:role==='public'?2:8);
   assert.equal(available.some(item=>item.key==='import'),role==='同工');
   assert.equal(available.some(item=>item.key==='print'),role==='同工');
  }
  assert.match(ui,/window\.schoolInterface\.navigate\(item\.route\)/);
 });
 test('every entry loads the same versioned tokens, SVG icons and UI adapter without blocking zoom',()=>{
- for(const entry of entries){for(const file of ['app-design-tokens.css','school-ui.css','school-icons.js','school-ui.js'])assert.match(entry,new RegExp(file.replaceAll('.','\\.')+'\\?v='+(file==='school-ui.js'?'(?:20261009-stage3|20261020-face-reload1)':'20261009-stage3')));
+ for(const entry of entries){for(const file of ['app-design-tokens.css','school-ui.css','school-icons.js','school-ui.js'])assert.match(entry,new RegExp(file.replaceAll('.','\\.')+'\\?v='+(file==='school-ui.js'?'(?:20261009-stage3|20261020-face-reload1|20261026-staff1)':'(?:20261009-stage3|20261026-staff1)')));
  assert.doesNotMatch(entry,/user-scalable=no|maximum-scale=1/);assert.match(entry,/school-mark\.svg/);}
  assert.match(tokens,/--app-ink:#302823/);assert.match(tokens,/--app-accent:#a83929/);
  assert.match(css,/height:80px!important/);assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
