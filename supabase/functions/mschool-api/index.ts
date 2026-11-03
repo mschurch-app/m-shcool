@@ -214,12 +214,12 @@ Deno.serve(async(req)=>{
    return json({error:"method not allowed"},405);
   }
   let kioskScope:string|null=null;
-  if(route.startsWith("/kiosk/")&&["check-in","face-match","logs"].includes(route.split("/").pop()||"")){
+  if(route.startsWith("/kiosk/")&&["check-in","face-match","logs","leaderboard"].includes(route.split("/").pop()||"")){
    const device=req.headers.get("x-kiosk-device")||"",hash=/^[a-f0-9]{64}$/.test(device)?await sha256(device):null;
    // Hash the edge-observed connection hint with the service secret; never persist raw IPs.
    // Compatibility mode is rate control only, not proof of a trusted physical device.
    const bucket=await sha256(key+":"+(req.headers.get("cf-connecting-ip")||req.headers.get("x-forwarded-for")||"unknown"));
-   const gate=await db.rpc("school_kiosk_gate",{p_hash:hash,p_bucket:bucket,p_route:route.split("/").pop()});
+   const gate=await db.rpc("school_kiosk_gate",{p_hash:hash,p_bucket:bucket,p_route:route.endsWith("/leaderboard")?"logs":route.split("/").pop()});
    if(gate.error)throw gate.error;
    kioskScope=gate.data?.trusted?hash:bucket;
    if(!gate.data?.ok)return json({error:gate.data?.code==="device_required"?"這台設備尚未啟用簽到，請聯絡管理同工。":"操作太頻繁，請稍後再試。",code:gate.data?.code},gate.data?.code==="device_required"?403:429);
@@ -234,6 +234,19 @@ Deno.serve(async(req)=>{
    const b=await req.json(),id=String(b.id||"").trim().toUpperCase();
    if(!/^[A-Z0-9_-]{2,32}$/.test(id))return json({ok:false,code:"invalid"},400);
    const {data,error}=await db.rpc("school_kiosk_punch",{p_scope:kioskScope,p_id:id,p_request:uuid(b.request_id)||crypto.randomUUID()});if(error)throw error;return json(data);
+  }
+  if(route==="/kiosk/leaderboard"){
+   if(req.method!=="GET")return json({error:"method not allowed"},405);
+   // Reuse the existing kiosk device/rate gate above. No personnel or biometric fields.
+   const {data,error}=await school.from("users").select("name,points")
+    .or("and(role_type.is.null,status.is.null),and(role_type.is.null,status.eq.在班),and(role_type.eq.學生,status.is.null),and(role_type.eq.學生,status.eq.在班)")
+    .order("points",{ascending:false,nullsFirst:false}).order("name",{ascending:true}).limit(20);
+   if(error)throw error;
+   let previous:number|null=null,rank=0;
+   return json((data||[]).map((row:any,index:number)=>{
+    const points=Number(row.points)||0;if(previous!==points)rank=index+1;previous=points;
+    return {rank,name:String(row.name||"學生"),points};
+   }));
   }
   if(u.pathname.endsWith("/kiosk/logs")){
    if(req.method!=="GET")return json({error:"method not allowed"},405);
@@ -364,3 +377,4 @@ Deno.serve(async(req)=>{
   }
  }catch(error){console.error("mschool-api request failed",(error as any)?.code||"unexpected");return json({error:"系統暫時無法完成操作，請稍後再試。",message:"系統暫時無法完成操作，請稍後再試。"},500)}
 });
+

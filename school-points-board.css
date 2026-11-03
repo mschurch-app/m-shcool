@@ -1,0 +1,20 @@
+@media screen {
+  .school-checkin-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+  .school-checkin-station{width:100%;min-width:0;margin:0;max-width:none}
+  .school-points-board{padding:28px;min-width:0}
+  .school-points-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .school-points-heading h2{margin:0;color:var(--app-ink,#302823);font-size:23px;font-weight:750;line-height:1.4}
+  .school-points-heading p,#points-board-status{font-size:13px;color:var(--app-secondary,#6c625d);line-height:1.6;margin:6px 0 0;overflow-wrap:anywhere}
+  .school-points-heading button{min-width:60px;min-height:44px;padding:10px 16px;border:1px solid var(--app-border,#e5ddd7);border-radius:12px;background:var(--app-surface-muted,#f7f4f1);color:var(--app-accent,#a83929);font-weight:650}
+  .school-points-heading button:focus-visible{outline:3px solid var(--app-focus,#2563eb);outline-offset:3px}
+  .school-points-list{list-style:none;padding:0;margin:16px 0 0;max-height:540px;overflow-y:auto;overscroll-behavior:contain}
+  .school-points-row{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--app-border,#e5ddd7)}
+  .school-points-rank{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--app-surface-muted,#f7f4f1);color:var(--app-secondary,#6c625d);font-weight:750;font-variant-numeric:tabular-nums}
+  .school-points-row[data-rank="1"] .school-points-rank{background:#f9e9bc;color:#795500}
+  .school-points-row[data-rank="2"] .school-points-rank{background:#e9edf0;color:#425766}
+  .school-points-row[data-rank="3"] .school-points-rank{background:#f2e0d2;color:#80502c}
+  .school-points-name{font-size:17px;font-weight:650;overflow-wrap:anywhere;color:var(--app-ink,#302823)}
+  .school-points-value{font-size:18px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--app-accent,#a83929);white-space:nowrap}
+  @media(max-width:767px){.school-checkin-columns{grid-template-columns:1fr;gap:16px}.school-points-board{padding:20px}.school-points-list{max-height:420px}}
+}
+@media print{.school-points-board{display:none}}
