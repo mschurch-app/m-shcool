@@ -38,7 +38,10 @@
       refresh.disabled = false;
     }
   };
-  document.addEventListener('DOMContentLoaded', () => window.loadPointsLeaderboard());
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('points-board-refresh')?.addEventListener('click', () => window.loadPointsLeaderboard());
+    window.loadPointsLeaderboard();
+  });
   setInterval(() => {
     if (!document.hidden && !document.getElementById('tab-checkin')?.classList.contains('hidden')) window.loadPointsLeaderboard();
   }, 60000);

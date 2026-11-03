@@ -1,6 +1,7 @@
 @media screen {
   .school-checkin-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
   .school-checkin-station{width:100%;min-width:0;margin:0;max-width:none}
+  .school-checkin-station > .flex{flex-wrap:wrap}
   .school-points-board{padding:28px;min-width:0}
   .school-points-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
   .school-points-heading h2{margin:0;color:var(--app-ink,#302823);font-size:23px;font-weight:750;line-height:1.4}
