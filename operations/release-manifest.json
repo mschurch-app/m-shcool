@@ -1,14 +1,14 @@
 {
-  "baseline": "9fabf88 + school-only staff personnel management (candidate)",
-  "api": "mschool-api candidate with /staff-people",
+  "baseline": "f7e4996 + check-in points leaderboard",
+  "api": "mschool-api v29; kiosk leaderboard; existing payroll preserved",
   "assets": [
     {
       "path": "index.html",
-      "sha256": "b50cb0cc3c73ff1fddfdd431a65c4044246f019b81242eb2b2eeff6a972b1abc"
+      "sha256": "2c5948753a9107e7526a1774a63791a04edd2d5cb7d48bb9a0e0090a50e3719f"
     },
     {
       "path": "index2.html",
-      "sha256": "b6a31d96be8b4b37aad9679d3a4136ca4d595d7cd355a4b6f48c51e0333104c1"
+      "sha256": "46ff8ee19914e8346acd685ce1a3b9e99cb9b96214f02326234c9f35afc5bd88"
     },
     {
       "path": "enrollment.html",
@@ -53,6 +53,14 @@
     {
       "path": "school-staff-people.js",
       "sha256": "23bea350da43a9cd3c5eacd9c6f657f57017ef0a5b24c2f985b8ddde205de70e"
+    },
+    {
+      "path": "school-points-board.js",
+      "sha256": "ab7e0cecfd7f3d29b69dfd24306474138591c42672aabfd9a5008909873a5304"
+    },
+    {
+      "path": "school-points-board.css",
+      "sha256": "3b854e44ea8ef54d7be47960a432bf0ebe43d9d362b5b396cb18c52f15b019ab"
     }
   ]
 }
